@@ -331,7 +331,7 @@ class _CharacterCreationScreenState extends ConsumerState<CharacterCreationScree
       ),
       child: Text(
         trait,
-        style: const TextStyle(
+        style: TextStyle(
           color: DripColors.white70,
           fontSize: 13,
         ),

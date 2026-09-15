@@ -147,7 +147,7 @@ class _GenerationsTab extends StatelessWidget {
                       data['prompt'] ?? '',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: DripColors.white70),
+                      style: TextStyle(fontSize: 11, color: DripColors.white70),
                     ),
                   ),
                 ],
