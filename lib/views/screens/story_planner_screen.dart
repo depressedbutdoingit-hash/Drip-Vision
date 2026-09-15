@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../../services/token_service.dart';
 import '../../models/character_dna.dart';
 import '../../services/cost_tracking_service.dart';
 import '../../views/widgets/galaxy_background.dart';
@@ -256,7 +257,7 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
                             Text(
                               '(\$${cost.markedUpCostUsd.toStringAsFixed(4)})',
                               style: TextStyle(
-                                color: Colors.white40,
+                                color: DripColors.white40,
                                 fontSize: 11,
                               ),
                             ),
@@ -608,9 +609,9 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
                 ),
                 child: Text(
                   shot,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
-                    color: Colors.white50,
+                    color: DripColors.white50,
                   ),
                 ),
               )).toList(),

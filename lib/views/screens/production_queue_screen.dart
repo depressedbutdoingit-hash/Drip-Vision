@@ -1,3 +1,4 @@
+import '../../core/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
@@ -401,7 +402,7 @@ class _ProductionQueueScreenState extends ConsumerState<ProductionQueueScreen> {
                                   child: Text(
                                     scene.heading,
                                     style: TextStyle(
-                                      color: isCompleted || isCurrent ? Colors.white : Colors.white40,
+                                      color: isCompleted || isCurrent ? Colors.white : DripColors.white40,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 13,
                                     ),
@@ -456,7 +457,7 @@ class _ProductionQueueScreenState extends ConsumerState<ProductionQueueScreen> {
                                         issue.message,
                                         style: TextStyle(
                                           fontSize: 11,
-                                          color: Colors.white40,
+                                          color: DripColors.white40,
                                         ),
                                       ),
                                     ),

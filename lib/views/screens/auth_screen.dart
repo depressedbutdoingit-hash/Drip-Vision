@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../../services/auth_service.dart';
 import '../../views/widgets/galaxy_background.dart';
 
 final authScreenProvider = StateNotifierProvider<AuthScreenNotifier, AuthScreenState>((ref) {
@@ -188,7 +189,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         fontWeight: FontWeight.w600,
                                         color: authState.isLogin
                                           ? DripTheme.cosmicTeal
-                                          : Colors.white40,
+                                          : DripDripColors.white40,
                                       ),
                                     ),
                                   ),
@@ -218,7 +219,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         fontWeight: FontWeight.w600,
                                         color: !authState.isLogin
                                           ? DripTheme.cosmicTeal
-                                          : Colors.white40,
+                                          : DripDripColors.white40,
                                       ),
                                     ),
                                   ),
@@ -327,7 +328,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           child: Text(
                             'SKIP FOR NOW →',
                             style: TextStyle(
-                              color: Colors.white30,
+                              color: DripColors.white30,
                               letterSpacing: 2,
                               fontSize: 12,
                             ),
@@ -373,8 +374,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.white20),
-            prefixIcon: Icon(icon, color: Colors.white30, size: 20),
+            hintStyle: TextStyle(color: DripDripColors.white20),
+            prefixIcon: Icon(icon, color: DripColors.white30, size: 20),
             filled: true,
             fillColor: Colors.white.withOpacity(0.03),
             border: OutlineInputBorder(

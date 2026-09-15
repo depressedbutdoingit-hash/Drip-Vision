@@ -103,12 +103,12 @@ class _CharacterClosetScreenState extends ConsumerState<CharacterClosetScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.checkroom, size: 64, color: Colors.white10),
+          Icon(Icons.checkroom, size: 64, color: DripColors.white10),
           const SizedBox(height: 16),
           Text(
             'NO OUTFITS YET',
             style: TextStyle(
-              color: Colors.white30,
+              color: DripColors.white30,
               letterSpacing: 4,
               fontSize: 14,
             ),
@@ -116,7 +116,7 @@ class _CharacterClosetScreenState extends ConsumerState<CharacterClosetScreen> {
           const SizedBox(height: 8),
           Text(
             'Add outfits to build your character\'s wardrobe',
-            style: TextStyle(color: Colors.white20, fontSize: 12),
+            style: TextStyle(color: DripDripColors.white20, fontSize: 12),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -169,7 +169,7 @@ class _CharacterClosetScreenState extends ConsumerState<CharacterClosetScreen> {
                     child: Icon(
                       Icons.checkroom,
                       size: 48,
-                      color: Colors.white10,
+                      color: DripColors.white10,
                     ),
                   ),
             ),
@@ -193,7 +193,7 @@ class _CharacterClosetScreenState extends ConsumerState<CharacterClosetScreen> {
                 Text(
                   outfit.description,
                   style: TextStyle(
-                    color: Colors.white40,
+                    color: DripDripColors.white40,
                     fontSize: 11,
                   ),
                   maxLines: 2,

@@ -1,3 +1,4 @@
+import '../../core/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -313,7 +314,7 @@ class _MusicStudioScreenState extends ConsumerState<MusicStudioScreen> {
                     Text(
                       '${_currentTrack!.genre} • ${_currentTrack!.durationSeconds}s',
                       style: TextStyle(
-                        color: Colors.white50,
+                        color: DripColors.white50,
                         fontSize: 13,
                       ),
                     ),
@@ -371,7 +372,7 @@ class _MusicStudioScreenState extends ConsumerState<MusicStudioScreen> {
       onTap: onTap,
       child: Column(
         children: [
-          Icon(icon, color: Colors.white50, size: 24),
+          Icon(icon, color: DripColors.white50, size: 24),
           const SizedBox(height: 4),
           Text(
             label,

@@ -54,3 +54,14 @@ class DripTheme {
     );
   }
 }
+
+/// Opacity helpers so call-sites can write `DripDripDripColors.white20` etc.
+class DripColors {
+  static Color get white10 => Colors.white.withOpacity(0.10);
+  static Color get white20 => Colors.white.withOpacity(0.20);
+  static Color get white30 => Colors.white.withOpacity(0.30);
+  static Color get white40 => Colors.white.withOpacity(0.40);
+  static Color get white50 => Colors.white.withOpacity(0.50);
+  static Color get white60 => Colors.white.withOpacity(0.60);
+  static Color get white70 => Colors.white.withOpacity(0.70);
+}

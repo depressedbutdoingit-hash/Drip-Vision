@@ -123,7 +123,7 @@ class _ExploreDripScreenState extends ConsumerState<ExploreDripScreen> {
           const SizedBox(height: 8),
           Text(
             'Be the first to create something',
-            style: TextStyle(color: Colors.white20, fontSize: 12),
+            style: TextStyle(color: DripColors.white20, fontSize: 12),
           ),
         ],
       ),

@@ -34,6 +34,7 @@ import '../models/style_dna.dart';
 import 'env.dart';
 
 // Services
+final navIndexProvider = StateProvider<int>((ref) => 0);
 final openRouterProvider = Provider((ref) => OpenRouterService());
 final dripEngineProvider = Provider((ref) => DripEngineService());
 final mediaActionProvider = Provider((ref) => MediaActionService());
