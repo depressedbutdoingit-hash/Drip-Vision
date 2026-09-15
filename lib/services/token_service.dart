@@ -59,4 +59,3 @@ class TokenService {
   }
 }
 
-final tokenServiceProvider = Provider((ref) => TokenService());

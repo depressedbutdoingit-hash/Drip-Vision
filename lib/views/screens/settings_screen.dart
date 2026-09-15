@@ -5,7 +5,7 @@ import 'admin_portal.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool isAdmin;
-  const SettingsScreen({super.key, required this.isAdmin});
+  const SettingsScreen({super.key, this.isAdmin = false});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();

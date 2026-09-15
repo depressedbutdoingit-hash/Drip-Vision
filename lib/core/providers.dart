@@ -14,7 +14,6 @@ import '../services/purchase_service.dart';
 import '../services/generation_guard.dart';
 import '../services/prompt_enhancer_service.dart';
 import '../services/video_stitching_service.dart';
-import '../services/watermark_export_service.dart';
 import '../services/ai_queue_service.dart';
 import '../services/auth_service.dart';
 import '../services/continuity_service.dart';
@@ -62,6 +61,7 @@ final sunoServiceProvider = Provider((ref) =>
   SunoService(Env.sunoApiKey)
 );
 final costTrackingProvider = Provider((ref) => CostTrackingService());
+final tokenServiceProvider = Provider((ref) => TokenService());
 
 // Standout feature services
 final voiceLockServiceProvider = Provider((ref) => VoiceLockService());
