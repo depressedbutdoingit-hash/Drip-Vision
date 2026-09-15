@@ -101,6 +101,32 @@ jobs:
             "configuration_version": "1"
           }
           JSON
+      - name: Restore missing Flutter Android files
+        run: |
+          TMP_DIR=$(mktemp -d)
+
+          flutter create \
+            --platforms=android \
+            --org com.dripvision \
+            "$TMP_DIR/dripvision"
+
+          mkdir -p android/app/src/main
+          cp -R "$TMP_DIR/dripvision/android/app/src/main/res" \
+            android/app/src/main/
+
+          mkdir -p android/app/src/main/kotlin/com/dripvision/app
+          cat > android/app/src/main/kotlin/com/dripvision/app/MainActivity.kt <<'EOF'
+          package com.dripvision.app
+
+          import io.flutter.embedding.android.FlutterActivity
+
+          class MainActivity : FlutterActivity()
+          EOF
+
+          echo "Flutter Android resources restored:"
+          find android/app/src/main/res -type f | sort
+          echo "MainActivity restored:"
+          cat android/app/src/main/kotlin/com/dripvision/app/MainActivity.kt
 
       - name: Build debug APK
         run: flutter build apk --debug
