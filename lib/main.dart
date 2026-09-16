@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,14 +16,49 @@ import 'views/screens/character_creation_screen.dart';
 import 'views/screens/music_studio_screen.dart';
 import 'views/screens/custom_outfit_creator.dart';
 
-void main() async {
+/// True after Firebase.initializeApp succeeds. When false, auth and
+/// Firebase-backed services are skipped so the UI can still open.
+bool firebaseReady = false;
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
-  await Firebase.initializeApp();
-  await CrashlyticsService.init();
-  await PurchaseService.init();
-  await PushNotificationService.init();
+
+  // .env is optional in debug / CI builds — never block launch.
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e, st) {
+    debugPrint('dotenv load skipped: $e');
+    debugPrintStack(stackTrace: st);
+  }
+
+  // Firebase is required for full features but must not crash cold start.
+  try {
+    await Firebase.initializeApp();
+    firebaseReady = true;
+  } catch (e, st) {
+    firebaseReady = false;
+    debugPrint('Firebase.initializeApp failed — running in offline UI mode: $e');
+    debugPrintStack(stackTrace: st);
+  }
+
+  if (firebaseReady) {
+    await _safeInit('Crashlytics', CrashlyticsService.init);
+    await _safeInit('Purchases', PurchaseService.init);
+    await _safeInit('Push', PushNotificationService.init);
+  } else {
+    debugPrint('Skipping Crashlytics / Purchases / Push (Firebase not ready)');
+  }
+
   runApp(const ProviderScope(child: DripVisionApp()));
+}
+
+Future<void> _safeInit(String name, Future<void> Function() init) async {
+  try {
+    await init();
+  } catch (e, st) {
+    debugPrint('$name init failed (non-fatal): $e');
+    debugPrintStack(stackTrace: st);
+  }
 }
 
 class DripVisionApp extends ConsumerWidget {
@@ -30,6 +66,17 @@ class DripVisionApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Without Firebase, skip the auth gate and open the main UI.
+    if (!firebaseReady) {
+      return MaterialApp(
+        title: 'DripVision',
+        debugShowCheckedModeBanner: false,
+        theme: DripTheme.theme,
+        home: const MainNavigation(),
+        routes: _routes,
+      );
+    }
+
     final authState = ref.watch(authStateProvider);
 
     return MaterialApp(
@@ -46,21 +93,27 @@ class DripVisionApp extends ConsumerWidget {
             child: CircularProgressIndicator(color: DripTheme.cosmicTeal),
           ),
         ),
-        error: (_, __) => const AuthScreen(),
-      ),
-      routes: {
-        '/story-planner': (context) => const StoryPlannerScreen(),
-        '/production': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments;
-          if (args is StoryPlan) {
-            return ProductionQueueScreen(plan: args);
-          }
-          return const StoryPlannerScreen();
+        error: (err, _) {
+          debugPrint('authState error: $err');
+          // Still open the app so a misconfigured Firebase doesn't brick launch.
+          return const MainNavigation();
         },
-        '/character-create': (context) => const CharacterCreationScreen(),
-        '/music-studio': (context) => const MusicStudioScreen(),
-        '/custom-outfit': (context) => const CustomOutfitCreator(),
-      },
+      ),
+      routes: _routes,
     );
   }
 }
+
+Map<String, WidgetBuilder> get _routes => {
+      '/story-planner': (context) => const StoryPlannerScreen(),
+      '/production': (context) {
+        final args = ModalRoute.of(context)?.settings.arguments;
+        if (args is StoryPlan) {
+          return ProductionQueueScreen(plan: args);
+        }
+        return const StoryPlannerScreen();
+      },
+      '/character-create': (context) => const CharacterCreationScreen(),
+      '/music-studio': (context) => const MusicStudioScreen(),
+      '/custom-outfit': (context) => const CustomOutfitCreator(),
+    };
