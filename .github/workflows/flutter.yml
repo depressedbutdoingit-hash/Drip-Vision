@@ -28,6 +28,7 @@ jobs:
         run: flutter pub get
 
       - name: Create CI env file
+        run: echo "REVENUECAT_ANDROID_KEY=${{ secrets.REVENUECAT_ANDROID_KEY }}" >> .env
         run: |
           touch .env
           echo "OPENROUTER_KEY=${{ secrets.OPENROUTER_KEY }}" >> .env
@@ -35,6 +36,7 @@ jobs:
           echo "OPENAI_KEY=${{ secrets.OPENAI_KEY }}" >> .env
           echo "ELEVENLABS_KEY=${{ secrets.ELEVENLABS_KEY }}" >> .env
           echo "SUNO_API_KEY=${{ secrets.SUNO_API_KEY }}" >> .env
+          echo "REVENUECAT_ANDROID_KEY=${{ secrets.REVENUECAT_ANDROID_KEY }}" >> .env
 
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
@@ -66,7 +68,7 @@ jobs:
         run: flutter pub get
 
       - name: Create CI env file
-        run: touch .env
+        run: echo "REVENUECAT_ANDROID_KEY=${{ secrets.REVENUECAT_ANDROID_KEY }}" >> .env
 
       - name: Create placeholder google-services.json
         run: |
