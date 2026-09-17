@@ -5,6 +5,7 @@ import '../../core/theme.dart';
 import '../../core/director_settings.dart';
 import '../../models/character.dart';
 import '../../services/push_notification_service.dart';
+import '../../services/purchase_service.dart';
 import '../widgets/camera_joystick.dart';
 import '../widgets/drip_swapper.dart';
 import '../widgets/media_picker_button.dart';
@@ -141,8 +142,9 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
               backgroundColor: DripTheme.cosmicTeal,
               foregroundColor: DripTheme.voidBlack,
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
+              await PurchaseService.presentPaywall();
             },
             child: const Text('View Plans', style: TextStyle(fontWeight: FontWeight.bold)),
           ),

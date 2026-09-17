@@ -3,10 +3,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 import '../core/env.dart';
 import '../models/user_profile.dart';
 
 class PurchaseService {
+  static Future<void> presentPaywall() async {
+    try {
+      final result = await RevenueCatUI.presentPaywallIfNeeded('pro');
+      print('RevenueCat Paywall result: $result');
+    } catch (e) {
+      print('RevenueCat Paywall error: $e');
+    }
+  }
+
   static Future<void> init() async {
     await Purchases.setLogLevel(LogLevel.debug);
     final config = PurchasesConfiguration(
