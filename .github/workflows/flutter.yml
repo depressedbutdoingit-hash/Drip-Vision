@@ -28,7 +28,6 @@ jobs:
         run: flutter pub get
 
       - name: Create CI env file
-        run: echo "REVENUECAT_ANDROID_KEY=${{ secrets.REVENUECAT_ANDROID_KEY }}" >> .env
         run: |
           touch .env
           echo "OPENROUTER_KEY=${{ secrets.OPENROUTER_KEY }}" >> .env
@@ -68,41 +67,16 @@ jobs:
         run: flutter pub get
 
       - name: Create CI env file
-        run: echo "REVENUECAT_ANDROID_KEY=${{ secrets.REVENUECAT_ANDROID_KEY }}" >> .env
-
-      - name: Create placeholder google-services.json
         run: |
-          cat > android/app/google-services.json << 'JSON'
-          {
-            "project_info": {
-              "project_number": "000000000000",
-              "project_id": "dripvision-ci-placeholder",
-              "storage_bucket": "dripvision-ci-placeholder.appspot.com"
-            },
-            "client": [
-              {
-                "client_info": {
-                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
-                  "android_client_info": {
-                    "package_name": "com.dripvision.app"
-                  }
-                },
-                "oauth_client": [],
-                "api_key": [
-                  {
-                    "current_key": "AIzaSyPlaceholderKeyForCIOnly000000000"
-                  }
-                ],
-                "services": {
-                  "appinvite_service": {
-                    "other_platform_oauth_client": []
-                  }
-                }
-              }
-            ],
-            "configuration_version": "1"
-          }
-          JSON
+          touch .env
+          echo "REVENUECAT_ANDROID_KEY=${{ secrets.REVENUECAT_ANDROID_KEY }}" >> .env
+
+      - name: Verify google-services.json
+        run: |
+          test -f android/app/google-services.json
+          echo "Using real google-services.json from repo"
+          python3 -c "import json; d=json.load(open('android/app/google-services.json')); print(d['project_info']['project_id'])"
+
       - name: Restore missing Flutter Android files
         run: |
           TMP_DIR=$(mktemp -d)
@@ -117,18 +91,16 @@ jobs:
             android/app/src/main/
 
           mkdir -p android/app/src/main/kotlin/com/dripvision/app
-          cat > android/app/src/main/kotlin/com/dripvision/app/MainActivity.kt <<'EOF'
+          cat > android/app/src/main/kotlin/com/dripvision/app/MainActivity.kt <<'KTEOF'
           package com.dripvision.app
 
           import io.flutter.embedding.android.FlutterActivity
 
           class MainActivity : FlutterActivity()
-          EOF
+          KTEOF
 
           echo "Flutter Android resources restored:"
           find android/app/src/main/res -type f | sort
-          echo "MainActivity restored:"
-          cat android/app/src/main/kotlin/com/dripvision/app/MainActivity.kt
 
       - name: Build debug APK
         run: flutter build apk --debug
