@@ -27,15 +27,20 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Create CI env file
+      - name: Create env files
         run: |
           touch .env
-          echo "OPENROUTER_KEY=${{ secrets.OPENROUTER_KEY }}" >> .env
-          echo "FAL_AI_KEY=${{ secrets.FAL_AI_KEY }}" >> .env
-          echo "OPENAI_KEY=${{ secrets.OPENAI_KEY }}" >> .env
-          echo "ELEVENLABS_KEY=${{ secrets.ELEVENLABS_KEY }}" >> .env
-          echo "SUNO_API_KEY=${{ secrets.SUNO_API_KEY }}" >> .env
-          echo "REVENUECAT_ANDROID_KEY=${{ secrets.REVENUECAT_ANDROID_KEY }}" >> .env
+          mkdir -p assets
+          cat > assets/.env << ENVFILE
+          OPENROUTER_KEY=${{ secrets.OPENROUTER_KEY }}
+          FAL_AI_KEY=${{ secrets.FAL_AI_KEY }}
+          OPENAI_KEY=${{ secrets.OPENAI_KEY }}
+          ELEVENLABS_KEY=${{ secrets.ELEVENLABS_KEY }}
+          SUNO_API_KEY=${{ secrets.SUNO_API_KEY }}
+          REVENUECAT_ANDROID_KEY=${{ secrets.REVENUECAT_ANDROID_KEY }}
+          REVENUECAT_IOS_KEY=${{ secrets.REVENUECAT_IOS_KEY }}
+          ENVFILE
+          cp assets/.env .env
 
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
@@ -66,41 +71,39 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Create CI env file
+      - name: Inject API keys into assets/.env
         run: |
-          touch .env
-          echo "REVENUECAT_ANDROID_KEY=${{ secrets.REVENUECAT_ANDROID_KEY }}" >> .env
+          mkdir -p assets
+          cat > assets/.env << ENVFILE
+          OPENROUTER_KEY=${{ secrets.OPENROUTER_KEY }}
+          FAL_AI_KEY=${{ secrets.FAL_AI_KEY }}
+          OPENAI_KEY=${{ secrets.OPENAI_KEY }}
+          ELEVENLABS_KEY=${{ secrets.ELEVENLABS_KEY }}
+          SUNO_API_KEY=${{ secrets.SUNO_API_KEY }}
+          REVENUECAT_ANDROID_KEY=${{ secrets.REVENUECAT_ANDROID_KEY }}
+          REVENUECAT_IOS_KEY=${{ secrets.REVENUECAT_IOS_KEY }}
+          ENVFILE
+          cp assets/.env .env
+          echo "assets/.env written (keys redacted)"
+          wc -l assets/.env
 
       - name: Verify google-services.json
         run: |
           test -f android/app/google-services.json
-          echo "Using real google-services.json from repo"
-          python3 -c "import json; d=json.load(open('android/app/google-services.json')); print(d['project_info']['project_id'])"
+          python3 -c "import json; print(json.load(open('android/app/google-services.json'))['project_info']['project_id'])"
 
       - name: Restore missing Flutter Android files
         run: |
           TMP_DIR=$(mktemp -d)
-
-          flutter create \
-            --platforms=android \
-            --org com.dripvision \
-            "$TMP_DIR/dripvision"
-
+          flutter create --platforms=android --org com.dripvision "$TMP_DIR/dripvision"
           mkdir -p android/app/src/main
-          cp -R "$TMP_DIR/dripvision/android/app/src/main/res" \
-            android/app/src/main/
-
+          cp -R "$TMP_DIR/dripvision/android/app/src/main/res" android/app/src/main/
           mkdir -p android/app/src/main/kotlin/com/dripvision/app
           cat > android/app/src/main/kotlin/com/dripvision/app/MainActivity.kt <<'KTEOF'
           package com.dripvision.app
-
           import io.flutter.embedding.android.FlutterActivity
-
           class MainActivity : FlutterActivity()
           KTEOF
-
-          echo "Flutter Android resources restored:"
-          find android/app/src/main/res -type f | sort
 
       - name: Build debug APK
         run: flutter build apk --debug

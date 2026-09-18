@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../services/token_service.dart';
+import '../../core/env.dart';
 import '../../models/character_dna.dart';
 import '../../services/cost_tracking_service.dart';
 import '../../views/widgets/galaxy_background.dart';
@@ -642,6 +643,11 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
     ref.read(isPlanningProvider.notifier).state = true;
 
     try {
+      if (!Env.hasOpenRouter) {
+        throw Exception(
+          'OpenRouter API key is missing. Add OPENROUTER_KEY in GitHub Secrets and install a new APK.',
+        );
+      }
       final service = ref.read(aiDirectorServiceProvider);
       final result = await service.planStory(
         title: _titleController.text.trim(),

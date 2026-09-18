@@ -46,7 +46,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
-    # .env is loaded at runtime via flutter_dotenv; do not declare as asset
+    - assets/.env
 
 # Note: record ^7.x brings compatible record_linux / record_platform_interface versions.
 # The previous force-override of record_linux is no longer needed.

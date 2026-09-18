@@ -23,12 +23,18 @@ bool firebaseReady = false;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // .env is optional in debug / CI builds — never block launch.
+  // .env is optional — always end up initialized so Env.* never throws.
   try {
     await dotenv.load(fileName: '.env');
-  } catch (e, st) {
-    debugPrint('dotenv load skipped: $e');
-    debugPrintStack(stackTrace: st);
+  } catch (_) {
+    try {
+      await dotenv.load(fileName: 'assets/.env');
+    } catch (e, st) {
+      // Empty init so dotenv.isInitialized is true
+      dotenv.testLoad(fileInput: '');
+      debugPrint('dotenv load skipped: $e');
+      debugPrintStack(stackTrace: st);
+    }
   }
 
   // Firebase is required for full features but must not crash cold start.
