@@ -17,6 +17,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _shorebirdCodePush = ShorebirdCodePush();
   bool _isCheckingUpdate = false;
   bool _isAdmin = false;
+  bool _signingOut = false;
 
   @override
   void initState() {
@@ -64,10 +65,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _isCheckingUpdate = false);
   }
 
+  Future<void> _signOut() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: DripTheme.surface,
+        title: const Text('Sign out?', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'You will need to sign in again to use your account.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sign out', style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _signingOut = true);
+    try {
+      await FirebaseAuth.instance.signOut();
+      if (!mounted) return;
+      // Pop settings; root listens to auth and shows AuthScreen.
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sign out failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _signingOut = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final email = FirebaseAuth.instance.currentUser?.email;
+
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: DripTheme.voidBlack,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -87,7 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: const Icon(Icons.person, color: DripTheme.cosmicTeal),
             title: const Text('Account Profile', style: TextStyle(color: Colors.white)),
             subtitle: Text(
-              FirebaseAuth.instance.currentUser?.email ?? 'Not signed in',
+              email ?? 'Not signed in',
               style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
           ),
@@ -133,6 +177,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               },
             ),
+          const Divider(color: Colors.white12, height: 32),
+          ListTile(
+            leading: _signingOut
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.redAccent,
+                    ),
+                  )
+                : const Icon(Icons.logout, color: Colors.redAccent),
+            title: const Text(
+              'Sign out',
+              style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
+            ),
+            subtitle: const Text(
+              'Return to the login screen',
+              style: TextStyle(color: Colors.white54, fontSize: 12),
+            ),
+            onTap: _signingOut ? null : _signOut,
+          ),
         ],
       ),
     );
