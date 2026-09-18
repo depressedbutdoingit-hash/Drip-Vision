@@ -28,12 +28,33 @@ class AuthService {
     }
   }
 
-  /// Creates users/{uid} if missing. New accounts get role "customer".
-  /// Promote yourself to admin in Firebase Console (see project docs).
+  /// Creates users/{uid} if missing. Never overwrites role if already set
+  /// (so promoting yourself to admin in Console is safe).
   Future<void> ensureUserDocument(User user, {bool isNew = false}) async {
     final ref = _db.collection('users').doc(user.uid);
     final snap = await ref.get();
-    if (snap.exists && !isNew) return;
+
+    if (snap.exists) {
+      // Only fill missing fields — do not reset role or tokens
+      final data = snap.data() ?? {};
+      final updates = <String, dynamic>{};
+      if (data['email'] == null || (data['email'] as String).isEmpty) {
+        updates['email'] = user.email ?? '';
+      }
+      if (data['role'] == null) {
+        updates['role'] = 'customer';
+      }
+      if (data['tokenBalance'] == null) {
+        updates['tokenBalance'] = 50;
+      }
+      if (data['subscriptionTier'] == null) {
+        updates['subscriptionTier'] = 'free';
+      }
+      if (updates.isNotEmpty) {
+        await ref.set(updates, SetOptions(merge: true));
+      }
+      return;
+    }
 
     await ref.set({
       'email': user.email ?? '',
@@ -42,7 +63,7 @@ class AuthService {
       'tokenBalance': 50,
       'lastFreeClaimDate': Timestamp.fromDate(DateTime.now()),
       'createdAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    });
   }
 
   Future<void> signInAnonymously() async {

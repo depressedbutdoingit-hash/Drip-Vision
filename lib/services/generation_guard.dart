@@ -18,7 +18,7 @@ class GenerationGuard {
       final data = snap.data()!;
 
       // ADMIN GOD MODE: Never deduct tokens for admin
-      if (data['role'] == 'admin') {
+      if ((data['role'] ?? '').toString().trim().toLowerCase() == 'admin') {
         return true;
       }
 

@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class TokenService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// Check if user has enough tokens and deduct the cost.
+  /// Admins (role == 'admin') always pass and are never charged.
   /// Returns true if deduction succeeded, false if insufficient balance.
   Future<bool> deduct(int amount) async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -18,6 +18,13 @@ class TokenService {
       if (!doc.exists) return false;
 
       final data = doc.data()!;
+
+      // Admin: unlimited — do not deduct
+      final role = (data['role'] ?? '').toString().trim().toLowerCase();
+      if (role == 'admin') {
+        return true;
+      }
+
       final currentBalance = (data['tokenBalance'] ?? 0) as int;
 
       if (currentBalance < amount) return false;
@@ -41,6 +48,15 @@ class TokenService {
     return (doc.data()?['tokenBalance'] ?? 0) as int;
   }
 
+  /// Whether the signed-in user is admin.
+  Future<bool> isAdmin() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return false;
+    final doc = await _firestore.collection('users').doc(userId).get();
+    final role = (doc.data()?['role'] ?? '').toString().trim().toLowerCase();
+    return role == 'admin';
+  }
+
   /// Add tokens (for purchases, rewards, etc.)
   Future<void> addTokens(int amount, {String reason = 'purchase'}) async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -50,7 +66,11 @@ class TokenService {
       'tokenBalance': FieldValue.increment(amount),
     });
 
-    await _firestore.collection('users').doc(userId).collection('transactions').add({
+    await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('transactions')
+        .add({
       'amount': amount,
       'type': 'credit',
       'reason': reason,
@@ -58,4 +78,3 @@ class TokenService {
     });
   }
 }
-
