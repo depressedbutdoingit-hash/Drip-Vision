@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shorebird_code_push/shorebird_code_push.dart';
 import '../../core/theme.dart';
@@ -14,16 +16,42 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final _shorebirdCodePush = ShorebirdCodePush();
   bool _isCheckingUpdate = false;
+  bool _isAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isAdmin = widget.isAdmin;
+    _loadAdminFlag();
+  }
+
+  Future<void> _loadAdminFlag() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final role = doc.data()?['role'] as String?;
+      if (mounted) {
+        setState(() => _isAdmin = role == 'admin');
+      }
+    } catch (_) {
+      // Offline / rules — keep existing flag
+    }
+  }
 
   Future<void> _checkForOverTheAirUpdate() async {
     setState(() => _isCheckingUpdate = true);
-    final isUpdateAvailable = await _shorebirdCodePush.isNewPatchAvailableForDownload();
+    final isUpdateAvailable =
+        await _shorebirdCodePush.isNewPatchAvailableForDownload();
 
     if (isUpdateAvailable) {
       await _shorebirdCodePush.downloadUpdateIfAvailable();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('New update downloaded! Restart app to apply.')),
+          const SnackBar(
+            content: Text('New update downloaded! Restart app to apply.'),
+          ),
         );
       }
     } else {
@@ -58,6 +86,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.person, color: DripTheme.cosmicTeal),
             title: const Text('Account Profile', style: TextStyle(color: Colors.white)),
+            subtitle: Text(
+              FirebaseAuth.instance.currentUser?.email ?? 'Not signed in',
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.system_update, color: DripTheme.nebulaCyan),
@@ -70,7 +102,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: DripTheme.nebulaCyan),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: DripTheme.nebulaCyan,
+                    ),
                   )
                 : const Icon(Icons.download, color: Colors.white54),
             onTap: _checkForOverTheAirUpdate,
@@ -87,7 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: Icon(Icons.description_outlined, color: DripTheme.chrome),
             title: Text('Terms of Service', style: TextStyle(color: Colors.white)),
           ),
-          if (widget.isAdmin)
+          if (_isAdmin)
             ListTile(
               leading: const Icon(Icons.admin_panel_settings, color: DripTheme.nebulaCyan),
               title: const Text('Admin Dashboard', style: TextStyle(color: Colors.white)),
