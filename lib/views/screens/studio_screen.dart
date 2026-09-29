@@ -1,3 +1,4 @@
+import 'edit_bay_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
@@ -122,3 +123,13 @@ class StudioScreen extends ConsumerWidget {
     );
   }
 }
+
+const SizedBox(height: 18),
+CinematicButton(
+  label: 'OPEN EDIT BAY',
+  icon: Icons.movie_filter_outlined,
+  onPressed: () => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const EditBayScreen()),
+  ),
+),
