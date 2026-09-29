@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:gal/gal.dart';
 import 'package:video_player/video_player.dart';
 import 'package:http/http.dart' as http;
+
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../services/video_edit_service.dart';
@@ -26,6 +28,11 @@ class EditBayScreen extends ConsumerStatefulWidget {
 }
 
 class _EditBayScreenState extends ConsumerState<EditBayScreen> {
+  // EDIT BAY PALETTE
+  static const Color editPurple = Color(0xFFB56CFF);
+  static const Color editPurpleGlow = Color(0xFFD8A7FF);
+  static const Color editPurpleSoft = Color(0xFF7C4DFF);
+
   final _editor = VideoEditService();
   final _picker = ImagePicker();
 
@@ -67,6 +74,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
   @override
   void initState() {
     super.initState();
+
     if (widget.initialVideoPathOrUrl != null) {
       _loadSource(widget.initialVideoPathOrUrl!);
     }
@@ -83,20 +91,31 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
       _loading = true;
       _status = 'Loading video…';
     });
+
     try {
       String localPath = pathOrUrl;
+
       if (pathOrUrl.startsWith('http')) {
         final dir = await getTemporaryDirectory();
+
         localPath =
-            '\( {dir.path}/import_ \){DateTime.now().millisecondsSinceEpoch}.mp4';
+            '${dir.path}/import_${DateTime.now().millisecondsSinceEpoch}.mp4';
+
         final res = await http.get(Uri.parse(pathOrUrl));
-        if (res.statusCode != 200) throw Exception('Download failed');
+
+        if (res.statusCode != 200) {
+          throw Exception('Download failed');
+        }
+
         await File(localPath).writeAsBytes(res.bodyBytes);
       }
+
       await _setController(localPath);
     } catch (e) {
       _toast('Could not load video: $e');
     } finally {
+      if (!mounted) return;
+
       setState(() {
         _loading = false;
         _status = null;
@@ -106,9 +125,13 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
 
   Future<void> _setController(String path) async {
     await _controller?.dispose();
+
     final c = VideoPlayerController.file(File(path));
+
     await c.initialize();
+
     final dur = c.value.duration.inMilliseconds / 1000.0;
+
     setState(() {
       _controller = c;
       _currentPath = path;
@@ -116,28 +139,41 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
       _trimStart = 0;
       _trimEnd = _duration;
     });
+
     c.setLooping(true);
     c.play();
   }
 
   Future<void> _pickFromGallery() async {
     final file = await _picker.pickVideo(source: ImageSource.gallery);
-    if (file != null) await _loadSource(file.path);
+
+    if (file != null) {
+      await _loadSource(file.path);
+    }
   }
 
-  Future<void> _runEdit(Future<String> Function() op, String label) async {
+  Future<void> _runEdit(
+    Future<String> Function() op,
+    String label,
+  ) async {
     if (_currentPath == null) return;
+
     setState(() {
       _loading = true;
       _status = label;
     });
+
     try {
       final out = await op();
+
       await _setController(out);
+
       _toast('$label complete');
     } catch (e) {
       _toast('$label failed: $e');
     } finally {
+      if (!mounted) return;
+
       setState(() {
         _loading = false;
         _status = null;
@@ -147,9 +183,13 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
 
   void _toast(String msg) {
     if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(color: Colors.white)),
+        content: Text(
+          msg,
+          style: const TextStyle(color: Colors.white),
+        ),
         backgroundColor: DripTheme.surfaceRaised,
       ),
     );
@@ -157,6 +197,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
 
   Future<void> _share() async {
     if (_currentPath == null) return;
+
     await Share.shareXFiles(
       [XFile(_currentPath!)],
       text: 'Edited with #DripVision',
@@ -165,16 +206,20 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
 
   Future<void> _download() async {
     if (_currentPath == null) return;
+
     setState(() {
       _loading = true;
       _status = 'Saving to gallery…';
     });
+
     try {
       await Gal.putVideo(_currentPath!);
       _toast('Saved to gallery');
     } catch (e) {
       _toast('Save failed: $e');
     } finally {
+      if (!mounted) return;
+
       setState(() {
         _loading = false;
         _status = null;
@@ -189,16 +234,26 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
       appBar: AppBar(
         title: const Text(
           'EDIT BAY',
-          style: TextStyle(fontSize: 12, letterSpacing: 3),
+          style: TextStyle(
+            fontSize: 12,
+            letterSpacing: 3,
+            color: editPurpleGlow,
+          ),
         ),
         actions: [
           if (_currentPath != null) ...[
             IconButton(
-              icon: const Icon(Icons.download_rounded, color: DripTheme.nebulaCyan),
+              icon: const Icon(
+                Icons.download_rounded,
+                color: editPurple,
+              ),
               onPressed: _loading ? null : _download,
             ),
             IconButton(
-              icon: const Icon(Icons.share_rounded, color: DripTheme.cosmicTeal),
+              icon: const Icon(
+                Icons.share_rounded,
+                color: editPurpleGlow,
+              ),
               onPressed: _loading ? null : _share,
             ),
           ],
@@ -214,7 +269,16 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                 decoration: BoxDecoration(
                   color: DripTheme.deepBlack,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.06)),
+                  border: Border.all(
+                    color: editPurple.withOpacity(0.16),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: editPurple.withOpacity(0.06),
+                      blurRadius: 24,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: _buildPreview(),
@@ -254,14 +318,16 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                                 height: 16,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: DripTheme.cosmicTeal,
+                                  color: editPurple,
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   _status ?? 'Working…',
-                                  style: const TextStyle(color: DripTheme.muted),
+                                  style: const TextStyle(
+                                    color: DripTheme.muted,
+                                  ),
                                 ),
                               ),
                             ],
@@ -297,16 +363,22 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
   Widget _buildPreview() {
     if (_loading && _controller == null) {
       return const Center(
-        child: CircularProgressIndicator(color: DripTheme.cosmicTeal),
+        child: CircularProgressIndicator(
+          color: editPurple,
+        ),
       );
     }
+
     if (_controller == null || !_controller!.value.isInitialized) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.movie_creation_outlined,
-                size: 48, color: Colors.white.withOpacity(0.2)),
+            Icon(
+              Icons.movie_creation_outlined,
+              size: 48,
+              color: editPurple.withOpacity(0.45),
+            ),
             const SizedBox(height: 12),
             const Text(
               'Import a video to start editing',
@@ -316,6 +388,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
         ),
       );
     }
+
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -338,13 +411,21 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
               decoration: BoxDecoration(
                 color: Colors.black54,
                 shape: BoxShape.circle,
-                border: Border.all(color: DripTheme.cosmicTeal.withOpacity(0.5)),
+                border: Border.all(
+                  color: editPurple.withOpacity(0.65),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: editPurple.withOpacity(0.25),
+                    blurRadius: 16,
+                  ),
+                ],
               ),
               child: Icon(
                 _controller!.value.isPlaying
                     ? Icons.pause_rounded
                     : Icons.play_arrow_rounded,
-                color: DripTheme.aquaGlow,
+                color: editPurpleGlow,
               ),
             ),
           ),
@@ -354,7 +435,10 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
   }
 
   Widget _buildToolRail() {
-    if (_currentPath == null) return const SizedBox.shrink();
+    if (_currentPath == null) {
+      return const SizedBox.shrink();
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
@@ -369,37 +453,61 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     );
   }
 
-  Widget _toolBtn(_EditTool tool, IconData icon, String label) {
+  Widget _toolBtn(
+    _EditTool tool,
+    IconData icon,
+    String label,
+  ) {
     final selected = _tool == tool;
+
     return GestureDetector(
-      onTap: () => setState(() => _tool = selected ? _EditTool.none : tool),
+      onTap: () {
+        setState(() {
+          _tool = selected ? _EditTool.none : tool;
+        });
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 10,
+        ),
         decoration: BoxDecoration(
           color: selected
-              ? DripTheme.cosmicTeal.withOpacity(0.12)
+              ? editPurple.withOpacity(0.14)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
-                ? DripTheme.cosmicTeal.withOpacity(0.45)
+                ? editPurple.withOpacity(0.55)
                 : Colors.transparent,
           ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: editPurple.withOpacity(0.12),
+                    blurRadius: 14,
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           children: [
-            Icon(icon,
-                size: 20,
-                color: selected ? DripTheme.cosmicTeal : Colors.white38),
+            Icon(
+              icon,
+              size: 20,
+              color: selected ? editPurpleGlow : Colors.white38,
+            ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 9,
                 letterSpacing: 1.2,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
-                color: selected ? DripTheme.cosmicTeal : Colors.white38,
+                fontWeight:
+                    selected ? FontWeight.w700 : FontWeight.w400,
+                color:
+                    selected ? editPurpleGlow : Colors.white38,
               ),
             ),
           ],
@@ -435,20 +543,25 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
               style: const TextStyle(
                 fontSize: 10,
                 letterSpacing: 1.5,
-                color: DripTheme.cosmicTeal,
+                color: editPurpleGlow,
                 fontWeight: FontWeight.w600,
               ),
             ),
             RangeSlider(
-              values: RangeValues(_trimStart, _trimEnd),
+              values: RangeValues(
+                _trimStart,
+                _trimEnd,
+              ),
               min: 0,
               max: _duration,
-              activeColor: DripTheme.cosmicTeal,
+              activeColor: editPurple,
               inactiveColor: Colors.white12,
-              onChanged: (v) => setState(() {
-                _trimStart = v.start;
-                _trimEnd = v.end;
-              }),
+              onChanged: (v) {
+                setState(() {
+                  _trimStart = v.start;
+                  _trimEnd = v.end;
+                });
+              },
             ),
             CinematicButton(
               label: 'APPLY TRIM',
@@ -470,6 +583,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
 
   Widget _cropPanel() {
     final ratios = ['16:9', '9:16', '1:1', '4:5'];
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: CinematicCard(
@@ -481,7 +595,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
               style: TextStyle(
                 fontSize: 10,
                 letterSpacing: 1.5,
-                color: DripTheme.cosmicTeal,
+                color: editPurpleGlow,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -489,20 +603,29 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
             Row(
               children: ratios.map((r) {
                 final sel = _aspect == r;
+
                 return Expanded(
                   child: GestureDetector(
-                    onTap: () => setState(() => _aspect = r),
+                    onTap: () {
+                      setState(() {
+                        _aspect = r;
+                      });
+                    },
                     child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 3,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: sel
-                            ? DripTheme.cosmicTeal.withOpacity(0.14)
+                            ? editPurple.withOpacity(0.14)
                             : Colors.white.withOpacity(0.03),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: sel
-                              ? DripTheme.cosmicTeal.withOpacity(0.5)
+                              ? editPurple.withOpacity(0.55)
                               : Colors.white10,
                         ),
                       ),
@@ -512,7 +635,9 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 12,
-                          color: sel ? DripTheme.aquaGlow : DripTheme.chrome,
+                          color: sel
+                              ? editPurpleGlow
+                              : DripTheme.chrome,
                         ),
                       ),
                     ),
@@ -546,17 +671,28 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: _filters.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          separatorBuilder: (_, __) =>
+              const SizedBox(width: 8),
           itemBuilder: (_, i) {
             final (id, name) = _filters[i];
-            final sel = _activeFilter == id || (id == 'none' && _activeFilter == null);
+
+            final sel =
+                _activeFilter == id ||
+                (id == 'none' && _activeFilter == null);
+
             return GestureDetector(
               onTap: () {
                 if (id == 'none') {
-                  setState(() => _activeFilter = null);
+                  setState(() {
+                    _activeFilter = null;
+                  });
                   return;
                 }
-                setState(() => _activeFilter = id);
+
+                setState(() {
+                  _activeFilter = id;
+                });
+
                 _runEdit(
                   () => _editor.applyFilter(
                     inputPath: _currentPath!,
@@ -569,12 +705,12 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                 width: 78,
                 decoration: BoxDecoration(
                   color: sel
-                      ? DripTheme.cosmicTeal.withOpacity(0.14)
+                      ? editPurple.withOpacity(0.14)
                       : DripTheme.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: sel
-                        ? DripTheme.cosmicTeal.withOpacity(0.5)
+                        ? editPurple.withOpacity(0.55)
                         : Colors.white10,
                   ),
                 ),
@@ -585,7 +721,9 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: sel ? DripTheme.aquaGlow : DripTheme.chrome,
+                      color: sel
+                          ? editPurpleGlow
+                          : DripTheme.chrome,
                     ),
                   ),
                 ),
@@ -598,19 +736,26 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
   }
 
   Widget _adjustPanel() {
-    Widget slider(String label, double value, ValueChanged<double> onChanged) {
+    Widget slider(
+      String label,
+      double value,
+      ValueChanged<double> onChanged,
+    ) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             '$label  ${value.toStringAsFixed(2)}',
-            style: const TextStyle(fontSize: 10, color: DripTheme.muted),
+            style: const TextStyle(
+              fontSize: 10,
+              color: DripTheme.muted,
+            ),
           ),
           Slider(
             value: value,
             min: -1,
             max: 1,
-            activeColor: DripTheme.cosmicTeal,
+            activeColor: editPurple,
             inactiveColor: Colors.white12,
             onChanged: onChanged,
           ),
@@ -623,10 +768,26 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
       child: CinematicCard(
         child: Column(
           children: [
-            slider('BRIGHTNESS', _brightness, (v) => setState(() => _brightness = v)),
-            slider('CONTRAST', _contrast, (v) => setState(() => _contrast = v)),
-            slider('SATURATION', _saturation, (v) => setState(() => _saturation = v)),
-            slider('WARMTH', _warmth, (v) => setState(() => _warmth = v)),
+            slider(
+              'BRIGHTNESS',
+              _brightness,
+              (v) => setState(() => _brightness = v),
+            ),
+            slider(
+              'CONTRAST',
+              _contrast,
+              (v) => setState(() => _contrast = v),
+            ),
+            slider(
+              'SATURATION',
+              _saturation,
+              (v) => setState(() => _saturation = v),
+            ),
+            slider(
+              'WARMTH',
+              _warmth,
+              (v) => setState(() => _warmth = v),
+            ),
             CinematicButton(
               label: 'APPLY ADJUSTMENTS',
               icon: Icons.tune,
@@ -648,10 +809,14 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
   }
 
   Widget _buildFromScenesButton() {
-    final scenes = ref.watch(sceneListProvider)
+    final scenes = ref
+        .watch(sceneListProvider)
         .where((s) => s.outputVideoUrl != null)
         .toList();
-    if (scenes.isEmpty) return const SizedBox.shrink();
+
+    if (scenes.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return CinematicButton(
       label: 'FROM GENERATED SCENES (${scenes.length})',
@@ -662,34 +827,43 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
           context: context,
           backgroundColor: DripTheme.surface,
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(18),
+            ),
           ),
           builder: (ctx) => ListView.builder(
             shrinkWrap: true,
             itemCount: scenes.length,
             itemBuilder: (_, i) {
               final s = scenes[i];
+
               return ListTile(
                 title: Text(
                   'SCENE ${(i + 1).toString().padLeft(2, '0')}',
                   style: const TextStyle(
                     fontSize: 11,
                     letterSpacing: 1.5,
-                    color: DripTheme.nebulaCyan,
+                    color: editPurpleGlow,
                   ),
                 ),
                 subtitle: Text(
                   s.prompt,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: DripTheme.warmWhite),
+                  style: const TextStyle(
+                    color: DripTheme.warmWhite,
+                  ),
                 ),
-                onTap: () => Navigator.pop(ctx, s.outputVideoUrl),
+                onTap: () =>
+                    Navigator.pop(ctx, s.outputVideoUrl),
               );
             },
           ),
         );
-        if (chosen != null) await _loadSource(chosen);
+
+        if (chosen != null) {
+          await _loadSource(chosen);
+        }
       },
     );
   }
