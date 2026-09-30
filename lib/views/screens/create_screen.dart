@@ -12,7 +12,7 @@ import 'character_lab_screen.dart';
 import 'custom_outfit_creator.dart';
 import 'music_studio_screen.dart';
 import 'style_dna_screen.dart';
-import 'edit_bay/edit_bay_screen.dart';
+import 'edit_bay_screen.dart';
 
 class CreateScreen extends ConsumerWidget { const CreateScreen({super.key});
   @override Widget build(BuildContext context, WidgetRef ref) => Scaffold(backgroundColor:DripTheme.voidBlack,body:SafeArea(child:SingleChildScrollView(padding:const EdgeInsets.fromLTRB(22,22,22,40),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[

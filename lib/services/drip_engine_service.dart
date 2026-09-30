@@ -10,16 +10,28 @@ class DripEngineException implements Exception {
   String toString() => message;
 }
 
+/// Generates videos through OpenRouter's unified video API.
+/// Uses only the OPENROUTER_KEY so no separate Fal key is required.
 class DripEngineService {
   final Dio _dio;
+
+  /// Default model — strong quality and good image-to-video support.
+  /// Other good options: 'bytedance/seedance-2.0', 'google/veo-3.1-lite',
+  /// 'alibaba/wan-2.6', 'kwaivgi/kling-v3.0-std'
+  static const String defaultModel = 'alibaba/wan-2.7';
 
   DripEngineService()
       : _dio = Dio(
           BaseOptions(
-            baseUrl: 'https://fal.run/',
-            headers: {'Authorization': 'Key ${Env.falAiKey}'},
+            baseUrl: 'https://openrouter.ai/api/v1/',
+            headers: {
+              'Authorization': 'Bearer ${Env.openRouterKey}',
+              'HTTP-Referer': 'https://dripvision.app',
+              'X-Title': 'DripVision',
+              'Content-Type': 'application/json',
+            },
             connectTimeout: const Duration(minutes: 2),
-            receiveTimeout: const Duration(minutes: 5),
+            receiveTimeout: const Duration(minutes: 10),
           ),
         );
 
@@ -30,30 +42,87 @@ class DripEngineService {
     required Character character,
     String? cameraMotion,
     void Function(double)? onProgress,
+    String model = defaultModel,
   }) async {
+    if (Env.openRouterKey.isEmpty) {
+      throw DripEngineException(
+        'OPENROUTER_KEY is missing. Add it to your .env file.',
+      );
+    }
+
     final activeOutfit = character.activeOutfit;
-    final fullPrompt = "${character.name}, wearing ${activeOutfit.description}, $enhancedPrompt"
-        "${cameraMotion != null ? '. Camera motion: $cameraMotion' : ''}";
+    final fullPrompt =
+        '${character.name}, wearing ${activeOutfit.description}, $enhancedPrompt'
+        '${cameraMotion != null ? '. Camera motion: $cameraMotion' : ''}';
+
+    // Build frame_images for continuity (previous last frame becomes first frame)
+    final List<Map<String, dynamic>> frameImages = [];
+    final previousFrame = previousScene?.generatedLastFrameUrl ??
+        previousScene?.outputVideoUrl;
+    if (previousFrame != null && previousFrame.startsWith('http')) {
+      frameImages.add({
+        'type': 'image_url',
+        'image_url': {'url': previousFrame},
+        'frame_type': 'first_frame',
+      });
+    }
+
+    // Character face as style/identity reference when available
+    final List<Map<String, dynamic>> inputReferences = [];
+    if (character.faceReferenceUrls.isNotEmpty) {
+      final faceUrl = character.faceReferenceUrls.first;
+      if (faceUrl.startsWith('http')) {
+        inputReferences.add({
+          'type': 'image_url',
+          'image_url': {'url': faceUrl},
+        });
+      }
+    }
+
+    final payload = <String, dynamic>{
+      'model': model,
+      'prompt': fullPrompt,
+      'duration': 5,
+      'resolution': '720p',
+      'aspect_ratio': '16:9',
+      'generate_audio': false,
+      if (frameImages.isNotEmpty) 'frame_images': frameImages,
+      if (inputReferences.isNotEmpty) 'input_references': inputReferences,
+    };
 
     try {
-      final response = await _dio.post(
-        'fal-ai/wan/v2.1/image-to-video',
-        data: {
-          'prompt': fullPrompt,
-          if (previousScene?.generatedLastFrameUrl != null)
-            'image_url': previousScene!.generatedLastFrameUrl,
-          // A character can genuinely have no photo yet — that's a real,
-          // valid state (not an error), so this just omits the identity
-          // lock rather than crashing on .first of an empty list.
-          if (character.faceReferenceUrls.isNotEmpty)
-            'ip_adapter_image_url': character.faceReferenceUrls.first,
-          'num_frames': 81,
-          'aspect_ratio': '16:9',
-          'guidance_scale': 7.5,
-        },
-        onSendProgress: (s, t) => onProgress?.call(t > 0 ? s / t * 0.3 : 0),
-        onReceiveProgress: (r, t) => onProgress?.call(t > 0 ? 0.3 + (r / t * 0.7) : 0.3),
+      onProgress?.call(0.05);
+
+      // 1. Submit the job
+      final submitResponse = await _dio.post('videos', data: payload);
+      final job = submitResponse.data as Map<String, dynamic>;
+      final jobId = job['id'] as String?;
+      final pollingUrl = job['polling_url'] as String?;
+
+      if (jobId == null) {
+        throw DripEngineException('OpenRouter did not return a job id.');
+      }
+
+      onProgress?.call(0.15);
+
+      // 2. Poll until completed or failed
+      final completed = await _pollUntilDone(
+        jobId: jobId,
+        pollingUrl: pollingUrl,
+        onProgress: onProgress,
       );
+
+      // 3. Extract video URL
+      final unsignedUrls = completed['unsigned_urls'] as List?;
+      String? videoUrl;
+      if (unsignedUrls != null && unsignedUrls.isNotEmpty) {
+        videoUrl = unsignedUrls.first as String;
+      } else {
+        videoUrl =
+            'https://openrouter.ai/api/v1/videos/$jobId/content?index=0';
+      }
+
+      onProgress?.call(1.0);
 
       return SceneNode(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -62,14 +131,52 @@ class DripEngineService {
         enhancedPrompt: enhancedPrompt,
         character: character,
         inputLastFrameUrl: previousScene?.generatedLastFrameUrl,
-        outputVideoUrl: response.data['video']['url'],
-        generatedLastFrameUrl: response.data['last_frame_url'],
+        outputVideoUrl: videoUrl,
+        generatedLastFrameUrl: null,
         cameraMotion: cameraMotion,
       );
     } on DioException catch (e) {
-      throw DripEngineException(
-        'Generation failed: ${e.response?.data?['detail'] ?? e.message}',
-      );
+      final detail = e.response?.data;
+      final message = detail is Map
+          ? (detail['error']?['message'] ?? detail['message'] ?? e.message)
+          : e.message;
+      throw DripEngineException('Generation failed: $message');
+    } catch (e) {
+      if (e is DripEngineException) rethrow;
+      throw DripEngineException('Generation failed: $e');
     }
+  }
+
+  Future<Map<String, dynamic>> _pollUntilDone({
+    required String jobId,
+    String? pollingUrl,
+    void Function(double)? onProgress,
+  }) async {
+    const maxAttempts = 60;
+    const interval = Duration(seconds: 10);
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      await Future.delayed(interval);
+
+      final url = pollingUrl ?? 'videos/$jobId';
+      final response = await _dio.get(url);
+      final data = response.data as Map<String, dynamic>;
+      final status = data['status'] as String? ?? 'unknown';
+
+      final progress = 0.15 + (attempt / maxAttempts) * 0.80;
+      onProgress?.call(progress.clamp(0.0, 0.95));
+
+      if (status == 'completed') {
+        return data;
+      }
+      if (status == 'failed' || status == 'cancelled' || status == 'expired') {
+        final error = data['error'] ?? status;
+        throw DripEngineException('Video job $status: $error');
+      }
+    }
+
+    throw DripEngineException(
+      'Video generation timed out after ${maxAttempts * interval.inSeconds} seconds.',
+    );
   }
 }

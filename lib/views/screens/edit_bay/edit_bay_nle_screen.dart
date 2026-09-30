@@ -10,15 +10,15 @@ import '../../widgets/cinematic_button.dart';
 
 /// EDIT BAY — dedicated full-screen non-linear editor for DripVision.
 /// Mobile-first: preview on top, timeline, tool rail, inspector sheets.
-class EditBayScreen extends ConsumerStatefulWidget {
+class EditBayNleScreen extends ConsumerStatefulWidget {
   final bool seedFromScenes;
-  const EditBayScreen({super.key, this.seedFromScenes = true});
+  const EditBayNleScreen({super.key, this.seedFromScenes = true});
 
   @override
-  ConsumerState<EditBayScreen> createState() => _EditBayScreenState();
+  ConsumerState<EditBayScreen> createState() => _EditBayNleScreenState();
 }
 
-class _EditBayScreenState extends ConsumerState<EditBayScreen> {
+class _EditBayNleScreenState extends ConsumerState<EditBayScreen> {
   VideoPlayerController? _player;
   String? _loadedUrl;
 
