@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:shorebird_code_push/shorebird_code_push.dart';
 import '../../core/theme.dart';
 import 'admin_portal.dart';
+import 'god_mode/god_mode_screen.dart';
+import '../../services/god_mode_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool isAdmin;
@@ -166,7 +168,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             leading: Icon(Icons.description_outlined, color: DripTheme.chrome),
             title: Text('Terms of Service', style: TextStyle(color: Colors.white)),
           ),
-          if (_isAdmin)
+          if (_isAdmin) ...[
             ListTile(
               leading: const Icon(Icons.admin_panel_settings, color: DripTheme.nebulaCyan),
               title: const Text('Admin Dashboard', style: TextStyle(color: Colors.white)),
@@ -177,6 +179,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.security, color: DripTheme.cosmicTeal),
+              title: const Text('God Mode', style: TextStyle(color: Colors.white)),
+              subtitle: const Text('System control · server-gated',
+                  style: TextStyle(color: Colors.white54, fontSize: 11)),
+              onTap: () async {
+                final ok = await GodModeService.isAuthorizedAdmin();
+                if (!context.mounted) return;
+                if (!ok) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Access denied')),
+                  );
+                  return;
+                }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const GodModeScreen()),
+                );
+              },
+            ),
+          ],
           const Divider(color: Colors.white12, height: 32),
           ListTile(
             leading: _signingOut

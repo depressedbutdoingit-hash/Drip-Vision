@@ -12,6 +12,7 @@ import 'character_lab_screen.dart';
 import 'custom_outfit_creator.dart';
 import 'music_studio_screen.dart';
 import 'style_dna_screen.dart';
+import 'edit_bay/edit_bay_screen.dart';
 
 class CreateScreen extends ConsumerWidget { const CreateScreen({super.key});
   @override Widget build(BuildContext context, WidgetRef ref) => Scaffold(backgroundColor:DripTheme.voidBlack,body:SafeArea(child:SingleChildScrollView(padding:const EdgeInsets.fromLTRB(22,22,22,40),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
@@ -21,7 +22,7 @@ class CreateScreen extends ConsumerWidget { const CreateScreen({super.key});
     Row(children:[Expanded(child:_CreateCard('CHARACTER','Create an actor with continuity.',Icons.person_outline,()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>ref.read(characterListProvider).isEmpty ? const CharacterCreationScreen() : const CharacterLabScreen())))),const SizedBox(width:12),Expanded(child:_CreateCard('OUTFIT','Open the wardrobe department.',Icons.checkroom_outlined,()=>_createOutfit(context, ref)))]),
     Row(children:[Expanded(child:_CreateCard('LOCATION','Build a world that stays consistent.',Icons.location_on_outlined, null)),const SizedBox(width:12),Expanded(child:_CreateCard('STYLE','Save a reusable Style DNA.',Icons.auto_awesome_outlined,()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const StyleDnaScreen()))))]),
     Row(children:[Expanded(child:_CreateCard('MUSIC','Score the scene.',Icons.music_note_outlined,()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const MusicStudioScreen())))),const SizedBox(width:12),Expanded(child:_CreateCard('VOICE','Give a character a voice.',Icons.graphic_eq_outlined,null))]),
-    const SizedBox(height:22),CinematicCard(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('DIRECTOR MODE',style:TextStyle(fontSize:10,letterSpacing:2.4,color:DripTheme.cosmicTeal)),const SizedBox(height:8),const Text('Shot • Lens • Movement • Lighting • Performance',style:TextStyle(fontSize:17,fontWeight:FontWeight.w600)),const SizedBox(height:7),const Text('A visual control surface that turns your choices into a smart generation prompt.',style:TextStyle(color:DripTheme.muted,height:1.4)),const SizedBox(height:16),CinematicButton(label:'OPEN DIRECTOR',icon:Icons.tune_outlined,onPressed:()=>ref.read(navIndexProvider.notifier).state=3)]) )
+    const SizedBox(height:22),CinematicCard(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('DIRECTOR MODE',style:TextStyle(fontSize:10,letterSpacing:2.4,color:DripTheme.cosmicTeal)),const SizedBox(height:8),const Text('Shot • Lens • Movement • Lighting • Performance',style:TextStyle(fontSize:17,fontWeight:FontWeight.w600)),const SizedBox(height:7),const Text('A visual control surface that turns your choices into a smart generation prompt.',style:TextStyle(color:DripTheme.muted,height:1.4)),const SizedBox(height:16),CinematicButton(label:'OPEN EDIT BAY',icon:Icons.movie_filter_outlined,onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const EditBayScreen()))),const SizedBox(height:10),CinematicButton(label:'OPEN DIRECTOR',icon:Icons.tune_outlined,onPressed:()=>ref.read(navIndexProvider.notifier).state=3)]) )
   ]))));
 
   // Outfits belong to a character's real closet — not a form that mints

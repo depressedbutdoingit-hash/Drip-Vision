@@ -7,6 +7,8 @@ import '../widgets/cinematic_button.dart';
 import '../widgets/cinematic_card.dart';
 import '../widgets/director_chip.dart';
 import 'generator_screen.dart';
+import 'edit_bay/edit_bay_screen.dart';
+import 'timeline_screen.dart';
 
 /// DIRECTOR MODE
 /// The user shapes a shot visually — shot size, camera angle, lens,
@@ -35,6 +37,33 @@ class StudioScreen extends ConsumerWidget {
               const Text('DIRECTOR MODE', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w600)),
               const SizedBox(height: 7),
               const Text('Shape the shot. DripVision translates the intent.', style: TextStyle(color: DripTheme.muted)),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Expanded(
+                    child: CinematicButton(
+                      label: 'EDIT BAY',
+                      icon: Icons.movie_filter_outlined,
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const EditBayScreen()),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: CinematicButton(
+                      label: "DIRECTOR'S CUT",
+                      icon: Icons.view_timeline_outlined,
+                      primary: false,
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const TimelineScreen()),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 24),
 
               CinematicCard(
