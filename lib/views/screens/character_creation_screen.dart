@@ -8,6 +8,7 @@ import '../../models/character.dart' as live;
 import '../../models/character_dna.dart';
 import '../../views/widgets/galaxy_background.dart';
 import 'character_lab_screen.dart';
+import '../widgets/character_reveal_sheet.dart';
 
 class CharacterCreationScreen extends ConsumerStatefulWidget {
   const CharacterCreationScreen({super.key});
@@ -345,7 +346,7 @@ class _CharacterCreationScreenState extends ConsumerState<CharacterCreationScree
     if (picked != null) setState(() => _pickedImagePath = picked.path);
   }
 
-  void _createCharacter() {
+  Future<void> _createCharacter() async {
     final dna = CharacterDNA(
       id: 'char_${DateTime.now().millisecondsSinceEpoch}',
       name: _nameController.text.isEmpty ? 'Unnamed' : _nameController.text,
@@ -382,9 +383,29 @@ class _CharacterCreationScreenState extends ConsumerState<CharacterCreationScree
     ref.read(characterListProvider.notifier).addCharacter(character);
     ref.read(activeCharacterProvider.notifier).state = character;
 
-    Navigator.pushReplacement(
+    // Show premium reveal, then open Character Lab
+    await showCharacterReveal(
       context,
-      MaterialPageRoute(builder: (_) => CharacterLabScreen(characterId: character.id)),
+      character: character,
+      onOpenLab: () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CharacterLabScreen(characterId: character.id),
+          ),
+        );
+      },
     );
+
+    // If user dismissed without opening lab, still land in lab
+    if (!context.mounted) return;
+    if (ModalRoute.of(context)?.isCurrent ?? false) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CharacterLabScreen(characterId: character.id),
+        ),
+      );
+    }
   }
 }
