@@ -85,24 +85,31 @@ class MainNavigation extends ConsumerWidget {
       behavior: HitTestBehavior.opaque,
       onTap: () => ref.read(navIndexProvider.notifier).state = index,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              color: selected ? DripTheme.cosmicTeal : DripTheme.muted,
+              color: selected ? DripTheme.warmWhite : DripTheme.faint,
               size: 20,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 5),
             Text(
               label,
               style: TextStyle(
                 fontSize: 8,
-                letterSpacing: 1.3,
-                color: selected ? DripTheme.cosmicTeal : DripTheme.muted,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                letterSpacing: 1.5,
+                color: selected ? DripTheme.warmWhite : DripTheme.faint,
+                fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
               ),
+            ),
+            const SizedBox(height: 5),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: selected ? 12 : 0,
+              height: 1.5,
+              color: selected ? DripTheme.cosmicTeal : Colors.transparent,
             ),
           ],
         ),

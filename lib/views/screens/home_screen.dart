@@ -27,11 +27,11 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: DripTheme.voidBlack,
       body: SafeArea(
         child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
           slivers: [
-            // Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 16, 0),
+                padding: const EdgeInsets.fromLTRB(28, 28, 20, 0),
                 child: Row(
                   children: [
                     const Expanded(
@@ -42,30 +42,32 @@ class HomeScreen extends ConsumerWidget {
                         context,
                         MaterialPageRoute(builder: (_) => const SettingsScreen()),
                       ),
-                      icon: const Icon(Icons.person_outline, size: 22, color: DripTheme.chrome),
+                      icon: const Icon(
+                        Icons.person_outline,
+                        size: 22,
+                        color: DripTheme.chrome,
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-
-            // Hero
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 8),
+                padding: const EdgeInsets.fromLTRB(28, 36, 28, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('$greeting, DIRECTOR.', style: DripTheme.overline),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 14),
                     const Text(
                       'An AI filmmaking studio\nthat remembers your\nentire universe.',
                       style: DripTheme.display,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Text(
                       scenes.isEmpty
-                          ? 'Start with a story, lock characters, then cut in the Edit Bay.'
+                          ? 'Start with a story. Lock characters. Finish in the Edit Bay.'
                           : '${scenes.length} scene${scenes.length == 1 ? '' : 's'} on the active timeline.',
                       style: DripTheme.body,
                     ),
@@ -73,22 +75,22 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
-            // Primary actions
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 8),
+                padding: const EdgeInsets.fromLTRB(28, 36, 28, 0),
                 child: Column(
                   children: [
                     CinematicButton(
-                      label: 'STORY   FILM',
+                      label: 'STORY → FILM',
                       icon: Icons.auto_stories_outlined,
                       onPressed: () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const StoryPlannerScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const StoryPlannerScreen(),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
@@ -98,19 +100,23 @@ class HomeScreen extends ConsumerWidget {
                             primary: false,
                             onPressed: () => Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const EditBayScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const EditBayScreen(),
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: CinematicButton(
-                            label: "CUT",
+                            label: 'CUT',
                             icon: Icons.view_timeline_outlined,
                             primary: false,
                             onPressed: () => Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const TimelineScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const TimelineScreen(),
+                              ),
                             ),
                           ),
                         ),
@@ -120,47 +126,52 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
-            // Pipeline
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 8),
+                padding: const EdgeInsets.fromLTRB(28, 48, 28, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('PRODUCTION PIPELINE', style: DripTheme.technical),
-                    const SizedBox(height: 14),
-                    _PipelineStep(
+                    const Text('PIPELINE', style: DripTheme.technical),
+                    const SizedBox(height: 20),
+                    _Step(
                       index: '01',
                       title: 'Story',
                       subtitle: 'Plan the narrative',
                       onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const StoryPlannerScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const StoryPlannerScreen(),
+                        ),
                       ),
                     ),
-                    _PipelineStep(
+                    _Step(
                       index: '02',
                       title: 'Characters',
-                      subtitle: 'Lock face & wardrobe DNA',
+                      subtitle: 'Lock face and wardrobe DNA',
                       onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const CharacterLabScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const CharacterLabScreen(),
+                        ),
                       ),
                     ),
-                    _PipelineStep(
+                    _Step(
                       index: '03',
                       title: 'Studio',
                       subtitle: 'Direct the shot',
-                      onTap: () => ref.read(navIndexProvider.notifier).state = 3,
+                      onTap: () =>
+                          ref.read(navIndexProvider.notifier).state = 3,
                     ),
-                    _PipelineStep(
+                    _Step(
                       index: '04',
                       title: 'Edit Bay',
                       subtitle: 'Cut, grade, finish',
                       onTap: () => Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const EditBayScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const EditBayScreen(),
+                        ),
                       ),
                       isLast: true,
                     ),
@@ -168,12 +179,10 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
-
-            // Recent scenes
             if (scenes.isNotEmpty)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 8),
+                  padding: const EdgeInsets.fromLTRB(28, 40, 28, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -185,13 +194,15 @@ class HomeScreen extends ConsumerWidget {
                           GestureDetector(
                             onTap: () => Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const TimelineScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const TimelineScreen(),
+                              ),
                             ),
                             child: const Text(
                               'OPEN',
                               style: TextStyle(
                                 fontSize: 10,
-                                letterSpacing: 1.4,
+                                letterSpacing: 1.6,
                                 color: DripTheme.cosmicTeal,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -199,58 +210,77 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      ...scenes.take(4).map((s) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: CinematicCard(
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 48,
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      color: DripTheme.surfaceLight,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: s.generatedLastFrameUrl != null
-                                        ? Image.network(
-                                            s.generatedLastFrameUrl!,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) =>
-                                                const Icon(Icons.movie, size: 18, color: DripTheme.muted),
-                                          )
-                                        : const Icon(Icons.movie, size: 18, color: DripTheme.muted),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'SCENE ${(s.sequenceIndex + 1).toString().padLeft(2, '0')}',
-                                          style: DripTheme.technical,
+                      const SizedBox(height: 14),
+                      ...scenes.take(4).map(
+                            (s) => Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: CinematicCard(
+                                padding: const EdgeInsets.all(12),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 52,
+                                      height: 52,
+                                      decoration: BoxDecoration(
+                                        color: DripTheme.surfaceLight,
+                                        borderRadius: BorderRadius.circular(
+                                          DripTheme.radiusSm,
                                         ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          s.prompt.isEmpty ? s.character.name : s.prompt,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(fontSize: 13, color: DripTheme.warmWhite),
-                                        ),
-                                      ],
+                                      ),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: s.generatedLastFrameUrl != null
+                                          ? Image.network(
+                                              s.generatedLastFrameUrl!,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) =>
+                                                  const Icon(
+                                                Icons.movie_outlined,
+                                                size: 18,
+                                                color: DripTheme.muted,
+                                              ),
+                                            )
+                                          : const Icon(
+                                              Icons.movie_outlined,
+                                              size: 18,
+                                              color: DripTheme.muted,
+                                            ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'SCENE ${(s.sequenceIndex + 1).toString().padLeft(2, '0')}',
+                                            style: DripTheme.technical,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            s.prompt.isEmpty
+                                                ? s.character.name
+                                                : s.prompt,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              color: DripTheme.warmWhite,
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          )),
+                          ),
                     ],
                   ),
                 ),
               ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 48)),
+            const SliverToBoxAdapter(child: SizedBox(height: 56)),
           ],
         ),
       ),
@@ -258,14 +288,14 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _PipelineStep extends StatelessWidget {
+class _Step extends StatelessWidget {
   final String index;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
   final bool isLast;
 
-  const _PipelineStep({
+  const _Step({
     required this.index,
     required this.title,
     required this.subtitle,
@@ -277,49 +307,55 @@ class _PipelineStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(DripTheme.radiusSm),
       child: Padding(
-        padding: EdgeInsets.only(bottom: isLast ? 0 : 4),
+        padding: EdgeInsets.only(bottom: isLast ? 0 : 2),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 36,
+              width: 40,
               child: Column(
                 children: [
-                  Text(index,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 1,
-                        color: DripTheme.cosmicTeal,
-                        fontWeight: FontWeight.w600,
-                      )),
+                  Text(
+                    index,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      letterSpacing: 1,
+                      color: DripTheme.faint,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                   if (!isLast)
                     Container(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      margin: const EdgeInsets.symmetric(vertical: 6),
                       width: 1,
                       height: 28,
-                      color: Colors.white.withOpacity(0.08),
+                      color: DripTheme.hairline,
                     ),
                 ],
               ),
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.only(bottom: 18, top: 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
-                    const SizedBox(height: 2),
+                    Text(title, style: DripTheme.title),
+                    const SizedBox(height: 3),
                     Text(subtitle, style: DripTheme.meta),
                   ],
                 ),
               ),
             ),
             const Padding(
-              padding: EdgeInsets.only(top: 2),
-              child: Icon(Icons.chevron_right, size: 18, color: DripTheme.muted),
+              padding: EdgeInsets.only(top: 4),
+              child: Icon(
+                Icons.chevron_right,
+                size: 18,
+                color: DripTheme.faint,
+              ),
             ),
           ],
         ),

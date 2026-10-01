@@ -8,20 +8,44 @@ class CinematicCard extends StatelessWidget {
   final double radius;
   final bool selected;
 
-  const CinematicCard({super.key, required this.child, this.onTap, this.padding = const EdgeInsets.all(18), this.radius = 18, this.selected = false});
+  const CinematicCard({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.padding = const EdgeInsets.all(16),
+    this.radius = DripTheme.radiusMd,
+    this.selected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final content = Container(
+    final content = AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
       padding: padding,
       decoration: BoxDecoration(
-        color: selected ? DripTheme.cosmicTeal.withOpacity(.075) : DripTheme.surface.withOpacity(.88),
+        color: selected
+            ? const Color(0x1400D4AA)
+            : DripTheme.surface,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: selected ? DripTheme.cosmicTeal.withOpacity(.38) : Colors.white.withOpacity(.065)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(.22), blurRadius: 28, offset: const Offset(0, 14))],
+        border: Border.all(
+          color: selected
+              ? DripTheme.cosmicTeal.withOpacity(0.45)
+              : DripTheme.hairline,
+        ),
       ),
       child: child,
     );
-    return onTap == null ? content : InkWell(onTap: onTap, borderRadius: BorderRadius.circular(radius), child: content);
+
+    if (onTap == null) return content;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(radius),
+        splashColor: DripTheme.cosmicTeal.withOpacity(0.06),
+        highlightColor: Colors.white.withOpacity(0.02),
+        child: content,
+      ),
+    );
   }
 }
