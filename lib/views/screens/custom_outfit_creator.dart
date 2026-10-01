@@ -9,6 +9,7 @@ import '../../core/providers.dart';
 import '../widgets/galaxy_background.dart';
 import '../widgets/drip_button.dart';
 import '../widgets/drip_celebration.dart';
+import '../widgets/outfit_reveal_sheet.dart';
 
 class CustomOutfitCreator extends ConsumerStatefulWidget {
   final String? characterName;
@@ -441,24 +442,25 @@ class _CustomOutfitCreatorState extends ConsumerState<CustomOutfitCreator> {
         isDefault: false,
       );
 
-      DripCelebration.show(context);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${outfit.name} minted to your wardrobe!'),
-          backgroundColor: DripTheme.cosmicTeal.withOpacity(0.8),
-        ),
-      );
-
-      Navigator.pop(context, outfit);
+      if (mounted) {
+        DripCelebration.show(context);
+        await showOutfitReveal(
+          context,
+          outfit: outfit,
+          characterName: widget.characterName,
+        );
+      }
+      if (mounted) Navigator.pop(context, outfit);
     } else {
-      setState(() => _isCreating = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Not enough tokens. Need 50 to mint a custom outfit.'),
-          backgroundColor: Colors.red.withOpacity(0.8),
-        ),
-      );
+      if (mounted) setState(() => _isCreating = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Not enough tokens. Need 50 to mint a custom outfit.'),
+            backgroundColor: Color(0xCCB00020),
+          ),
+        );
+      }
     }
   }
 }
