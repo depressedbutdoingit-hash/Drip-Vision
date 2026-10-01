@@ -15,6 +15,7 @@ import '../../core/theme.dart';
 import '../../models/edit_project.dart';
 import '../../services/edit_bay_notifier.dart';
 import '../../services/video_edit_service.dart';
+import '../../services/timeline_export_service.dart';
 import '../widgets/cinematic_button.dart';
 
 /// EDIT BAY — unified NLE + real FFmpeg finishing.
@@ -184,6 +185,64 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     await Share.shareXFiles([XFile(_currentPath!)], text: 'Edited with #DripVision');
   }
 
+
+  Future<void> _exportTimeline() async {
+    final project = ref.read(editBayProvider).project;
+    setState(() {
+      _loading = true;
+      _status = 'Exporting cut…';
+    });
+    try {
+      final exporter = TimelineExportService();
+      final path = await exporter.exportProject(
+        project,
+        onStage: (s) {
+          if (mounted) setState(() => _status = s);
+        },
+      );
+      await _setController(path);
+      if (mounted) {
+        final action = await showDialog<String>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: DripTheme.surfaceRaised,
+            title: const Text('Cut ready', style: TextStyle(color: DripTheme.warmWhite)),
+            content: const Text(
+              'Your timeline was stitched into one file.',
+              style: TextStyle(color: DripTheme.chrome),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, 'share'),
+                child: const Text('SHARE'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, 'save'),
+                child: const Text('SAVE TO GALLERY',
+                    style: TextStyle(color: DripTheme.cosmicTeal)),
+              ),
+            ],
+          ),
+        );
+        if (action == 'share') {
+          await Share.shareXFiles([XFile(path)], text: 'Cut with #DripVision');
+        } else if (action == 'save') {
+          await Gal.putVideo(path);
+          _toast('Saved to gallery');
+        }
+      }
+    } catch (e) {
+      _toast('Export failed: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _status = null;
+        });
+      }
+    }
+  }
+
   Future<void> _download() async {
     if (_currentPath == null) return;
     setState(() {
@@ -317,6 +376,18 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
               icon: const Icon(Icons.ios_share, size: 18, color: DripTheme.chrome),
             ),
           ],
+          TextButton(
+            onPressed: _loading ? null : _exportTimeline,
+            child: const Text(
+              'EXPORT',
+              style: TextStyle(
+                fontSize: 11,
+                letterSpacing: 1.4,
+                color: DripTheme.warmWhite,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
           TextButton(
             onPressed: bay.saving
                 ? null

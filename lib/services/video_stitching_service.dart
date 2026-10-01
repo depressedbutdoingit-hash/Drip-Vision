@@ -15,9 +15,18 @@ class VideoStitchingService {
     final lines = videoPaths.map((p) => "file '${p.replaceAll("'", r"'\''")}'").join('\n');
     await concatFile.writeAsString(lines);
 
-    final command = '-f concat -safe 0 -i "${concatFile.path}" -c copy -movflags +faststart "$outputPath"';
-    final session = await FFmpegKit.execute(command);
-    final returnCode = await session.getReturnCode();
+    // Prefer stream copy; fall back to re-encode when codecs differ.
+    var command =
+        '-f concat -safe 0 -i "${concatFile.path}" -c copy -movflags +faststart "$outputPath"';
+    var session = await FFmpegKit.execute(command);
+    var returnCode = await session.getReturnCode();
+
+    if (!ReturnCode.isSuccess(returnCode)) {
+      command =
+          '-f concat -safe 0 -i "${concatFile.path}" -c:v libx264 -c:a aac -movflags +faststart "$outputPath"';
+      session = await FFmpegKit.execute(command);
+      returnCode = await session.getReturnCode();
+    }
 
     if (await concatFile.exists()) await concatFile.delete();
 
