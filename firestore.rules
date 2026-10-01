@@ -41,6 +41,11 @@ service cloud.firestore {
       allow create: if isSignedIn();
     }
 
+    match /admin_audit/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+    }
+
     match /generations/{id} {
       allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
       allow write: if isSignedIn();
