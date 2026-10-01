@@ -114,4 +114,73 @@ class SceneNode {
       sfxCues: sfxCues ?? this.sfxCues,
     );
   }
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'sequenceIndex': sequenceIndex,
+        'prompt': prompt,
+        'enhancedPrompt': enhancedPrompt,
+        'character': character.toJson(),
+        'inputLastFrameUrl': inputLastFrameUrl,
+        'outputVideoUrl': outputVideoUrl,
+        'generatedLastFrameUrl': generatedLastFrameUrl,
+        'cameraMotion': cameraMotion,
+        'createdAt': createdAt.toIso8601String(),
+        'locationId': locationId,
+        'locationName': locationName,
+        'locationDescription': locationDescription,
+        'locationProps': locationProps,
+        'timeOfDay': timeOfDay,
+        'weather': weather,
+        'lighting': lighting,
+        'characterIds': characterIds,
+        'characterOutfits': characterOutfits,
+        'isTransition': isTransition,
+        'musicTrackUrl': musicTrackUrl,
+        'musicTitle': musicTitle,
+        'ambienceNotes': ambienceNotes,
+        'ambienceTrackUrl': ambienceTrackUrl,
+        'sfxCues': sfxCues,
+      };
+
+  factory SceneNode.fromMap(Map<String, dynamic> m) => SceneNode(
+        id: m['id'] as String? ?? '',
+        sequenceIndex: (m['sequenceIndex'] as num?)?.toInt() ?? 0,
+        prompt: m['prompt'] as String? ?? '',
+        enhancedPrompt: m['enhancedPrompt'] as String? ?? '',
+        character: m['character'] is Map
+            ? Character.fromJson(Map<String, dynamic>.from(m['character'] as Map))
+            : Character(
+                id: 'unknown',
+                name: 'Unknown',
+                faceReferenceUrls: const [],
+                activeOutfitId: '',
+                closet: const [],
+              ),
+        inputLastFrameUrl: m['inputLastFrameUrl'] as String?,
+        outputVideoUrl: m['outputVideoUrl'] as String?,
+        generatedLastFrameUrl: m['generatedLastFrameUrl'] as String?,
+        cameraMotion: m['cameraMotion'] as String?,
+        createdAt: DateTime.tryParse(m['createdAt'] as String? ?? '') ?? DateTime.now(),
+        locationId: m['locationId'] as String?,
+        locationName: m['locationName'] as String?,
+        locationDescription: m['locationDescription'] as String?,
+        locationProps: m['locationProps'] is Map
+            ? Map<String, dynamic>.from(m['locationProps'] as Map)
+            : null,
+        timeOfDay: m['timeOfDay'] as String?,
+        weather: m['weather'] as String?,
+        lighting: m['lighting'] as String?,
+        characterIds: (m['characterIds'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+        characterOutfits: m['characterOutfits'] is Map
+            ? Map<String, String>.from(
+                (m['characterOutfits'] as Map).map((k, v) => MapEntry(k.toString(), v.toString())))
+            : const {},
+        isTransition: m['isTransition'] as bool? ?? false,
+        musicTrackUrl: m['musicTrackUrl'] as String?,
+        musicTitle: m['musicTitle'] as String?,
+        ambienceNotes: m['ambienceNotes'] as String?,
+        ambienceTrackUrl: m['ambienceTrackUrl'] as String?,
+        sfxCues: (m['sfxCues'] as List?)?.map((e) => e.toString()).toList() ?? const [],
+      );
 }

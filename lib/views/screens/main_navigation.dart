@@ -23,51 +23,43 @@ class MainNavigation extends ConsumerWidget {
       const ExploreDripScreen(),
     ];
 
+    // Home owns its own header; other tabs get a quiet brand bar.
+    final showAppBar = i != 0;
+
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
-      appBar: i == 4
-          ? null
-          : AppBar(
-              title: const Text(
-                'DRIPVISION',
-                style: TextStyle(
-                  fontSize: 12,
-                  letterSpacing: 4.5,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+      appBar: showAppBar
+          ? AppBar(
+              title: const Text('DRIPVISION', style: DripTheme.brandMark),
               actions: [
                 IconButton(
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const SettingsScreen()),
                   ),
-                  icon: const Icon(
-                    Icons.person_outline,
-                    size: 21,
-                    color: DripTheme.chrome,
-                  ),
+                  icon: const Icon(Icons.person_outline, size: 21, color: DripTheme.chrome),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
               ],
-            ),
+            )
+          : null,
       body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 220),
+        duration: const Duration(milliseconds: 200),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
         child: KeyedSubtree(
           key: ValueKey(i),
           child: screens[i],
         ),
       ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: DripTheme.deepBlack,
-          border: Border(
-            top: BorderSide(color: Colors.white.withOpacity(.06)),
-          ),
+          border: Border(top: BorderSide(color: DripTheme.hairline)),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 7),
+            padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -84,31 +76,19 @@ class MainNavigation extends ConsumerWidget {
     );
   }
 
-  Widget _nav(
-    WidgetRef ref,
-    int index,
-    IconData icon,
-    String label,
-    int current,
-  ) {
+  Widget _nav(WidgetRef ref, int index, IconData icon, String label, int current) {
     final selected = index == current;
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () => ref.read(navIndexProvider.notifier).state = index,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          color: selected
-              ? DripTheme.cosmicTeal.withOpacity(.07)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              color: selected ? DripTheme.cosmicTeal : Colors.white38,
+              color: selected ? DripTheme.cosmicTeal : DripTheme.muted,
               size: 20,
             ),
             const SizedBox(height: 4),
@@ -116,9 +96,9 @@ class MainNavigation extends ConsumerWidget {
               label,
               style: TextStyle(
                 fontSize: 8,
-                letterSpacing: 1.2,
-                color: selected ? DripTheme.cosmicTeal : Colors.white38,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                letterSpacing: 1.3,
+                color: selected ? DripTheme.cosmicTeal : DripTheme.muted,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ],

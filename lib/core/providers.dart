@@ -160,23 +160,70 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<UserProfile>> {
 }
 
 class SceneListNotifier extends StateNotifier<List<SceneNode>> {
-  SceneListNotifier() : super([]);
-
-  void addScene(SceneNode scene) => state = [...state, scene];
-  void removeScene(String id) => state = state.where((s) => s.id != id).toList();
-  void updateScene(SceneNode updated) {
-    state = state.map((s) => s.id == updated.id ? updated : s).toList();
+  SceneListNotifier() : super([]) {
+    _load();
   }
 
-  /// Real drag-reorder for the Director's Cut timeline — mutates order only,
-  /// sequenceIndex is recomputed so continuity/export logic downstream still
-  /// sees a consistent cut.
+  Future<void> _load() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('projects')
+          .doc('active')
+          .get();
+      final data = doc.data();
+      if (data == null) return;
+      final raw = data['scenes'] as List? ?? [];
+      state = raw
+          .map((e) => SceneNode.fromMap(Map<String, dynamic>.from(e as Map)))
+          .toList();
+    } catch (_) {
+      // Offline / rules — keep in-memory
+    }
+  }
+
+  Future<void> _persist() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('projects')
+          .doc('active')
+          .set({
+        'scenes': state.map((s) => s.toMap()).toList(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (_) {}
+  }
+
+  void addScene(SceneNode scene) {
+    state = [...state, scene];
+    _persist();
+  }
+
+  void removeScene(String id) {
+    state = state.where((s) => s.id != id).toList();
+    _persist();
+  }
+
+  void updateScene(SceneNode updated) {
+    state = state.map((s) => s.id == updated.id ? updated : s).toList();
+    _persist();
+  }
+
+  /// Real drag-reorder for the Director's Cut timeline.
   void reorder(int oldIndex, int newIndex) {
     final list = [...state];
     if (newIndex > oldIndex) newIndex -= 1;
     final item = list.removeAt(oldIndex);
     list.insert(newIndex, item);
     state = [for (var i = 0; i < list.length; i++) list[i].copyWith(sequenceIndex: i)];
+    _persist();
   }
 
   void duplicateScene(String id) {
@@ -188,7 +235,11 @@ class SceneListNotifier extends StateNotifier<List<SceneNode>> {
     final index = state.indexWhere((s) => s.id == id);
     final list = [...state]..insert(index + 1, copy);
     state = [for (var i = 0; i < list.length; i++) list[i].copyWith(sequenceIndex: i)];
+    _persist();
   }
 
-  void clear() => state = [];
+  void clear() {
+    state = [];
+    _persist();
+  }
 }

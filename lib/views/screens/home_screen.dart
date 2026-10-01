@@ -4,10 +4,11 @@ import '../../core/providers.dart';
 import '../../core/theme.dart';
 import '../widgets/cinematic_button.dart';
 import '../widgets/cinematic_card.dart';
-import '../widgets/cinematic_media_card.dart';
-import '../widgets/section_header.dart';
 import 'character_lab_screen.dart';
+import 'edit_bay_screen.dart';
 import 'settings_screen.dart';
+import 'story_planner_screen.dart';
+import 'timeline_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -15,261 +16,241 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scenes = ref.watch(sceneListProvider);
+    final hour = DateTime.now().hour;
+    final greeting = hour < 12
+        ? 'GOOD MORNING'
+        : hour < 18
+            ? 'GOOD AFTERNOON'
+            : 'GOOD EVENING';
 
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(22, 16, 22, 10),
-              sliver: SliverToBoxAdapter(
+            // Header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 16, 0),
                 child: Row(
                   children: [
                     const Expanded(
-                      child: Text(
-                        'DRIPVISION',
-                        style: TextStyle(
-                          fontSize: 13,
-                          letterSpacing: 4.5,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      child: Text('DRIPVISION', style: DripTheme.brandMark),
                     ),
                     IconButton(
                       onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const SettingsScreen()),
                       ),
-                      icon: const Icon(
-                        Icons.person_outline,
-                        size: 21,
-                        color: DripTheme.chrome,
-                      ),
+                      icon: const Icon(Icons.person_outline, size: 22, color: DripTheme.chrome),
                     ),
                   ],
                 ),
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
-              sliver: SliverToBoxAdapter(
+
+            // Hero
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text('$greeting, DIRECTOR.', style: DripTheme.overline),
+                    const SizedBox(height: 10),
                     const Text(
-                      'GOOD EVENING, DIRECTOR.',
-                      style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 2.8,
-                        color: DripTheme.cosmicTeal,
-                        fontWeight: FontWeight.w600,
+                      'An AI filmmaking studio\nthat remembers your\nentire universe.',
+                      style: DripTheme.display,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      scenes.isEmpty
+                          ? 'Start with a story, lock characters, then cut in the Edit Bay.'
+                          : '${scenes.length} scene${scenes.length == 1 ? '' : 's'} on the active timeline.',
+                      style: DripTheme.body,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Primary actions
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 8),
+                child: Column(
+                  children: [
+                    CinematicButton(
+                      label: 'STORY   FILM',
+                      icon: Icons.auto_stories_outlined,
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const StoryPlannerScreen()),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Your worlds are waiting.',
-                      style: TextStyle(
-                        fontSize: 31,
-                        height: 1.03,
-                        fontWeight: FontWeight.w600,
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CinematicButton(
+                            label: 'EDIT BAY',
+                            icon: Icons.movie_filter_outlined,
+                            primary: false,
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const EditBayScreen()),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: CinematicButton(
+                            label: "CUT",
+                            icon: Icons.view_timeline_outlined,
+                            primary: false,
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const TimelineScreen()),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Pipeline
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 32, 24, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('PRODUCTION PIPELINE', style: DripTheme.technical),
+                    const SizedBox(height: 14),
+                    _PipelineStep(
+                      index: '01',
+                      title: 'Story',
+                      subtitle: 'Plan the narrative',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const StoryPlannerScreen()),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    CinematicCard(
-                      padding: EdgeInsets.zero,
-                      child: SizedBox(
-                        height: 225,
-                        child: Stack(
-                          children: [
-                            Positioned.fill(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: DripTheme.surfaceRaised,
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      DripTheme.surfaceRaised,
-                                      Colors.black,
-                                    ],
-                                  ),
-                                ),
+                    _PipelineStep(
+                      index: '02',
+                      title: 'Characters',
+                      subtitle: 'Lock face & wardrobe DNA',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CharacterLabScreen()),
+                      ),
+                    ),
+                    _PipelineStep(
+                      index: '03',
+                      title: 'Studio',
+                      subtitle: 'Direct the shot',
+                      onTap: () => ref.read(navIndexProvider.notifier).state = 3,
+                    ),
+                    _PipelineStep(
+                      index: '04',
+                      title: 'Edit Bay',
+                      subtitle: 'Cut, grade, finish',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const EditBayScreen()),
+                      ),
+                      isLast: true,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Recent scenes
+            if (scenes.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text('ACTIVE CUT', style: DripTheme.technical),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const TimelineScreen()),
+                            ),
+                            child: const Text(
+                              'OPEN',
+                              style: TextStyle(
+                                fontSize: 10,
+                                letterSpacing: 1.4,
+                                color: DripTheme.cosmicTeal,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            Positioned(
-                              left: 20,
-                              top: 18,
-                              child: Text(
-                                'CURRENT PRODUCTION',
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  letterSpacing: 2.5,
-                                  color: Colors.white.withOpacity(.5),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              left: 20,
-                              bottom: 20,
-                              right: 20,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      ...scenes.take(4).map((s) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: CinematicCard(
+                              child: Row(
                                 children: [
-                                  const Text(
-                                    'THE LAST HOUSE',
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w600,
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: DripTheme.surfaceLight,
+                                      borderRadius: BorderRadius.circular(6),
                                     ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: s.generatedLastFrameUrl != null
+                                        ? Image.network(
+                                            s.generatedLastFrameUrl!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) =>
+                                                const Icon(Icons.movie, size: 18, color: DripTheme.muted),
+                                          )
+                                        : const Icon(Icons.movie, size: 18, color: DripTheme.muted),
                                   ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    scenes.isEmpty
-                                        ? 'No scenes yet — start a new production'
-                                        : '${scenes.length} scene${scenes.length == 1 ? '' : 's'} in the cut',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(.55),
-                                      fontSize: 13,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'SCENE ${(s.sequenceIndex + 1).toString().padLeft(2, '0')}',
+                                          style: DripTheme.technical,
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          s.prompt.isEmpty ? s.character.name : s.prompt,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(fontSize: 13, color: DripTheme.warmWhite),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  CinematicButton(
-                                    label: 'CONTINUE PRODUCTION',
-                                    icon: Icons.play_arrow_rounded,
-                                    onPressed: () =>
-                                        ref.read(navIndexProvider.notifier).state = 3,
                                   ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(22, 0, 22, 12),
-              sliver: SliverToBoxAdapter(
-                child: SectionHeader(
-                  eyebrow: 'RECENT SCENES',
-                  title: 'The cut so far',
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 160,
-                child: scenes.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 22),
-                        child: Text(
-                          'No scenes yet. Capture a visual idea and let the Director build it.',
-                          style: TextStyle(color: DripTheme.muted, height: 1.5),
-                        ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 22),
-                        scrollDirection: Axis.horizontal,
-                        itemCount: scenes.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
-                        itemBuilder: (c, i) {
-                          final s = scenes[i];
-                          return CinematicMediaCard(
-                            title:
-                                'SCENE ${(i + 1).toString().padLeft(2, '0')}',
-                            meta:
-                                '${s.cameraMotion ?? 'STATIC'}  •  ${s.character.name}',
-                            imageUrl: s.generatedLastFrameUrl ??
-                                s.inputLastFrameUrl,
-                          );
-                        },
-                      ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(22, 30, 22, 12),
-              sliver: const SliverToBoxAdapter(
-                child: SectionHeader(
-                  eyebrow: 'YOUR UNIVERSE',
-                  title: 'Drip Memory™',
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 22),
-              sliver: SliverGrid(
-                delegate: SliverChildListDelegate([
-                  _MemoryTile(
-                    label: 'CHARACTERS',
-                    icon: Icons.person_outline,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CharacterLabScreen(),
-                      ),
-                    ),
+                          )),
+                    ],
                   ),
-                  const _MemoryTile(
-                    label: 'LOCATIONS',
-                    icon: Icons.location_on_outlined,
-                  ),
-                  const _MemoryTile(
-                    label: 'PROPS',
-                    icon: Icons.inventory_2_outlined,
-                  ),
-                  const _MemoryTile(
-                    label: 'STYLES',
-                    icon: Icons.auto_awesome_outlined,
-                  ),
-                ]),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.55,
                 ),
               ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(22, 30, 22, 12),
-              sliver: const SliverToBoxAdapter(
-                child: SectionHeader(
-                  eyebrow: 'QUICK CREATE',
-                  title: 'Make something worth watching',
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(22, 0, 22, 40),
-              sliver: SliverToBoxAdapter(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: CinematicButton(
-                        label: 'NEW FILM',
-                        icon: Icons.movie_creation_outlined,
-                        onPressed: () =>
-                            ref.read(navIndexProvider.notifier).state = 1,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: CinematicButton(
-                        label: 'NEW SCENE',
-                        icon: Icons.camera_alt_outlined,
-                        primary: false,
-                        onPressed: () =>
-                            ref.read(navIndexProvider.notifier).state = 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 48)),
           ],
         ),
       ),
@@ -277,35 +258,71 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _MemoryTile extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback? onTap;
+class _PipelineStep extends StatelessWidget {
+  final String index;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool isLast;
 
-  const _MemoryTile({
-    required this.label,
-    required this.icon,
-    this.onTap,
+  const _PipelineStep({
+    required this.index,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.isLast = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return CinematicCard(
+    return InkWell(
       onTap: onTap,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(icon, size: 24, color: DripTheme.chrome),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              letterSpacing: 2,
-              fontWeight: FontWeight.w600,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: EdgeInsets.only(bottom: isLast ? 0 : 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 36,
+              child: Column(
+                children: [
+                  Text(index,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        letterSpacing: 1,
+                        color: DripTheme.cosmicTeal,
+                        fontWeight: FontWeight.w600,
+                      )),
+                  if (!isLast)
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      width: 1,
+                      height: 28,
+                      color: Colors.white.withOpacity(0.08),
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: DripTheme.meta),
+                  ],
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(top: 2),
+              child: Icon(Icons.chevron_right, size: 18, color: DripTheme.muted),
+            ),
+          ],
+        ),
       ),
     );
   }

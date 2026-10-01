@@ -22,6 +22,9 @@ service cloud.firestore {
       match /editProjects/{projectId} {
         allow read, write: if isSignedIn() && request.auth.uid == uid;
       }
+      match /projects/{projectId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
       match /transactions/{txId} {
         allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
         allow write: if isSignedIn() && request.auth.uid == uid;
