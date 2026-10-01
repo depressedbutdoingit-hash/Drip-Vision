@@ -14,12 +14,12 @@ import '../../core/providers.dart';
 import '../../core/theme.dart';
 import '../../models/edit_project.dart';
 import '../../services/edit_bay_notifier.dart';
-import '../../services/video_edit_service.dart';
 import '../../services/timeline_export_service.dart';
+import '../../services/video_edit_service.dart';
 import '../widgets/cinematic_button.dart';
 
-/// EDIT BAY — unified NLE + real FFmpeg finishing.
-/// Multi-track timeline (project state) + media ops (trim/crop/filter/adjust).
+/// EDIT BAY — cinema NLE surface (inspired by professional post suites).
+/// Charcoal environment, teal only on playhead / selection / primary actions.
 class EditBayScreen extends ConsumerStatefulWidget {
   final String? initialVideoPathOrUrl;
   final bool seedFromScenes;
@@ -44,8 +44,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
   String? _status;
   bool _seeded = false;
 
-  // Active media-tool panel (finishing ops on current file)
-  String _finishingTool = 'timeline'; // timeline|trim|crop|filters|adjust|memory
+  String _finishingTool = 'timeline';
 
   double _duration = 5;
   double _trimStart = 0;
@@ -71,6 +70,11 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     ('dream', 'Dream'),
     ('plasticFantasy', 'Plastic'),
   ];
+
+  // Monitor bezel — charcoal, not pure black
+  static const _monitor = Color(0xFF0C0E10);
+  static const _rail = Color(0xFF0E1113);
+  static const _panel = Color(0xFF121518);
 
   @override
   void initState() {
@@ -137,10 +141,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     if (file != null) await _loadSource(file.path);
   }
 
-  Future<void> _runEdit(
-    Future<String> Function() op,
-    String label,
-  ) async {
+  Future<void> _runEdit(Future<String> Function() op, String label) async {
     if (_currentPath == null) return;
     setState(() {
       _loading = true;
@@ -149,13 +150,10 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     try {
       final out = await op();
       await _setController(out);
-      // Keep selected clip media pointer in NLE state if possible
       final bay = ref.read(editBayProvider);
       final sel = bay.selectedClip;
       if (sel != null) {
-        ref.read(editBayProvider.notifier).updateClip(
-              sel.copyWith(mediaUrl: out),
-            );
+        ref.read(editBayProvider.notifier).updateClip(sel.copyWith(mediaUrl: out));
       }
       _toast('$label complete');
     } catch (e) {
@@ -173,18 +171,14 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
   void _toast(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg, style: const TextStyle(color: Colors.white)),
-        backgroundColor: DripTheme.surfaceRaised,
-      ),
+      SnackBar(content: Text(msg), backgroundColor: DripTheme.surfaceRaised),
     );
   }
 
   Future<void> _share() async {
     if (_currentPath == null) return;
-    await Share.shareXFiles([XFile(_currentPath!)], text: 'Edited with #DripVision');
+    await Share.shareXFiles([XFile(_currentPath!)], text: 'Cut with #DripVision');
   }
-
 
   Future<void> _exportTimeline() async {
     final project = ref.read(editBayProvider).project;
@@ -193,43 +187,42 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
       _status = 'Exporting cut…';
     });
     try {
-      final exporter = TimelineExportService();
-      final path = await exporter.exportProject(
+      final path = await TimelineExportService().exportProject(
         project,
         onStage: (s) {
           if (mounted) setState(() => _status = s);
         },
       );
       await _setController(path);
-      if (mounted) {
-        final action = await showDialog<String>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: DripTheme.surfaceRaised,
-            title: const Text('Cut ready', style: TextStyle(color: DripTheme.warmWhite)),
-            content: const Text(
-              'Your timeline was stitched into one file.',
-              style: TextStyle(color: DripTheme.chrome),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, 'share'),
-                child: const Text('SHARE'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, 'save'),
-                child: const Text('SAVE TO GALLERY',
-                    style: TextStyle(color: DripTheme.cosmicTeal)),
-              ),
-            ],
+      if (!mounted) return;
+      final action = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: _panel,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: const Text('Cut ready', style: TextStyle(color: DripTheme.warmWhite)),
+          content: const Text(
+            'Timeline stitched into one file.',
+            style: TextStyle(color: DripTheme.chrome),
           ),
-        );
-        if (action == 'share') {
-          await Share.shareXFiles([XFile(path)], text: 'Cut with #DripVision');
-        } else if (action == 'save') {
-          await Gal.putVideo(path);
-          _toast('Saved to gallery');
-        }
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, 'share'),
+              child: const Text('SHARE', style: TextStyle(color: DripTheme.chrome)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, 'save'),
+              child: const Text('SAVE TO GALLERY',
+                  style: TextStyle(color: DripTheme.cosmicTeal)),
+            ),
+          ],
+        ),
+      );
+      if (action == 'share') {
+        await Share.shareXFiles([XFile(path)], text: 'Cut with #DripVision');
+      } else if (action == 'save') {
+        await Gal.putVideo(path);
+        _toast('Saved to gallery');
       }
     } catch (e) {
       _toast('Export failed: $e');
@@ -293,18 +286,21 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     }
 
     return Scaffold(
-      backgroundColor: DripTheme.voidBlack,
+      backgroundColor: _monitor,
       body: SafeArea(
         child: Column(
           children: [
-            _buildTopBar(bay, n),
-            Expanded(flex: 5, child: _buildPreview(bay)),
-            _buildTransport(bay, n),
-            Expanded(flex: 3, child: _buildTimeline(bay, n)),
-            _buildToolRail(),
+            _topChrome(bay, n),
+            Expanded(flex: 5, child: _cinemaMonitor(bay)),
+            _transport(bay, n),
+            Expanded(flex: 3, child: _timelineDeck(bay, n)),
+            _toolChrome(),
             SizedBox(
-              height: MediaQuery.of(context).size.height * 0.20,
-              child: _buildInspector(bay, n),
+              height: MediaQuery.of(context).size.height * 0.19,
+              child: ColoredBox(
+                color: _panel,
+                child: _inspector(bay, n),
+              ),
             ),
           ],
         ),
@@ -312,20 +308,24 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     );
   }
 
-  Widget _buildTopBar(EditBayState bay, EditBayNotifier n) {
+  // ─── TOP CHROME ───────────────────────────────────────────
+  Widget _topChrome(EditBayState bay, EditBayNotifier n) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(4, 4, 4, 6),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.06))),
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: const BoxDecoration(
+        color: _rail,
+        border: Border(bottom: BorderSide(color: Color(0x14FFFFFF))),
       ),
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.close, size: 20, color: DripTheme.chrome),
+            icon: const Icon(Icons.close, size: 18, color: DripTheme.chrome),
             onPressed: () => Navigator.pop(context),
           ),
           Expanded(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -334,10 +334,12 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 11,
-                    letterSpacing: 1.5,
+                    letterSpacing: 1.8,
                     fontWeight: FontWeight.w600,
+                    color: DripTheme.warmWhite,
                   ),
                 ),
+                const SizedBox(height: 1),
                 Text(
                   '${bay.project.sequenceName}  ·  ${bay.project.dirty ? 'UNSAVED' : 'SAVED'}',
                   style: TextStyle(
@@ -345,48 +347,24 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                     letterSpacing: 1.2,
                     color: bay.project.dirty
                         ? DripTheme.cosmicTeal
-                        : DripTheme.muted,
+                        : const Color(0xFF6A7270),
                   ),
                 ),
               ],
             ),
           ),
-          IconButton(
-            tooltip: 'Import',
-            onPressed: _loading ? null : _pickFromGallery,
-            icon: const Icon(Icons.add_box_outlined, size: 20, color: DripTheme.chrome),
-          ),
-          IconButton(
-            onPressed: bay.undoStack.isEmpty ? null : n.undo,
-            icon: Icon(Icons.undo, size: 18,
-                color: bay.undoStack.isEmpty ? DripTheme.muted : DripTheme.chrome),
-          ),
-          IconButton(
-            onPressed: bay.redoStack.isEmpty ? null : n.redo,
-            icon: Icon(Icons.redo, size: 18,
-                color: bay.redoStack.isEmpty ? DripTheme.muted : DripTheme.chrome),
-          ),
+          _iconBtn(Icons.add_box_outlined, _loading ? null : _pickFromGallery, tip: 'Import'),
+          _iconBtn(Icons.undo, bay.undoStack.isEmpty ? null : n.undo),
+          _iconBtn(Icons.redo, bay.redoStack.isEmpty ? null : n.redo),
           if (_currentPath != null) ...[
-            IconButton(
-              onPressed: _loading ? null : _download,
-              icon: const Icon(Icons.download_rounded, size: 20, color: DripTheme.chrome),
-            ),
-            IconButton(
-              onPressed: _loading ? null : _share,
-              icon: const Icon(Icons.ios_share, size: 18, color: DripTheme.chrome),
-            ),
+            _iconBtn(Icons.download_rounded, _loading ? null : _download),
+            _iconBtn(Icons.ios_share, _loading ? null : _share),
           ],
           TextButton(
             onPressed: _loading ? null : _exportTimeline,
-            child: const Text(
-              'EXPORT',
-              style: TextStyle(
-                fontSize: 11,
-                letterSpacing: 1.4,
-                color: DripTheme.warmWhite,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            child: const Text('EXPORT',
+                style: TextStyle(
+                    fontSize: 10, letterSpacing: 1.3, color: DripTheme.warmWhite)),
           ),
           TextButton(
             onPressed: bay.saving
@@ -394,7 +372,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                 : () async {
                     try {
                       await n.save();
-                      _toast('Project saved');
+                      _toast('Saved');
                     } catch (e) {
                       _toast('Save failed: $e');
                     }
@@ -402,8 +380,8 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
             child: Text(
               bay.saving ? '…' : 'SAVE',
               style: const TextStyle(
-                fontSize: 11,
-                letterSpacing: 1.4,
+                fontSize: 10,
+                letterSpacing: 1.3,
                 color: DripTheme.cosmicTeal,
                 fontWeight: FontWeight.w700,
               ),
@@ -414,25 +392,42 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     );
   }
 
-  Widget _buildPreview(EditBayState bay) {
+  Widget _iconBtn(IconData icon, VoidCallback? onTap, {String? tip}) {
+    return IconButton(
+      tooltip: tip,
+      onPressed: onTap,
+      icon: Icon(icon,
+          size: 18,
+          color: onTap == null ? const Color(0xFF3A4040) : DripTheme.chrome),
+    );
+  }
+
+  // ─── CINEMA MONITOR ───────────────────────────────────────
+  Widget _cinemaMonitor(EditBayState bay) {
     final adj = bay.selectedClip?.adjustments ?? const ClipAdjustments();
 
-    Widget body;
+    Widget picture;
     if (_loading) {
-      body = Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: DripTheme.cosmicTeal, strokeWidth: 2),
-            if (_status != null) ...[
-              const SizedBox(height: 12),
-              Text(_status!, style: const TextStyle(color: DripTheme.muted, fontSize: 12)),
-            ],
+      picture = Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(
+              color: DripTheme.cosmicTeal,
+              strokeWidth: 1.5,
+            ),
+          ),
+          if (_status != null) ...[
+            const SizedBox(height: 12),
+            Text(_status!,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF7A8280))),
           ],
-        ),
+        ],
       );
     } else if (_controller != null && _controller!.value.isInitialized) {
-      body = ColorFiltered(
+      picture = ColorFiltered(
         colorFilter: ColorFilter.matrix(_previewMatrix(adj)),
         child: AspectRatio(
           aspectRatio: _controller!.value.aspectRatio,
@@ -440,76 +435,106 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
         ),
       );
     } else {
-      body = Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.movie_creation_outlined,
-                size: 40, color: DripTheme.cosmicTeal.withOpacity(0.35)),
-            const SizedBox(height: 12),
-            const Text('NO SIGNAL',
-                style: TextStyle(letterSpacing: 3, fontSize: 11, color: DripTheme.muted)),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: _pickFromGallery,
-              child: const Text('IMPORT VIDEO',
-                  style: TextStyle(color: DripTheme.cosmicTeal, letterSpacing: 1.2)),
-            ),
-          ],
-        ),
+      picture = Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.videocam_outlined,
+              size: 36, color: DripTheme.cosmicTeal.withOpacity(0.25)),
+          const SizedBox(height: 10),
+          const Text('NO SIGNAL',
+              style: TextStyle(
+                  fontSize: 10, letterSpacing: 3, color: Color(0xFF5A6260))),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: _pickFromGallery,
+            child: const Text('IMPORT',
+                style: TextStyle(
+                    fontSize: 11,
+                    letterSpacing: 1.4,
+                    color: DripTheme.cosmicTeal)),
+          ),
+        ],
       );
     }
 
     return Container(
       color: Colors.black,
-      alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          body,
-          if (adj.vignette > 0.01)
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: RadialGradient(
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(adj.vignette.clamp(0, 1)),
-                    ],
-                  ),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: bay.project.aspectRatio.value,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0x18FFFFFF)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.6),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
                 ),
-              ),
+              ],
             ),
-          Positioned(
-            left: 10,
-            bottom: 8,
-            child: Text(
-              _fmt(bay.project.playheadSec),
-              style: const TextStyle(
-                fontSize: 10,
-                color: Colors.white70,
-                fontFeatures: [FontFeature.tabularFigures()],
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ColoredBox(color: _monitor, child: Center(child: picture)),
+                  if (adj.vignette > 0.01)
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(adj.vignette.clamp(0, 1)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  // Timecode HUD
+                  Positioned(
+                    left: 10,
+                    bottom: 8,
+                    child: Text(
+                      _fmt(bay.project.playheadSec),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 0.5,
+                        color: Color(0xB3FFFFFF),
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 10,
+                    bottom: 8,
+                    child: Text(
+                      bay.project.aspectRatio.label,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        letterSpacing: 1.2,
+                        color: Color(0x66FFFFFF),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          Positioned(
-            right: 10,
-            bottom: 8,
-            child: Text(
-              bay.project.aspectRatio.label,
-              style: const TextStyle(fontSize: 9, letterSpacing: 1, color: DripTheme.muted),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildTransport(EditBayState bay, EditBayNotifier n) {
+  // ─── TRANSPORT ────────────────────────────────────────────
+  Widget _transport(EditBayState bay, EditBayNotifier n) {
     final playing = _controller?.value.isPlaying ?? false;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+    return Container(
+      height: 44,
+      color: _rail,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         children: [
           IconButton(
@@ -519,49 +544,61 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
               _controller?.seekTo(Duration.zero);
             },
           ),
-          IconButton(
-            icon: Icon(
-              playing ? Icons.pause : Icons.play_arrow,
-              size: 28,
-              color: DripTheme.warmWhite,
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0x22FFFFFF)),
             ),
-            onPressed: () {
-              if (_controller == null) return;
-              setState(() {
-                if (playing) {
-                  _controller!.pause();
-                  n.setPlaying(false);
-                } else {
-                  _controller!.play();
-                  n.setPlaying(true);
-                }
-              });
-            },
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              icon: Icon(
+                playing ? Icons.pause : Icons.play_arrow,
+                size: 22,
+                color: DripTheme.warmWhite,
+              ),
+              onPressed: () {
+                if (_controller == null) return;
+                setState(() {
+                  if (playing) {
+                    _controller!.pause();
+                    n.setPlaying(false);
+                  } else {
+                    _controller!.play();
+                    n.setPlaying(true);
+                  }
+                });
+              },
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.skip_next, size: 20, color: DripTheme.chrome),
             onPressed: () {
               n.setPlayhead(bay.project.totalDuration);
-              if (_controller != null) {
-                _controller!.seekTo(_controller!.value.duration);
-              }
+              _controller?.seekTo(_controller!.value.duration);
             },
           ),
           Expanded(
             child: SliderTheme(
               data: SliderTheme.of(context).copyWith(
                 trackHeight: 2,
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
                 activeTrackColor: DripTheme.cosmicTeal,
-                inactiveTrackColor: Colors.white12,
+                inactiveTrackColor: const Color(0x18FFFFFF),
                 thumbColor: DripTheme.warmWhite,
               ),
               child: Slider(
-                value: bay.project.playheadSec.clamp(0, bay.project.totalDuration),
-                max: bay.project.totalDuration <= 0 ? 1 : bay.project.totalDuration,
+                value: bay.project.playheadSec
+                    .clamp(0, bay.project.totalDuration),
+                max: bay.project.totalDuration <= 0
+                    ? 1
+                    : bay.project.totalDuration,
                 onChanged: (v) {
                   n.setPlayhead(v);
-                  _controller?.seekTo(Duration(milliseconds: (v * 1000).round()));
+                  _controller?.seekTo(
+                      Duration(milliseconds: (v * 1000).round()));
                 },
               ),
             ),
@@ -571,41 +608,29 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     );
   }
 
-  Widget _buildTimeline(EditBayState bay, EditBayNotifier n) {
+  // ─── TIMELINE DECK (filmstrip style) ──────────────────────
+  Widget _timelineDeck(EditBayState bay, EditBayNotifier n) {
     final pps = bay.project.pixelsPerSecond;
     final width = (bay.project.totalDuration * pps).clamp(320.0, 8000.0);
 
     return Container(
-      decoration: BoxDecoration(
-        color: DripTheme.deepBlack,
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.05))),
-      ),
+      color: const Color(0xFF0A0C0E),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 8, 2),
+            padding: const EdgeInsets.fromLTRB(12, 6, 4, 2),
             child: Row(
               children: [
                 const Text('TIMELINE',
-                    style: TextStyle(fontSize: 9, letterSpacing: 2, color: DripTheme.muted)),
+                    style: TextStyle(
+                        fontSize: 9,
+                        letterSpacing: 2,
+                        color: Color(0xFF5A6260))),
                 const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.content_cut, size: 16, color: DripTheme.chrome),
-                  tooltip: 'Split',
-                  onPressed: n.splitClipAtPlayhead,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 16, color: DripTheme.chrome),
-                  onPressed: n.deleteSelected,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.zoom_out, size: 16, color: DripTheme.chrome),
-                  onPressed: () => n.setZoom(pps - 8),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.zoom_in, size: 16, color: DripTheme.chrome),
-                  onPressed: () => n.setZoom(pps + 8),
-                ),
+                _miniIcon(Icons.content_cut, n.splitClipAtPlayhead),
+                _miniIcon(Icons.delete_outline, n.deleteSelected),
+                _miniIcon(Icons.zoom_out, () => n.setZoom(pps - 8)),
+                _miniIcon(Icons.zoom_in, () => n.setZoom(pps + 8)),
               ],
             ),
           ),
@@ -613,14 +638,15 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
             child: bay.project.clips.isEmpty
                 ? const Center(
                     child: Text(
-                      'Import media or generate scenes — they appear here as clips.',
-                      style: TextStyle(color: DripTheme.muted, fontSize: 12),
+                      'Import media or generate scenes — clips appear here.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF5A6260)),
                       textAlign: TextAlign.center,
                     ),
                   )
                 : SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.only(left: 44, right: 12, bottom: 6),
+                    padding:
+                        const EdgeInsets.only(left: 40, right: 12, bottom: 8),
                     child: SizedBox(
                       width: width,
                       child: Stack(
@@ -630,7 +656,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                               final clips = bay.project.clips
                                   .where((c) => c.trackId == track.id)
                                   .toList();
-                              return _TrackRow(
+                              return _FilmTrack(
                                 track: track,
                                 clips: clips,
                                 pps: pps,
@@ -639,19 +665,44 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                                   n.selectClip(id);
                                   EditClip? clip;
                                   for (final c in bay.project.clips) {
-                                    if (c.id == id) { clip = c; break; }
+                                    if (c.id == id) {
+                                      clip = c;
+                                      break;
+                                    }
                                   }
-                                  if (clip != null) _loadSelectedClipMedia(clip);
+                                  if (clip != null) {
+                                    _loadSelectedClipMedia(clip);
+                                  }
                                 },
                                 onMove: n.moveClip,
                               );
                             }).toList(),
                           ),
+                          // Playhead — only teal accent on timeline
                           Positioned(
                             left: bay.project.playheadSec * pps,
                             top: 0,
                             bottom: 0,
-                            child: Container(width: 1.5, color: DripTheme.cosmicTeal),
+                            child: IgnorePointer(
+                              child: Container(
+                                width: 1.5,
+                                color: DripTheme.cosmicTeal,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            left: bay.project.playheadSec * pps - 4,
+                            top: 0,
+                            child: IgnorePointer(
+                              child: Container(
+                                width: 9,
+                                height: 9,
+                                decoration: const BoxDecoration(
+                                  color: DripTheme.cosmicTeal,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -663,7 +714,17 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     );
   }
 
-  Widget _buildToolRail() {
+  Widget _miniIcon(IconData icon, VoidCallback onTap) {
+    return IconButton(
+      padding: const EdgeInsets.all(6),
+      constraints: const BoxConstraints(),
+      icon: Icon(icon, size: 15, color: DripTheme.chrome),
+      onPressed: onTap,
+    );
+  }
+
+  // ─── TOOL RAIL ────────────────────────────────────────────
+  Widget _toolChrome() {
     const tools = [
       ('timeline', Icons.view_timeline_outlined, 'CUT'),
       ('trim', Icons.content_cut, 'TRIM'),
@@ -673,9 +734,13 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
       ('memory', Icons.memory, 'DNA'),
     ];
     return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.06))),
+      height: 50,
+      decoration: const BoxDecoration(
+        color: _rail,
+        border: Border(
+          top: BorderSide(color: Color(0x14FFFFFF)),
+          bottom: BorderSide(color: Color(0x14FFFFFF)),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -683,18 +748,24 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
           final on = _finishingTool == t.$1;
           return InkWell(
             onTap: () => setState(() => _finishingTool = t.$1),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(t.$2, size: 18, color: on ? DripTheme.cosmicTeal : DripTheme.muted),
-                const SizedBox(height: 2),
-                Text(t.$3,
-                    style: TextStyle(
-                      fontSize: 8,
-                      letterSpacing: 1,
-                      color: on ? DripTheme.cosmicTeal : DripTheme.muted,
-                    )),
-              ],
+            child: SizedBox(
+              width: 52,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(t.$2,
+                      size: 17,
+                      color: on ? DripTheme.cosmicTeal : const Color(0xFF6A7270)),
+                  const SizedBox(height: 3),
+                  Text(t.$3,
+                      style: TextStyle(
+                        fontSize: 8,
+                        letterSpacing: 1,
+                        color:
+                            on ? DripTheme.cosmicTeal : const Color(0xFF6A7270),
+                      )),
+                ],
+              ),
             ),
           );
         }).toList(),
@@ -702,28 +773,24 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     );
   }
 
-  Widget _buildInspector(EditBayState bay, EditBayNotifier n) {
+  // ─── INSPECTOR ────────────────────────────────────────────
+  Widget _inspector(EditBayState bay, EditBayNotifier n) {
     final clip = bay.selectedClip;
 
     if (_finishingTool == 'memory') {
       return Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         child: clip == null
-            ? const Text('Select a clip', style: TextStyle(color: DripTheme.muted))
+            ? const Text('Select a clip', style: DripTheme.meta)
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('CHARACTER  ·  ${clip.characterName ?? '—'}',
-                      style: const TextStyle(fontSize: 12)),
-                  const SizedBox(height: 6),
-                  Text('LOCATION  ·  ${clip.locationName ?? '—'}',
-                      style: const TextStyle(fontSize: 12, color: DripTheme.chrome)),
-                  const SizedBox(height: 6),
-                  Text('CAMERA  ·  ${clip.styleNote ?? '—'}',
-                      style: const TextStyle(fontSize: 11, color: DripTheme.muted)),
-                  const SizedBox(height: 6),
-                  Text('SCENE  ·  ${clip.sceneId ?? '—'}',
-                      style: const TextStyle(fontSize: 10, color: DripTheme.muted)),
+                  const Text('CONTINUITY', style: DripTheme.technical),
+                  const SizedBox(height: 10),
+                  _dnaRow('CHARACTER', clip.characterName ?? '—'),
+                  _dnaRow('LOCATION', clip.locationName ?? '—'),
+                  _dnaRow('CAMERA', clip.styleNote ?? '—'),
+                  _dnaRow('SCENE', clip.sceneId ?? '—'),
                 ],
               ),
       );
@@ -766,8 +833,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
 
     if (_currentPath == null) {
       return const Center(
-        child: Text('Load a clip to use finishing tools',
-            style: TextStyle(color: DripTheme.muted, fontSize: 12)),
+        child: Text('Load a clip for finishing tools', style: DripTheme.meta),
       );
     }
 
@@ -785,6 +851,26 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     }
   }
 
+  Widget _dnaRow(String k, String v) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 88,
+            child: Text(k,
+                style: const TextStyle(
+                    fontSize: 9, letterSpacing: 1.2, color: Color(0xFF6A7270))),
+          ),
+          Expanded(
+            child: Text(v,
+                style: const TextStyle(fontSize: 12, color: DripTheme.warmWhite)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _trimPanel() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
@@ -793,17 +879,17 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
           Row(
             children: [
               Text('IN ${_trimStart.toStringAsFixed(1)}s',
-                  style: const TextStyle(fontSize: 10, color: DripTheme.muted)),
+                  style: const TextStyle(fontSize: 10, color: Color(0xFF6A7270))),
               const Spacer(),
               Text('OUT ${_trimEnd.toStringAsFixed(1)}s',
-                  style: const TextStyle(fontSize: 10, color: DripTheme.muted)),
+                  style: const TextStyle(fontSize: 10, color: Color(0xFF6A7270))),
             ],
           ),
           RangeSlider(
             values: RangeValues(_trimStart, _trimEnd),
             max: _duration,
             activeColor: DripTheme.cosmicTeal,
-            inactiveColor: Colors.white12,
+            inactiveColor: const Color(0x18FFFFFF),
             onChanged: (v) => setState(() {
               _trimStart = v.start;
               _trimEnd = v.end;
@@ -844,14 +930,14 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                         child: ChoiceChip(
                           label: Text(r, style: const TextStyle(fontSize: 11)),
                           selected: _aspect == r,
-                          selectedColor: DripTheme.cosmicTeal.withOpacity(0.3),
+                          selectedColor: DripTheme.cosmicTeal.withOpacity(0.25),
                           onSelected: (_) => setState(() => _aspect = r),
                           labelStyle: TextStyle(
                             color: _aspect == r
                                 ? DripTheme.cosmicTeal
                                 : DripTheme.warmWhite,
                           ),
-                          backgroundColor: DripTheme.surface,
+                          backgroundColor: _panel,
                         ),
                       ))
                   .toList(),
@@ -881,13 +967,14 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.all(12),
       children: _filters.map((f) {
-        final on = _activeFilter == f.$1 || (f.$1 == 'none' && _activeFilter == null);
+        final on =
+            _activeFilter == f.$1 || (f.$1 == 'none' && _activeFilter == null);
         return Padding(
           padding: const EdgeInsets.only(right: 8),
           child: ChoiceChip(
             label: Text(f.$2, style: const TextStyle(fontSize: 11)),
             selected: on,
-            selectedColor: DripTheme.cosmicTeal.withOpacity(0.3),
+            selectedColor: DripTheme.cosmicTeal.withOpacity(0.25),
             onSelected: (_) {
               setState(() => _activeFilter = f.$1 == 'none' ? null : f.$1);
               if (f.$1 != 'none' && !_loading) {
@@ -903,7 +990,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
             labelStyle: TextStyle(
               color: on ? DripTheme.cosmicTeal : DripTheme.warmWhite,
             ),
-            backgroundColor: DripTheme.surface,
+            backgroundColor: _panel,
           ),
         );
       }).toList(),
@@ -917,7 +1004,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
           SizedBox(
             width: 72,
             child: Text(label,
-                style: const TextStyle(fontSize: 10, color: DripTheme.muted)),
+                style: const TextStyle(fontSize: 10, color: Color(0xFF6A7270))),
           ),
           Expanded(
             child: Slider(
@@ -925,7 +1012,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
               min: -1,
               max: 1,
               activeColor: DripTheme.cosmicTeal,
-              inactiveColor: Colors.white12,
+              inactiveColor: const Color(0x18FFFFFF),
               onChanged: on,
             ),
           ),
@@ -993,7 +1080,8 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
   }
 }
 
-class _TrackRow extends StatelessWidget {
+/// Filmstrip-style track row (reference #1 energy).
+class _FilmTrack extends StatelessWidget {
   final EditTrack track;
   final List<EditClip> clips;
   final double pps;
@@ -1001,7 +1089,7 @@ class _TrackRow extends StatelessWidget {
   final void Function(String?) onSelect;
   final void Function(String, double) onMove;
 
-  const _TrackRow({
+  const _FilmTrack({
     required this.track,
     required this.clips,
     required this.pps,
@@ -1012,30 +1100,36 @@ class _TrackRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isVideo = track.kind == TrackKind.video;
     return SizedBox(
-      height: track.kind == TrackKind.video ? 48 : 32,
+      height: isVideo ? 52 : 30,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Positioned(
-            left: -40,
+            left: -36,
             top: 0,
             bottom: 0,
-            width: 36,
+            width: 32,
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(track.name,
-                  style: const TextStyle(
-                      fontSize: 9, letterSpacing: 1, color: DripTheme.muted)),
+              child: Text(
+                track.name,
+                style: const TextStyle(
+                  fontSize: 9,
+                  letterSpacing: 1,
+                  color: Color(0xFF5A6260),
+                ),
+              ),
             ),
           ),
           ...clips.map((c) {
             final selected = c.id == selectedId;
             return Positioned(
               left: c.startOnTimeline * pps,
-              width: (c.duration * pps).clamp(24, 4000),
-              top: 3,
-              bottom: 3,
+              width: (c.duration * pps).clamp(28, 4000),
+              top: 4,
+              bottom: 4,
               child: GestureDetector(
                 onTap: () => onSelect(c.id),
                 onHorizontalDragUpdate: (d) {
@@ -1043,28 +1137,72 @@ class _TrackRow extends StatelessWidget {
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: track.kind == TrackKind.video
+                    color: isVideo
                         ? (selected
-                            ? DripTheme.cosmicTeal.withOpacity(0.35)
-                            : DripTheme.surfaceRaised)
+                            ? const Color(0xFF1A2A28)
+                            : const Color(0xFF161A1C))
                         : (selected
-                            ? DripTheme.nebulaCyan.withOpacity(0.28)
-                            : const Color(0xFF1A2224)),
-                    borderRadius: BorderRadius.circular(4),
+                            ? const Color(0xFF1A2428)
+                            : const Color(0xFF121618)),
+                    borderRadius: BorderRadius.circular(3),
                     border: Border.all(
                       color: selected
-                          ? DripTheme.cosmicTeal
-                          : Colors.white.withOpacity(0.08),
+                          ? DripTheme.cosmicTeal.withOpacity(0.7)
+                          : const Color(0x14FFFFFF),
+                      width: selected ? 1.2 : 1,
                     ),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    c.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 9, color: DripTheme.warmWhite),
-                  ),
+                  child: isVideo
+                      ? Row(
+                          children: [
+                            if (c.thumbnailUrl != null &&
+                                c.thumbnailUrl!.isNotEmpty)
+                              ClipRRect(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(2),
+                                  bottomLeft: Radius.circular(2),
+                                ),
+                                child: Image.network(
+                                  c.thumbnailUrl!,
+                                  width: 36,
+                                  height: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      const SizedBox(width: 4),
+                                ),
+                              ),
+                            Expanded(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 6),
+                                child: Text(
+                                  c.label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 9,
+                                    color: DripTheme.warmWhite,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              c.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 8,
+                                color: Color(0xFF8A9290),
+                              ),
+                            ),
+                          ),
+                        ),
                 ),
               ),
             );
