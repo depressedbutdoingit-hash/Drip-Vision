@@ -6,6 +6,7 @@ import '../../core/theme.dart';
 import 'admin_portal.dart';
 import 'god_mode/god_mode_screen.dart';
 import '../../services/god_mode_service.dart';
+import 'auth_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final bool isAdmin;
@@ -35,155 +36,160 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final doc =
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final role = doc.data()?['role'] as String?;
-      if (mounted) {
-        setState(() => _isAdmin = role == 'admin');
-      }
-    } catch (_) {
-      // Offline / rules — keep existing flag
-    }
+      if (mounted) setState(() => _isAdmin = role == 'admin');
+    } catch (_) {}
   }
 
   Future<void> _checkForOverTheAirUpdate() async {
     setState(() => _isCheckingUpdate = true);
-    final isUpdateAvailable =
-        await _shorebirdCodePush.isNewPatchAvailableForDownload();
-
-    if (isUpdateAvailable) {
-      await _shorebirdCodePush.downloadUpdateIfAvailable();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('New update downloaded! Restart app to apply.'),
-          ),
-        );
-      }
-    } else {
-      if (mounted) {
+    try {
+      final isUpdateAvailable =
+          await _shorebirdCodePush.isNewPatchAvailableForDownload();
+      if (isUpdateAvailable) {
+        await _shorebirdCodePush.downloadUpdateIfAvailable();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Update downloaded. Restart the app to apply.'),
+            ),
+          );
+        }
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('App is up to date.')),
         );
       }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Update check failed: $e')),
+        );
+      }
     }
-    setState(() => _isCheckingUpdate = false);
+    if (mounted) setState(() => _isCheckingUpdate = false);
   }
 
   Future<void> _signOut() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: DripTheme.surface,
-        title: const Text('Sign out?', style: TextStyle(color: Colors.white)),
+        backgroundColor: DripTheme.surfaceRaised,
+        title: const Text('Sign out?', style: TextStyle(color: DripTheme.warmWhite)),
         content: const Text(
-          'You will need to sign in again to use your account.',
-          style: TextStyle(color: Colors.white70),
+          'You will need to sign in again to use DripVision.',
+          style: TextStyle(color: DripTheme.chrome),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: const Text('CANCEL', style: TextStyle(color: DripTheme.muted)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sign out', style: TextStyle(color: Colors.redAccent)),
+            child: const Text('SIGN OUT',
+                style: TextStyle(color: Color(0xFFFF8A80))),
           ),
         ],
       ),
     );
-    if (confirmed != true) return;
-
+    if (confirmed != true || !mounted) return;
     setState(() => _signingOut = true);
     try {
       await FirebaseAuth.instance.signOut();
       if (!mounted) return;
-      // Pop settings; root listens to auth and shows AuthScreen.
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+        (_) => false,
+      );
     } catch (e) {
       if (mounted) {
+        setState(() => _signingOut = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Sign out failed: $e')),
         );
       }
-    } finally {
-      if (mounted) setState(() => _signingOut = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final email = FirebaseAuth.instance.currentUser?.email;
+    final user = FirebaseAuth.instance.currentUser;
+    final email = user?.email ?? user?.uid ?? 'Director';
 
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          'Settings',
-          style: TextStyle(
-            color: DripTheme.nebulaCyan,
-            shadows: [
-              Shadow(color: DripTheme.cosmicTeal, blurRadius: 15),
-            ],
-          ),
-        ),
+        title: const Text('SETTINGS', style: DripTheme.brandMark),
       ),
       body: ListView(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 40),
         children: [
-          ListTile(
-            leading: const Icon(Icons.person, color: DripTheme.cosmicTeal),
-            title: const Text('Account Profile', style: TextStyle(color: Colors.white)),
-            subtitle: Text(
-              email ?? 'Not signed in',
-              style: const TextStyle(color: Colors.white54, fontSize: 12),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('ACCOUNT', style: DripTheme.technical),
+                const SizedBox(height: 10),
+                Text(email, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                if (_isAdmin) ...[
+                  const SizedBox(height: 6),
+                  const Text('ADMIN',
+                      style: TextStyle(
+                          fontSize: 10,
+                          letterSpacing: 1.4,
+                          color: DripTheme.cosmicTeal,
+                          fontWeight: FontWeight.w600)),
+                ],
+              ],
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.system_update, color: DripTheme.nebulaCyan),
-            title: const Text('Check for App Updates', style: TextStyle(color: Colors.white)),
-            subtitle: const Text(
-              'Downloads Over-the-Air patches instantly',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
+          const Divider(color: DripTheme.hairline, height: 1),
+          _tile(
+            icon: Icons.system_update_outlined,
+            title: 'Check for update',
+            subtitle: 'Over-the-air patch via Shorebird',
             trailing: _isCheckingUpdate
                 ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: DripTheme.nebulaCyan,
+                      color: DripTheme.cosmicTeal,
                     ),
                   )
-                : const Icon(Icons.download, color: Colors.white54),
-            onTap: _checkForOverTheAirUpdate,
+                : null,
+            onTap: _isCheckingUpdate ? null : _checkForOverTheAirUpdate,
           ),
-          const ListTile(
-            leading: Icon(Icons.restore, color: DripTheme.chrome),
-            title: Text('Restore Purchases', style: TextStyle(color: Colors.white)),
+          _tile(
+            icon: Icons.privacy_tip_outlined,
+            title: 'Privacy Policy',
+            onTap: () {},
           ),
-          const ListTile(
-            leading: Icon(Icons.privacy_tip_outlined, color: DripTheme.chrome),
-            title: Text('Privacy Policy', style: TextStyle(color: Colors.white)),
-          ),
-          const ListTile(
-            leading: Icon(Icons.description_outlined, color: DripTheme.chrome),
-            title: Text('Terms of Service', style: TextStyle(color: Colors.white)),
+          _tile(
+            icon: Icons.description_outlined,
+            title: 'Terms of Service',
+            onTap: () {},
           ),
           if (_isAdmin) ...[
-            ListTile(
-              leading: const Icon(Icons.admin_panel_settings, color: DripTheme.nebulaCyan),
-              title: const Text('Admin Dashboard', style: TextStyle(color: Colors.white)),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AdminPortalScreen()),
-                );
-              },
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+              child: Text('CONTROL ROOM', style: DripTheme.technical),
             ),
-            ListTile(
-              leading: const Icon(Icons.security, color: DripTheme.cosmicTeal),
-              title: const Text('God Mode', style: TextStyle(color: Colors.white)),
-              subtitle: const Text('System control · server-gated',
-                  style: TextStyle(color: Colors.white54, fontSize: 11)),
+            _tile(
+              icon: Icons.admin_panel_settings_outlined,
+              title: 'Admin Dashboard',
+              accent: DripTheme.nebulaCyan,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AdminPortalScreen()),
+              ),
+            ),
+            _tile(
+              icon: Icons.security,
+              title: 'God Mode',
+              subtitle: 'System control · server-gated',
+              accent: DripTheme.cosmicTeal,
               onTap: () async {
                 final ok = await GodModeService.isAuthorizedAdmin();
                 if (!context.mounted) return;
@@ -200,30 +206,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
           ],
-          const Divider(color: Colors.white12, height: 32),
-          ListTile(
-            leading: _signingOut
+          const SizedBox(height: 12),
+          const Divider(color: DripTheme.hairline, height: 1),
+          _tile(
+            icon: _signingOut ? null : Icons.logout,
+            title: 'Sign out',
+            subtitle: 'Return to login',
+            accent: const Color(0xFFFF8A80),
+            trailing: _signingOut
                 ? const SizedBox(
-                    width: 24,
-                    height: 24,
+                    width: 20,
+                    height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.redAccent,
+                      color: Color(0xFFFF8A80),
                     ),
                   )
-                : const Icon(Icons.logout, color: Colors.redAccent),
-            title: const Text(
-              'Sign out',
-              style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
-            ),
-            subtitle: const Text(
-              'Return to the login screen',
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
+                : null,
             onTap: _signingOut ? null : _signOut,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _tile({
+    IconData? icon,
+    required String title,
+    String? subtitle,
+    Color? accent,
+    Widget? trailing,
+    VoidCallback? onTap,
+  }) {
+    final color = accent ?? DripTheme.chrome;
+    return ListTile(
+      leading: icon == null
+          ? const SizedBox(width: 24)
+          : Icon(icon, color: color, size: 22),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: accent ?? DripTheme.warmWhite,
+          fontWeight: accent != null ? FontWeight.w600 : FontWeight.w500,
+          fontSize: 14,
+        ),
+      ),
+      subtitle: subtitle == null
+          ? null
+          : Text(subtitle, style: const TextStyle(color: DripTheme.muted, fontSize: 12)),
+      trailing: trailing,
+      onTap: onTap,
     );
   }
 }

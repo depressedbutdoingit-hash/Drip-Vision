@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../services/auth_service.dart';
-import '../../views/widgets/galaxy_background.dart';
 
 final authScreenProvider = StateNotifierProvider<AuthScreenNotifier, AuthScreenState>((ref) {
   return AuthScreenNotifier(ref.read(authServiceProvider));
@@ -97,8 +96,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       backgroundColor: DripTheme.voidBlack,
       body: Stack(
         children: [
-          const GalaxyBackground(starCount: 100, intensity: 0.4),
-
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -138,14 +135,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             Text(
                               'DRIPVISION',
                               style: theme.textTheme.headlineMedium?.copyWith(
-                                letterSpacing: 12,
+                                letterSpacing: 6,
                                 fontWeight: FontWeight.w300,
                                 color: Colors.white,
                               ),
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'POCKET FILM STUDIO',
+                              'CINEMATIC STUDIO',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 letterSpacing: 6,
                                 color: DripTheme.cosmicTeal,

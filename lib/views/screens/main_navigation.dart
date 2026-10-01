@@ -8,6 +8,7 @@ import 'library_screen.dart';
 import 'studio_screen.dart';
 import 'explore_drip_screen.dart';
 import 'settings_screen.dart';
+import '../widgets/system_banner.dart';
 
 class MainNavigation extends ConsumerWidget {
   const MainNavigation({super.key});
@@ -26,7 +27,8 @@ class MainNavigation extends ConsumerWidget {
     // Home owns its own header; other tabs get a quiet brand bar.
     final showAppBar = i != 0;
 
-    return Scaffold(
+    return SystemBannerHost(
+      child: Scaffold(
       backgroundColor: DripTheme.voidBlack,
       appBar: showAppBar
           ? AppBar(
@@ -73,6 +75,7 @@ class MainNavigation extends ConsumerWidget {
           ),
         ),
       ),
+    ),
     );
   }
 
