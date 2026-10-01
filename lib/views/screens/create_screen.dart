@@ -14,32 +14,174 @@ import 'music_studio_screen.dart';
 import 'style_dna_screen.dart';
 import 'edit_bay_screen.dart';
 
-class CreateScreen extends ConsumerWidget { const CreateScreen({super.key});
-  @override Widget build(BuildContext context, WidgetRef ref) => Scaffold(backgroundColor:DripTheme.voidBlack,body:SafeArea(child:SingleChildScrollView(padding:const EdgeInsets.fromLTRB(22,22,22,40),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    const Text('CREATE',style:TextStyle(fontSize:11,letterSpacing:3,color:DripTheme.cosmicTeal,fontWeight:FontWeight.w700)),const SizedBox(height:8),const Text('WHAT ARE WE MAKING?',style:TextStyle(fontSize:31,fontWeight:FontWeight.w600,height:1.05)),const SizedBox(height:8),const Text('Choose the department. The Director handles the technical language.',style:TextStyle(color:DripTheme.muted,height:1.45)),const SizedBox(height:28),
-    _CreateCard('FILM','Build a complete production from story to cut.',Icons.movie_creation_outlined,()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const StoryPlannerScreen()))),
-    _CreateCard('SCENE','Direct a single cinematic moment.',Icons.camera_alt_outlined,()=>ref.read(navIndexProvider.notifier).state=3),
-    Row(children:[Expanded(child:_CreateCard('CHARACTER','Create an actor with continuity.',Icons.person_outline,()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>ref.read(characterListProvider).isEmpty ? const CharacterCreationScreen() : const CharacterLabScreen())))),const SizedBox(width:12),Expanded(child:_CreateCard('OUTFIT','Open the wardrobe department.',Icons.checkroom_outlined,()=>_createOutfit(context, ref)))]),
-    Row(children:[Expanded(child:_CreateCard('LOCATION','Build a world that stays consistent.',Icons.location_on_outlined, null)),const SizedBox(width:12),Expanded(child:_CreateCard('STYLE','Save a reusable Style DNA.',Icons.auto_awesome_outlined,()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const StyleDnaScreen()))))]),
-    Row(children:[Expanded(child:_CreateCard('MUSIC','Score the scene.',Icons.music_note_outlined,()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const MusicStudioScreen())))),const SizedBox(width:12),Expanded(child:_CreateCard('VOICE','Give a character a voice.',Icons.graphic_eq_outlined,null))]),
-    const SizedBox(height:22),CinematicCard(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('DIRECTOR MODE',style:TextStyle(fontSize:10,letterSpacing:2.4,color:DripTheme.cosmicTeal)),const SizedBox(height:8),const Text('Shot • Lens • Movement • Lighting • Performance',style:TextStyle(fontSize:17,fontWeight:FontWeight.w600)),const SizedBox(height:7),const Text('A visual control surface that turns your choices into a smart generation prompt.',style:TextStyle(color:DripTheme.muted,height:1.4)),const SizedBox(height:16),CinematicButton(label:'OPEN EDIT BAY',icon:Icons.movie_filter_outlined,onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const EditBayScreen()))),const SizedBox(height:10),CinematicButton(label:'OPEN DIRECTOR',icon:Icons.tune_outlined,onPressed:()=>ref.read(navIndexProvider.notifier).state=3)]) )
-  ]))));
+class CreateScreen extends ConsumerWidget {
+  const CreateScreen({super.key});
 
-  // Outfits belong to a character's real closet — not a form that mints
-  // an Outfit and discards it. Requires an active character so nothing
-  // orphaned gets created; the minted look is written straight onto that
-  // character via characterListProvider, the same path Character Lab uses.
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      backgroundColor: DripTheme.voidBlack,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('CREATE', style: DripTheme.overline),
+              const SizedBox(height: 10),
+              const Text('What are we making?', style: DripTheme.display),
+              const SizedBox(height: 10),
+              const Text(
+                'Choose a department. DripVision handles the technical language.',
+                style: DripTheme.body,
+              ),
+              const SizedBox(height: 28),
+
+              // Primary
+              _Dept(
+                title: 'FILM',
+                subtitle: 'Story to cut — full production',
+                icon: Icons.movie_creation_outlined,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StoryPlannerScreen()),
+                ),
+              ),
+              _Dept(
+                title: 'SCENE',
+                subtitle: 'Direct a single cinematic moment',
+                icon: Icons.camera_alt_outlined,
+                onTap: () => ref.read(navIndexProvider.notifier).state = 3,
+              ),
+              const SizedBox(height: 8),
+              const Text('CAST & WORLD', style: DripTheme.technical),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _Dept(
+                      title: 'CHARACTER',
+                      subtitle: 'Actor + continuity',
+                      icon: Icons.person_outline,
+                      compact: true,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ref.read(characterListProvider).isEmpty
+                              ? const CharacterCreationScreen()
+                              : const CharacterLabScreen(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _Dept(
+                      title: 'OUTFIT',
+                      subtitle: 'Wardrobe',
+                      icon: Icons.checkroom_outlined,
+                      compact: true,
+                      onTap: () => _createOutfit(context, ref),
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: _Dept(
+                      title: 'LOCATION',
+                      subtitle: 'Coming soon',
+                      icon: Icons.location_on_outlined,
+                      compact: true,
+                      onTap: null,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _Dept(
+                      title: 'STYLE',
+                      subtitle: 'Style DNA',
+                      icon: Icons.auto_awesome_outlined,
+                      compact: true,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const StyleDnaScreen()),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text('AUDIO', style: DripTheme.technical),
+              const SizedBox(height: 12),
+              _Dept(
+                title: 'MUSIC',
+                subtitle: 'Score the scene',
+                icon: Icons.music_note_outlined,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MusicStudioScreen()),
+                ),
+              ),
+              const SizedBox(height: 20),
+              CinematicCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('FINISHING', style: DripTheme.technical),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Edit Bay',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Cut, grade, and export your production.',
+                      style: DripTheme.body,
+                    ),
+                    const SizedBox(height: 16),
+                    CinematicButton(
+                      label: 'OPEN EDIT BAY',
+                      icon: Icons.movie_filter_outlined,
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const EditBayScreen()),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    CinematicButton(
+                      label: 'OPEN DIRECTOR',
+                      icon: Icons.tune_outlined,
+                      primary: false,
+                      onPressed: () =>
+                          ref.read(navIndexProvider.notifier).state = 3,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _createOutfit(BuildContext context, WidgetRef ref) async {
     final character = ref.read(activeCharacterProvider);
     if (character == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Create a character first — outfits are designed for someone.')),
+        const SnackBar(
+          content: Text('Create a character first — outfits are designed for someone.'),
+        ),
       );
       return;
     }
     final result = await Navigator.push<dna.Outfit>(
       context,
-      MaterialPageRoute(builder: (_) => CustomOutfitCreator(characterName: character.name)),
+      MaterialPageRoute(
+        builder: (_) => CustomOutfitCreator(characterName: character.name),
+      ),
     );
     if (result == null) return;
 
@@ -54,4 +196,85 @@ class CreateScreen extends ConsumerWidget { const CreateScreen({super.key});
     ref.read(activeCharacterProvider.notifier).state = updated;
   }
 }
-class _CreateCard extends StatelessWidget { final String title,desc; final IconData icon; final VoidCallback? onTap; const _CreateCard(this.title,this.desc,this.icon,this.onTap); @override Widget build(BuildContext context)=>Padding(padding:const EdgeInsets.only(bottom:12),child:CinematicCard(onTap:onTap,child:Row(children:[Container(width:46,height:46,decoration:BoxDecoration(color:DripTheme.cosmicTeal.withOpacity(.07),borderRadius:BorderRadius.circular(13)),child:Icon(icon,color:DripTheme.nebulaCyan)),const SizedBox(width:14),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(title,style:const TextStyle(fontSize:13,letterSpacing:1.5,fontWeight:FontWeight.w700)),const SizedBox(height:5),Text(desc,style:const TextStyle(color:DripTheme.muted,fontSize:12,height:1.35))]))]))); }
+
+class _Dept extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool compact;
+
+  const _Dept({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    this.onTap,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: CinematicCard(
+        onTap: onTap,
+        child: Row(
+          children: [
+            Container(
+              width: compact ? 40 : 44,
+              height: compact ? 40 : 44,
+              decoration: BoxDecoration(
+                color: enabled
+                    ? DripTheme.cosmicTeal.withOpacity(0.06)
+                    : Colors.white.withOpacity(0.03),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: enabled ? DripTheme.cosmicTeal : DripTheme.muted,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 12,
+                          letterSpacing: 1.4,
+                          fontWeight: FontWeight.w600,
+                          color: enabled ? DripTheme.warmWhite : DripTheme.muted,
+                        ),
+                      ),
+                      if (!enabled) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text('SOON', style: DripTheme.technical),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(subtitle, style: DripTheme.meta),
+                ],
+              ),
+            ),
+            if (enabled)
+              const Icon(Icons.chevron_right, size: 18, color: DripTheme.muted),
+          ],
+        ),
+      ),
+    );
+  }
+}
