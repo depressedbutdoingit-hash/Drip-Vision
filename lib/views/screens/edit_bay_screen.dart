@@ -293,6 +293,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
             _topChrome(bay, n),
             Expanded(flex: 5, child: _cinemaMonitor(bay)),
             _transport(bay, n),
+            _mediaBin(bay, n, scenes),
             Expanded(flex: 3, child: _timelineDeck(bay, n)),
             _toolChrome(),
             SizedBox(
@@ -604,6 +605,158 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+
+  // ─── MEDIA BIN (horizontal, reference #1) ─────────────────
+  Widget _mediaBin(EditBayState bay, EditBayNotifier n, List scenes) {
+    final items = <_BinItem>[];
+    for (final s in scenes) {
+      final media = s.outputVideoUrl as String?;
+      if (media == null || media.isEmpty) continue;
+      items.add(_BinItem(
+        mediaUrl: media,
+        thumb: (s.generatedLastFrameUrl ?? s.inputLastFrameUrl) as String?,
+        label: 'S${((s.sequenceIndex as int) + 1).toString().padLeft(2, '0')}',
+        sceneId: s.id as String?,
+        characterName: s.character.name as String?,
+        locationName: s.locationName as String?,
+        styleNote: s.cameraMotion as String?,
+      ));
+    }
+
+    return Container(
+      height: 78,
+      color: const Color(0xFF0C0E10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(12, 6, 12, 4),
+            child: Text('MEDIA',
+                style: TextStyle(
+                    fontSize: 9, letterSpacing: 2, color: Color(0xFF5A6260))),
+          ),
+          Expanded(
+            child: items.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      children: [
+                        _binAction(
+                          icon: Icons.add,
+                          label: 'Import',
+                          onTap: _pickFromGallery,
+                        ),
+                        const SizedBox(width: 10),
+                        const Text('No scene media yet',
+                            style: TextStyle(
+                                fontSize: 11, color: Color(0xFF5A6260))),
+                      ],
+                    ),
+                  )
+                : ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                    itemCount: items.length + 1,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, i) {
+                      if (i == 0) {
+                        return _binAction(
+                          icon: Icons.add,
+                          label: 'Import',
+                          onTap: _pickFromGallery,
+                        );
+                      }
+                      final item = items[i - 1];
+                      return GestureDetector(
+                        onTap: () {
+                          n.addMediaClip(
+                            mediaUrl: item.mediaUrl,
+                            thumbnailUrl: item.thumb,
+                            label: item.label,
+                            sceneId: item.sceneId,
+                            characterName: item.characterName,
+                            locationName: item.locationName,
+                            styleNote: item.styleNote,
+                          );
+                          _loadSource(item.mediaUrl);
+                          _toast('Added ${item.label} to timeline');
+                        },
+                        child: Container(
+                          width: 56,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF161A1C),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: const Color(0x18FFFFFF)),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              if (item.thumb != null && item.thumb!.isNotEmpty)
+                                Image.network(
+                                  item.thumb!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      const ColoredBox(color: Color(0xFF161A1C)),
+                                )
+                              else
+                                const Center(
+                                  child: Icon(Icons.movie,
+                                      size: 16, color: Color(0xFF5A6260)),
+                                ),
+                              Positioned(
+                                left: 3,
+                                bottom: 2,
+                                child: Text(
+                                  item.label,
+                                  style: const TextStyle(
+                                    fontSize: 8,
+                                    color: Colors.white70,
+                                    shadows: [
+                                      Shadow(blurRadius: 4, color: Colors.black)
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _binAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 56,
+        decoration: BoxDecoration(
+          color: const Color(0xFF121518),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: const Color(0x22FFFFFF)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: DripTheme.cosmicTeal),
+            const SizedBox(height: 2),
+            Text(label,
+                style: const TextStyle(fontSize: 8, color: Color(0xFF8A9290))),
+          ],
+        ),
       ),
     );
   }
@@ -1211,4 +1364,24 @@ class _FilmTrack extends StatelessWidget {
       ),
     );
   }
+}
+
+
+class _BinItem {
+  final String mediaUrl;
+  final String? thumb;
+  final String label;
+  final String? sceneId;
+  final String? characterName;
+  final String? locationName;
+  final String? styleNote;
+  const _BinItem({
+    required this.mediaUrl,
+    this.thumb,
+    required this.label,
+    this.sceneId,
+    this.characterName,
+    this.locationName,
+    this.styleNote,
+  });
 }

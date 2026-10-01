@@ -10,11 +10,7 @@ import 'generator_screen.dart';
 import 'edit_bay_screen.dart';
 import 'timeline_screen.dart';
 
-/// DIRECTOR MODE
-/// The user shapes a shot visually — shot size, camera angle, lens,
-/// movement, lighting, time, weather, mood, performance and color —
-/// and DripVision translates it into the language the generation
-/// services actually consume. No prompt-engineering required.
+/// DIRECTOR MODE — shape the shot; generation services consume the brief.
 class StudioScreen extends ConsumerWidget {
   const StudioScreen({super.key});
 
@@ -28,33 +24,20 @@ class StudioScreen extends ConsumerWidget {
       backgroundColor: DripTheme.voidBlack,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(22, 18, 22, 40),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'STUDIO',
-                style: TextStyle(
-                  fontSize: 11,
-                  letterSpacing: 3,
-                  color: DripTheme.cosmicTeal,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 7),
-              const Text(
-                'DIRECTOR MODE',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 7),
+              const Text('STUDIO', style: DripTheme.overline),
+              const SizedBox(height: 10),
+              const Text('Director Mode', style: DripTheme.display),
+              const SizedBox(height: 10),
               const Text(
                 'Shape the shot. DripVision translates the intent.',
-                style: TextStyle(color: DripTheme.muted),
+                style: DripTheme.body,
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 22),
+
               Row(
                 children: [
                   Expanded(
@@ -70,7 +53,7 @@ class StudioScreen extends ConsumerWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: CinematicButton(
-                      label: "DIRECTOR'S CUT",
+                      label: "CUT",
                       icon: Icons.view_timeline_outlined,
                       primary: false,
                       onPressed: () => Navigator.push(
@@ -81,11 +64,12 @@ class StudioScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
 
+              const Text('CAMERA', style: DripTheme.technical),
+              const SizedBox(height: 12),
               CinematicCard(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     DirectorControlRow(
                       label: 'SHOT',
@@ -98,17 +82,15 @@ class StudioScreen extends ConsumerWidget {
                       label: 'CAMERA',
                       value: settings.camera,
                       options: DirectorSettings.cameras,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(camera: v),
+                      onSelect: (v) => notifier.state =
+                          ref.read(directorSettingsProvider).copyWith(camera: v),
                     ),
                     DirectorControlRow(
                       label: 'LENS',
                       value: settings.lens,
                       options: DirectorSettings.lenses,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(lens: v),
+                      onSelect: (v) => notifier.state =
+                          ref.read(directorSettingsProvider).copyWith(lens: v),
                     ),
                     DirectorControlRow(
                       label: 'MOVEMENT',
@@ -118,6 +100,16 @@ class StudioScreen extends ConsumerWidget {
                           .read(directorSettingsProvider)
                           .copyWith(movement: v),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              const Text('LIGHT & WORLD', style: DripTheme.technical),
+              const SizedBox(height: 12),
+              CinematicCard(
+                child: Column(
+                  children: [
                     DirectorControlRow(
                       label: 'LIGHTING',
                       value: settings.lighting,
@@ -130,9 +122,8 @@ class StudioScreen extends ConsumerWidget {
                       label: 'TIME',
                       value: settings.time,
                       options: DirectorSettings.times,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(time: v),
+                      onSelect: (v) => notifier.state =
+                          ref.read(directorSettingsProvider).copyWith(time: v),
                     ),
                     DirectorControlRow(
                       label: 'WEATHER',
@@ -143,12 +134,28 @@ class StudioScreen extends ConsumerWidget {
                           .copyWith(weather: v),
                     ),
                     DirectorControlRow(
+                      label: 'COLOR',
+                      value: settings.color,
+                      options: DirectorSettings.colors,
+                      onSelect: (v) => notifier.state =
+                          ref.read(directorSettingsProvider).copyWith(color: v),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              const Text('PERFORMANCE', style: DripTheme.technical),
+              const SizedBox(height: 12),
+              CinematicCard(
+                child: Column(
+                  children: [
+                    DirectorControlRow(
                       label: 'MOOD',
                       value: settings.mood,
                       options: DirectorSettings.moods,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(mood: v),
+                      onSelect: (v) => notifier.state =
+                          ref.read(directorSettingsProvider).copyWith(mood: v),
                     ),
                     DirectorControlRow(
                       label: 'PERFORMANCE',
@@ -158,58 +165,34 @@ class StudioScreen extends ConsumerWidget {
                           .read(directorSettingsProvider)
                           .copyWith(performance: v),
                     ),
-                    DirectorControlRow(
-                      label: 'COLOR',
-                      value: settings.color,
-                      options: DirectorSettings.colors,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(color: v),
-                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
               CinematicCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "DIRECTOR'S BRIEF",
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 2.3,
-                        color: DripTheme.cosmicTeal,
-                      ),
-                    ),
+                    const Text("DIRECTOR'S BRIEF", style: DripTheme.technical),
                     const SizedBox(height: 10),
                     Text(
                       settings.toSummary(),
                       style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
                       ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Character identity, location and continuity remain untouched — Director Mode only shapes the camera and the light.',
-                      style: TextStyle(
-                        color: DripTheme.muted,
-                        height: 1.45,
-                      ),
+                      'Character identity and continuity stay locked — this only shapes camera and light.',
+                      style: DripTheme.meta,
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: CinematicButton(
+                    const SizedBox(height: 16),
+                    CinematicButton(
                       label: 'GENERATE SHOT',
-                      icon: Icons.play_arrow_rounded,
+                      icon: Icons.camera_alt_outlined,
                       onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -217,86 +200,77 @@ class StudioScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text('CUTTING ROOM', style: DripTheme.technical),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: CinematicButton(
-                      label: 'RESET',
-                      icon: Icons.refresh_rounded,
-                      primary: false,
-                      onPressed: () =>
-                          notifier.state = const DirectorSettings(),
-                    ),
+                  Text(
+                    '${scenes.length.toString().padLeft(2, '0')} SHOTS',
+                    style: DripTheme.meta,
                   ),
                 ],
               ),
-
-              const SizedBox(height: 18),
-
-              CinematicButton(
-                label: 'OPEN EDIT BAY',
-                icon: Icons.movie_filter_outlined,
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const EditBayScreen(),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              const Text(
-                'CUTTING ROOM',
-                style: TextStyle(
-                  fontSize: 10,
-                  letterSpacing: 2.5,
-                  color: DripTheme.cosmicTeal,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '${scenes.length.toString().padLeft(2, '0')} SHOTS IN CURRENT CUT',
-                style: const TextStyle(color: DripTheme.muted),
-              ),
-              const SizedBox(height: 10),
-
-              ...scenes.asMap().entries.map(
-                    (e) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: CinematicCard(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 13,
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              'SHOT ${(e.key + 1).toString().padLeft(2, '0')}',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                letterSpacing: 1.5,
-                                color: DripTheme.nebulaCyan,
+              const SizedBox(height: 12),
+              if (scenes.isEmpty)
+                const Text(
+                  'Generate a shot and it will land here.',
+                  style: DripTheme.meta,
+                )
+              else
+                ...scenes.asMap().entries.map(
+                      (e) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: CinematicCard(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const TimelineScreen(),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                'SHOT ${(e.key + 1).toString().padLeft(2, '0')}',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  letterSpacing: 1.4,
+                                  color: DripTheme.cosmicTeal,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 15),
-                            Expanded(
-                              child: Text(
-                                e.value.prompt,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 13),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Text(
+                                  e.value.prompt.isEmpty
+                                      ? e.value.character.name
+                                      : e.value.prompt,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 13),
+                                ),
                               ),
-                            ),
-                            const Icon(
-                              Icons.chevron_right,
-                              color: Colors.white24,
-                            ),
-                          ],
+                              const Icon(Icons.chevron_right,
+                                  size: 18, color: DripTheme.muted),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
+              const SizedBox(height: 12),
+              CinematicButton(
+                label: 'OPEN EDIT BAY',
+                icon: Icons.movie_filter_outlined,
+                primary: false,
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EditBayScreen()),
+                ),
+              ),
             ],
           ),
         ),

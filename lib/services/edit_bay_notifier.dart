@@ -235,6 +235,44 @@ class EditBayNotifier extends StateNotifier<EditBayState> {
     );
   }
 
+
+  /// Append a media clip to V1 at the end of the current cut.
+  void addMediaClip({
+    required String mediaUrl,
+    String? thumbnailUrl,
+    String label = 'CLIP',
+    String? sceneId,
+    String? characterName,
+    String? locationName,
+    String? styleNote,
+    double duration = 4,
+  }) {
+    _pushUndo(state.project);
+    final start = state.project.totalDuration;
+    final clip = EditClip(
+      id: 'clip_${DateTime.now().millisecondsSinceEpoch}',
+      trackId: 'v1',
+      mediaUrl: mediaUrl,
+      thumbnailUrl: thumbnailUrl,
+      label: label,
+      startOnTimeline: start,
+      duration: duration,
+      outPoint: duration,
+      sceneId: sceneId,
+      characterName: characterName,
+      locationName: locationName,
+      styleNote: styleNote,
+    );
+    state = state.copyWith(
+      project: state.project.copyWith(
+        clips: [...state.project.clips, clip],
+        dirty: true,
+        updatedAt: DateTime.now(),
+      ),
+      selectedClipId: clip.id,
+    );
+  }
+
   Future<void> save() async {
     state = state.copyWith(saving: true);
     try {
