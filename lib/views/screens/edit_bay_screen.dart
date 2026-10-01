@@ -170,9 +170,27 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
 
   void _toast(String msg) {
     if (!mounted) return;
+    // Keep snackbars human — never dump FFmpeg stacks
+    final clean = msg
+        .replaceAll(RegExp(r'Exception:\s*'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    final short = clean.length > 120 ? '${clean.substring(0, 120)}…' : clean;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: DripTheme.surfaceRaised),
+      SnackBar(
+        content: Text(short, style: const TextStyle(color: Colors.white)),
+        backgroundColor: DripTheme.surfaceRaised,
+      ),
     );
+  }
+
+  void _splitWithFeedback(EditBayNotifier n) {
+    final ok = n.splitClipAtPlayhead();
+    if (ok) {
+      _toast('Clip split at playhead');
+    } else {
+      _toast('Select a clip and move the playhead into the middle of it, then split');
+    }
   }
 
   Future<void> _share() async {
@@ -429,7 +447,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
       );
     } else if (_controller != null && _controller!.value.isInitialized) {
       picture = ColorFiltered(
-        colorFilter: ColorFilter.matrix(_previewMatrix(adj)),
+        colorFilter: ColorFilter.matrix(_previewMatrix(adj, _activeFilter)),
         child: AspectRatio(
           aspectRatio: _controller!.value.aspectRatio,
           child: VideoPlayer(_controller!),
@@ -780,7 +798,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                         letterSpacing: 2,
                         color: Color(0xFF5A6260))),
                 const Spacer(),
-                _miniIcon(Icons.content_cut, n.splitClipAtPlayhead),
+                _miniIcon(Icons.content_cut, () => _splitWithFeedback(n)),
                 _miniIcon(Icons.delete_outline, n.deleteSelected),
                 _miniIcon(Icons.zoom_out, () => n.setZoom(pps - 8)),
                 _miniIcon(Icons.zoom_in, () => n.setZoom(pps + 8)),
@@ -959,7 +977,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                 label: 'SPLIT',
                 icon: Icons.content_cut,
                 primary: false,
-                onPressed: n.splitClipAtPlayhead,
+                onPressed: () => _splitWithFeedback(n),
               ),
             ),
             const SizedBox(width: 8),
@@ -1130,15 +1148,15 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
             selectedColor: DripTheme.cosmicTeal.withOpacity(0.25),
             onSelected: (_) {
               setState(() => _activeFilter = f.$1 == 'none' ? null : f.$1);
-              if (f.$1 != 'none' && !_loading) {
-                _runEdit(
-                  () => _editor.applyFilter(
-                    inputPath: _currentPath!,
-                    filterId: f.$1,
-                  ),
-                  'Filter ${f.$2}',
-                );
-              }
+              if (f.$1 == 'none' || _loading || _currentPath == null) return;
+              // Instant look change on the monitor; bake with FFmpeg in background
+              _runEdit(
+                () => _editor.applyFilter(
+                  inputPath: _currentPath!,
+                  filterId: f.$1,
+                ),
+                'Filter ${f.$2}',
+              );
             },
             labelStyle: TextStyle(
               color: on ? DripTheme.cosmicTeal : DripTheme.warmWhite,
@@ -1215,19 +1233,74 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     return '$m:$sec:$f';
   }
 
-  static List<double> _previewMatrix(ClipAdjustments a) {
-    final b = a.brightness + a.exposure * 0.5;
-    final c = 1 + a.contrast * 0.5 + a.cinematicContrast * 0.25;
-    final sat = 1 + a.saturation * 0.5;
+  static List<double> _previewMatrix(ClipAdjustments a, String? filterId) {
+    var b = a.brightness + a.exposure * 0.5;
+    var c = 1 + a.contrast * 0.5 + a.cinematicContrast * 0.25;
+    var sat = 1 + a.saturation * 0.5;
+    var warm = a.temperature;
+    // Named filter look (instant monitor feedback)
+    switch (filterId) {
+      case 'cinematic':
+      case 'dripCinema':
+        c *= 1.12;
+        sat *= 0.9;
+        b -= 0.03;
+        break;
+      case 'teal_orange':
+      case 'neonNight':
+        sat *= 1.15;
+        warm -= 0.15;
+        break;
+      case 'noir':
+        sat = 0.05;
+        c *= 1.25;
+        b -= 0.04;
+        break;
+      case 'vivid':
+        sat *= 1.35;
+        c *= 1.12;
+        break;
+      case 'vintage':
+      case 'film35mm':
+        sat *= 0.75;
+        warm += 0.12;
+        break;
+      case 'cool':
+        warm -= 0.2;
+        break;
+      case 'warm':
+      case 'bleach':
+        warm += 0.2;
+        break;
+      case 'horror':
+        sat *= 0.55;
+        c *= 1.3;
+        b -= 0.06;
+        break;
+      case 'dream':
+      case 'pastelHorror':
+        sat *= 0.9;
+        c *= 0.95;
+        b += 0.03;
+        break;
+      case 'plasticFantasy':
+        sat *= 1.25;
+        c *= 1.08;
+        break;
+      case 'grain':
+      case 'vhs':
+        c *= 1.05;
+        sat *= 0.95;
+        break;
+    }
     const lr = 0.2126, lg = 0.7152, lb = 0.0722;
     final r = (1 - sat) * lr;
     final g = (1 - sat) * lg;
     final bl = (1 - sat) * lb;
-    final t = a.temperature;
     return [
-      (r + sat) * c, g * c, bl * c, 0, b * 255 + t * 20,
+      (r + sat) * c, g * c, bl * c, 0, b * 255 + warm * 20,
       r * c, (g + sat) * c, bl * c, 0, b * 255,
-      r * c, g * c, (bl + sat) * c, 0, b * 255 - t * 12,
+      r * c, g * c, (bl + sat) * c, 0, b * 255 - warm * 12,
       0, 0, 0, 1, 0,
     ];
   }

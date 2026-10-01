@@ -140,14 +140,17 @@ class EditBayNotifier extends StateNotifier<EditBayState> {
     ));
   }
 
-  void splitClipAtPlayhead() {
+  /// Returns true if the selected clip was split at the playhead.
+  bool splitClipAtPlayhead() {
     final id = state.selectedClipId;
-    if (id == null) return;
-    final clip = state.project.clips.firstWhere((c) => c.id == id);
+    if (id == null) return false;
+    final matches = state.project.clips.where((c) => c.id == id);
+    if (matches.isEmpty) return false;
+    final clip = matches.first;
     final ph = state.project.playheadSec;
     if (ph <= clip.startOnTimeline + 0.15 ||
         ph >= clip.endOnTimeline - 0.15) {
-      return;
+      return false;
     }
     _pushUndo(state.project);
     final leftDur = ph - clip.startOnTimeline;
@@ -180,6 +183,7 @@ class EditBayNotifier extends StateNotifier<EditBayState> {
       project: state.project.copyWith(clips: clips, dirty: true),
       selectedClipId: right.id,
     );
+    return true;
   }
 
   void deleteSelected() {
