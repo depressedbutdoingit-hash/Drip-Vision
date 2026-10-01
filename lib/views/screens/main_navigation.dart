@@ -9,9 +9,16 @@ import 'studio_screen.dart';
 import 'explore_drip_screen.dart';
 import 'settings_screen.dart';
 import '../widgets/system_banner.dart';
+import '../widgets/studio_drawer.dart';
 
 class MainNavigation extends ConsumerWidget {
   const MainNavigation({super.key});
+
+  static final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
+  static void openDrawer() {
+    scaffoldKey.currentState?.openDrawer();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,58 +31,73 @@ class MainNavigation extends ConsumerWidget {
       const ExploreDripScreen(),
     ];
 
-    // Home owns its own header; other tabs get a quiet brand bar.
+    // Home has its own header + menu; other tabs use app bar menu.
     final showAppBar = i != 0;
 
     return SystemBannerHost(
       child: Scaffold(
-      backgroundColor: DripTheme.voidBlack,
-      appBar: showAppBar
-          ? AppBar(
-              title: const Text('DRIPVISION', style: DripTheme.brandMark),
-              actions: [
-                IconButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        key: scaffoldKey,
+        backgroundColor: DripTheme.voidBlack,
+        drawer: const StudioDrawer(),
+        appBar: showAppBar
+            ? AppBar(
+                leading: IconButton(
+                  tooltip: 'Menu',
+                  onPressed: openDrawer,
+                  icon: const Icon(
+                    Icons.menu,
+                    size: 22,
+                    color: DripTheme.chrome,
                   ),
-                  icon: const Icon(Icons.person_outline, size: 21, color: DripTheme.chrome),
                 ),
-                const SizedBox(width: 4),
-              ],
-            )
-          : null,
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 200),
-        switchInCurve: Curves.easeOut,
-        switchOutCurve: Curves.easeIn,
-        child: KeyedSubtree(
-          key: ValueKey(i),
-          child: screens[i],
+                title: const Text('DRIPVISION', style: DripTheme.brandMark),
+                actions: [
+                  IconButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    ),
+                    icon: const Icon(
+                      Icons.person_outline,
+                      size: 21,
+                      color: DripTheme.chrome,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+              )
+            : null,
+        body: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          child: KeyedSubtree(
+            key: ValueKey(i),
+            child: screens[i],
+          ),
         ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: DripTheme.deepBlack,
-          border: Border(top: BorderSide(color: DripTheme.hairline)),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _nav(ref, 0, Icons.home_outlined, 'HOME', i),
-                _nav(ref, 1, Icons.add_box_outlined, 'CREATE', i),
-                _nav(ref, 2, Icons.folder_open_outlined, 'LIBRARY', i),
-                _nav(ref, 3, Icons.tune_outlined, 'STUDIO', i),
-                _nav(ref, 4, Icons.explore_outlined, 'EXPLORE', i),
-              ],
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: DripTheme.deepBlack,
+            border: Border(top: BorderSide(color: DripTheme.hairline)),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _nav(ref, 0, Icons.home_outlined, 'HOME', i),
+                  _nav(ref, 1, Icons.add_box_outlined, 'CREATE', i),
+                  _nav(ref, 2, Icons.folder_open_outlined, 'LIBRARY', i),
+                  _nav(ref, 3, Icons.tune_outlined, 'STUDIO', i),
+                  _nav(ref, 4, Icons.explore_outlined, 'EXPLORE', i),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 

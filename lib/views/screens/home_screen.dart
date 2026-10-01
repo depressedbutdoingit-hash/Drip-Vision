@@ -9,6 +9,7 @@ import 'edit_bay_screen.dart';
 import 'settings_screen.dart';
 import 'story_planner_screen.dart';
 import 'timeline_screen.dart';
+import 'main_navigation.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -31,9 +32,18 @@ class HomeScreen extends ConsumerWidget {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(28, 28, 20, 0),
+                padding: const EdgeInsets.fromLTRB(12, 20, 12, 0),
                 child: Row(
                   children: [
+                    IconButton(
+                      tooltip: 'Menu',
+                      onPressed: MainNavigation.openDrawer,
+                      icon: const Icon(
+                        Icons.menu,
+                        size: 22,
+                        color: DripTheme.chrome,
+                      ),
+                    ),
                     const Expanded(
                       child: Text('DRIPVISION', style: DripTheme.brandMark),
                     ),
