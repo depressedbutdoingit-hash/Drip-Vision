@@ -60,7 +60,7 @@ class _UsersTab extends StatelessWidget {
           itemCount: users.length,
           itemBuilder: (context, i) {
             final u = users[i].data() as Map<String, dynamic>;
-            final isAdmin = u['role'] == 'admin';
+            final isAdmin = (u['role'] ?? '').toString().trim().toLowerCase() == 'admin' || (u['role'] ?? '').toString().trim().toLowerCase() == 'owner';
             return ListTile(
               leading: CircleAvatar(
                 backgroundColor: isAdmin

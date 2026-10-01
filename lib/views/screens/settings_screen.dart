@@ -35,8 +35,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final doc =
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      final role = doc.data()?['role'] as String?;
-      if (mounted) setState(() => _isAdmin = role == 'admin');
+      final role = (doc.data()?['role'] ?? '').toString().trim().toLowerCase();
+      if (mounted) setState(() => _isAdmin = role == 'admin' || role == 'owner');
     } catch (_) {}
   }
 

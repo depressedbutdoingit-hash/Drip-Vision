@@ -21,7 +21,7 @@ class UserProfile {
   bool get isPro => subscriptionTier == 'pro';
   bool get isStarter => subscriptionTier == 'starter';
   bool get isFree => subscriptionTier == 'free';
-  bool get isAdmin => role == 'admin';
+  bool get isAdmin => role.trim().toLowerCase() == 'admin' || role.trim().toLowerCase() == 'owner';
 
   UserProfile copyWith({
     String? uid,

@@ -277,7 +277,7 @@ class _UsersTabState extends State<_UsersTab> {
                       style: const TextStyle(fontSize: 10, color: DripTheme.muted, height: 1.35),
                     ),
                     isThreeLine: true,
-                    trailing: role == 'admin'
+                    trailing: role.toString().trim().toLowerCase() == 'admin' || role.toString().trim().toLowerCase() == 'owner'
                         ? const Icon(Icons.shield, color: DripTheme.cosmicTeal, size: 18)
                         : IconButton(
                             icon: const Icon(Icons.add, color: DripTheme.chrome, size: 20),

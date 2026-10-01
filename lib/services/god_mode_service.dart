@@ -22,7 +22,7 @@ class GodModeService {
           .doc(user.uid)
           .get();
       final role = (doc.data()?['role'] ?? '').toString().trim().toLowerCase();
-      return role == 'admin';
+      return role == 'admin' || role == 'owner';
     } catch (_) {
       return false;
     }

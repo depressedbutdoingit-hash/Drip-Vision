@@ -18,7 +18,7 @@ class TokenService {
     try {
       final doc = await _firestore.collection('users').doc(user.uid).get();
       final role = (doc.data()?['role'] ?? '').toString().trim().toLowerCase();
-      return role == 'admin';
+      return role == 'admin' || role == 'owner';
     } catch (_) {
       return false;
     }
@@ -50,7 +50,7 @@ class TokenService {
       if (!doc.exists) return false;
       final data = doc.data()!;
       final role = (data['role'] ?? '').toString().trim().toLowerCase();
-      if (role == 'admin') return true;
+      if (role == 'admin' || role == 'owner') return true;
 
       final currentBalance = (data['tokenBalance'] ?? 0) as int;
       if (currentBalance < amount) return false;
