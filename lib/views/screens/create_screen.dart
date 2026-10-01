@@ -219,11 +219,12 @@ class _Dept extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: CinematicCard(
         onTap: onTap,
+        padding: EdgeInsets.all(compact ? 12 : 16),
         child: Row(
           children: [
             Container(
-              width: compact ? 40 : 44,
-              height: compact ? 40 : 44,
+              width: compact ? 36 : 44,
+              height: compact ? 36 : 44,
               decoration: BoxDecoration(
                 color: enabled
                     ? DripTheme.cosmicTeal.withOpacity(0.06)
@@ -232,46 +233,38 @@ class _Dept extends StatelessWidget {
               ),
               child: Icon(
                 icon,
-                size: 20,
+                size: compact ? 18 : 20,
                 color: enabled ? DripTheme.cosmicTeal : DripTheme.muted,
               ),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: compact ? 10 : 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 12,
-                          letterSpacing: 1.4,
-                          fontWeight: FontWeight.w600,
-                          color: enabled ? DripTheme.warmWhite : DripTheme.muted,
-                        ),
-                      ),
-                      if (!enabled) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text('SOON', style: DripTheme.technical),
-                        ),
-                      ],
-                    ],
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: compact ? 11 : 12,
+                      letterSpacing: compact ? 1.0 : 1.4,
+                      fontWeight: FontWeight.w600,
+                      color: enabled ? DripTheme.warmWhite : DripTheme.muted,
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(subtitle, style: DripTheme.meta),
+                  const SizedBox(height: 3),
+                  Text(
+                    enabled ? subtitle : 'Coming soon',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: DripTheme.meta.copyWith(fontSize: compact ? 11 : 12),
+                  ),
                 ],
               ),
             ),
             if (enabled)
-              const Icon(Icons.chevron_right, size: 18, color: DripTheme.muted),
+              const Icon(Icons.chevron_right, size: 16, color: DripTheme.muted),
           ],
         ),
       ),

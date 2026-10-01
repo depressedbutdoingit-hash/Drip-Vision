@@ -121,9 +121,38 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
   }
 
   Future<void> _setController(String path) async {
-    await _controller?.dispose();
+    // Detach old controller before dispose so build never paints a disposed player
+    final previous = _controller;
+    if (mounted) {
+      setState(() => _controller = null);
+    } else {
+      _controller = null;
+    }
+    try {
+      await previous?.dispose();
+    } catch (_) {}
+
+    if (!mounted) return;
+    if (!await File(path).exists()) {
+      _toast('Video file missing');
+      return;
+    }
+
     final c = VideoPlayerController.file(File(path));
-    await c.initialize();
+    try {
+      await c.initialize();
+    } catch (e) {
+      try {
+        await c.dispose();
+      } catch (_) {}
+      if (mounted) _toast('Could not open video');
+      return;
+    }
+    if (!mounted) {
+      await c.dispose();
+      return;
+    }
+
     final dur = c.value.duration.inMilliseconds / 1000.0;
     setState(() {
       _controller = c;
@@ -133,7 +162,9 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
       _trimEnd = _duration;
     });
     c.setLooping(true);
-    await c.play();
+    try {
+      await c.play();
+    } catch (_) {}
   }
 
   Future<void> _pickFromGallery() async {
@@ -447,7 +478,14 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
       );
     } else if (_controller != null && _controller!.value.isInitialized) {
       picture = ColorFiltered(
-        colorFilter: ColorFilter.matrix(_previewMatrix(adj, _activeFilter)),
+        colorFilter: ColorFilter.matrix(_previewMatrix(
+            adj,
+            _activeFilter,
+            brightness: _brightness,
+            contrast: _contrast,
+            saturation: _saturation,
+            warmth: _warmth,
+          )),
         child: AspectRatio(
           aspectRatio: _controller!.value.aspectRatio,
           child: VideoPlayer(_controller!),
@@ -595,7 +633,10 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
             icon: const Icon(Icons.skip_next, size: 20, color: DripTheme.chrome),
             onPressed: () {
               n.setPlayhead(bay.project.totalDuration);
-              _controller?.seekTo(_controller!.value.duration);
+              final c = _controller;
+              if (c != null && c.value.isInitialized) {
+                c.seekTo(c.value.duration);
+              }
             },
           ),
           Expanded(
@@ -1147,13 +1188,18 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
             selected: on,
             selectedColor: DripTheme.cosmicTeal.withOpacity(0.25),
             onSelected: (_) {
-              setState(() => _activeFilter = f.$1 == 'none' ? null : f.$1);
-              if (f.$1 == 'none' || _loading || _currentPath == null) return;
-              // Instant look change on the monitor; bake with FFmpeg in background
+              final id = f.$1 == 'none' ? null : f.$1;
+              setState(() => _activeFilter = id);
+              if (id == null) {
+                _toast('Filter cleared');
+                return;
+              }
+              if (_loading || _currentPath == null) return;
+              // Preview is instant; bake is best-effort
               _runEdit(
                 () => _editor.applyFilter(
                   inputPath: _currentPath!,
-                  filterId: f.$1,
+                  filterId: id,
                 ),
                 'Filter ${f.$2}',
               );
@@ -1233,12 +1279,18 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     return '$m:$sec:$f';
   }
 
-  static List<double> _previewMatrix(ClipAdjustments a, String? filterId) {
-    var b = a.brightness + a.exposure * 0.5;
-    var c = 1 + a.contrast * 0.5 + a.cinematicContrast * 0.25;
-    var sat = 1 + a.saturation * 0.5;
-    var warm = a.temperature;
-    // Named filter look (instant monitor feedback)
+  static List<double> _previewMatrix(
+    ClipAdjustments a,
+    String? filterId, {
+    double brightness = 0,
+    double contrast = 0,
+    double saturation = 0,
+    double warmth = 0,
+  }) {
+    var b = a.brightness + a.exposure * 0.5 + brightness;
+    var c = 1 + a.contrast * 0.5 + a.cinematicContrast * 0.25 + contrast * 0.5;
+    var sat = 1 + a.saturation * 0.5 + saturation * 0.5;
+    var warm = a.temperature + warmth;
     switch (filterId) {
       case 'cinematic':
       case 'dripCinema':
@@ -1252,9 +1304,9 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
         warm -= 0.15;
         break;
       case 'noir':
-        sat = 0.05;
-        c *= 1.25;
-        b -= 0.04;
+        sat = 0.02;
+        c *= 1.3;
+        b -= 0.05;
         break;
       case 'vivid':
         sat *= 1.35;
@@ -1293,14 +1345,17 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
         sat *= 0.95;
         break;
     }
+    c = c.clamp(0.2, 3.0);
+    sat = sat.clamp(0.0, 3.0);
+    b = b.clamp(-1.0, 1.0);
     const lr = 0.2126, lg = 0.7152, lb = 0.0722;
     final r = (1 - sat) * lr;
     final g = (1 - sat) * lg;
     final bl = (1 - sat) * lb;
     return [
-      (r + sat) * c, g * c, bl * c, 0, b * 255 + warm * 20,
+      (r + sat) * c, g * c, bl * c, 0, b * 255 + warm * 25,
       r * c, (g + sat) * c, bl * c, 0, b * 255,
-      r * c, g * c, (bl + sat) * c, 0, b * 255 - warm * 12,
+      r * c, g * c, (bl + sat) * c, 0, b * 255 - warm * 15,
       0, 0, 0, 1, 0,
     ];
   }

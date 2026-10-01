@@ -132,22 +132,25 @@ class StudioDrawer extends ConsumerWidget {
                     label: 'Settings',
                     onTap: () => _push(context, const SettingsScreen()),
                   ),
-                  _item(
-                    icon: Icons.security,
-                    label: 'God Mode',
-                    onTap: () async {
-                      Navigator.pop(context);
-                      final ok = await GodModeService.isAuthorizedAdmin();
-                      if (!context.mounted) return;
-                      if (!ok) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Access denied')),
-                        );
-                        return;
+                  // Only visible to admins — not every user
+                  FutureBuilder<bool>(
+                    future: GodModeService.isAuthorizedAdmin(),
+                    builder: (context, snap) {
+                      if (snap.data != true) {
+                        return const SizedBox.shrink();
                       }
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const GodModeScreen()),
+                      return _item(
+                        icon: Icons.security,
+                        label: 'God Mode',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const GodModeScreen(),
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
