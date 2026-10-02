@@ -169,7 +169,18 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
 
   Future<void> _pickFromGallery() async {
     final file = await _picker.pickVideo(source: ImageSource.gallery);
-    if (file != null) await _loadSource(file.path);
+    if (file == null) return;
+    await _loadSource(file.path);
+    if (!mounted || _currentPath == null) return;
+    // Import must land on the timeline, not only in the monitor
+    final name = file.name.isNotEmpty ? file.name : 'Import';
+    final label = name.length > 24 ? '${name.substring(0, 24)}…' : name;
+    ref.read(editBayProvider.notifier).addMediaClip(
+          mediaUrl: _currentPath!,
+          label: label,
+          duration: _duration > 0.5 ? _duration : 4,
+        );
+    _toast('Added to timeline');
   }
 
   Future<void> _runEdit(Future<String> Function() op, String label) async {
@@ -850,7 +861,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
             child: bay.project.clips.isEmpty
                 ? const Center(
                     child: Text(
-                      'Import media or generate scenes — clips appear here.',
+                      'Import a video (＋ above) — it appears on the timeline here.',
                       style: TextStyle(fontSize: 12, color: Color(0xFF5A6260)),
                       textAlign: TextAlign.center,
                     ),
