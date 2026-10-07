@@ -10,7 +10,6 @@ import '../../services/continuity_service.dart';
 import '../../services/token_service.dart';
 import 'story_planner_screen.dart';
 import '../widgets/video_player_widget.dart';
-import '../widgets/galaxy_background.dart';
 
 final productionQueueProvider = StateNotifierProvider.family<ProductionQueueNotifier, ProductionQueueState, StoryPlan>(
   (ref, plan) => ProductionQueueNotifier(
@@ -257,85 +256,6 @@ class _ProductionQueueScreenState extends ConsumerState<ProductionQueueScreen> {
       backgroundColor: DripTheme.voidBlack,
       body: Stack(
         children: [
-          const GalaxyBackground(starCount: 60, intensity: 0.2),
-
-          SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'PRODUCTION',
-                              style: TextStyle(
-                                fontSize: 12,
-                                letterSpacing: 4,
-                                color: DripTheme.cosmicTeal.withOpacity(0.7),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.plan.title.toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 2,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: widget.plan.scenes.isEmpty
-                        ? 0
-                        : (state.currentSceneIndex + (state.isGenerating ? 0 : 1)) / widget.plan.scenes.length,
-                      backgroundColor: Colors.white.withOpacity(0.05),
-                      valueColor: AlwaysStoppedAnimation<Color>(DripTheme.cosmicTeal),
-                      minHeight: 4,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                if (state.currentStatus != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      state.currentStatus!.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 2,
-                        color: DripTheme.cosmicTeal.withOpacity(0.8),
-                      ),
-                    ),
-                  ),
-
-                const SizedBox(height: 16),
-
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: widget.plan.scenes.length,
                     itemBuilder: (context, index) {
                       final scene = widget.plan.scenes[index];

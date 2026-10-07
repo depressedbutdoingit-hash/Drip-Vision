@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../core/theme.dart';
 import '../../services/suno_service.dart';
-import '../../views/widgets/galaxy_background.dart';
 
 final musicPlayerProvider = Provider((ref) => AudioPlayer());
 
@@ -50,7 +49,6 @@ class _MusicStudioScreenState extends ConsumerState<MusicStudioScreen> {
       backgroundColor: DripTheme.voidBlack,
       body: Stack(
         children: [
-          const GalaxyBackground(starCount: 70, intensity: 0.3),
 
           SafeArea(
             child: SingleChildScrollView(

@@ -6,7 +6,6 @@ import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../models/character.dart' as live;
 import '../../models/character_dna.dart';
-import '../../views/widgets/galaxy_background.dart';
 import 'character_lab_screen.dart';
 import '../widgets/character_reveal_sheet.dart';
 
@@ -46,7 +45,6 @@ class _CharacterCreationScreenState extends ConsumerState<CharacterCreationScree
       backgroundColor: DripTheme.voidBlack,
       body: Stack(
         children: [
-          const GalaxyBackground(starCount: 60, intensity: 0.25),
 
           SafeArea(
             child: SingleChildScrollView(

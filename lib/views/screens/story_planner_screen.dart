@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../widgets/drip_button.dart';
+import '../widgets/cinematic_button.dart';
 import '../../core/providers.dart';
 import '../../services/token_service.dart';
 import '../../core/env.dart';
 import '../../models/character_dna.dart';
 import '../../services/cost_tracking_service.dart';
-import '../../views/widgets/galaxy_background.dart';
 import '../../views/widgets/drip_celebration.dart';
 import 'screenplay_screen.dart';
 import 'storyboard_screen.dart';
@@ -117,31 +118,19 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
 
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
-      body: Stack(
-        children: [
-          const GalaxyBackground(starCount: 80, intensity: 0.3),
-
-          SafeArea(
+      body: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Text('STORY → FILM', style: DripTheme.brandMark),
+                  const SizedBox(height: 6),
                   Text(
-                    'STORY TO FILM',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      letterSpacing: 8,
-                      color: DripTheme.cosmicTeal,
-                    ),
+                    'Describe the film. The Director plans production.',
+                    style: DripTheme.meta,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Describe your story. The Director will plan the production.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white54,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
 
                   _buildInputField(
                     controller: _titleController,
@@ -193,38 +182,20 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  SizedBox(
+                  DripButton(
                     width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: isPlanning ? null : _planProduction,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: DripTheme.cosmicTeal,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 8,
-                        shadowColor: DripTheme.cosmicTeal.withOpacity(0.4),
-                      ),
-                      child: isPlanning
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.black,
-                              ),
-                            )
-                          : const Text(
-                              'PLAN PRODUCTION',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 2,
-                              ),
+                    height: 52,
+                    onPressed: isPlanning ? null : _planProduction,
+                    child: isPlanning
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: DripTheme.voidBlack,
                             ),
-                    ),
+                          )
+                        : const Text('PLAN PRODUCTION'),
                   ),
                   const SizedBox(height: 48),
 
@@ -236,7 +207,7 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: DripTheme.cosmicTeal.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(DripTheme.radiusMd),
                           border: Border.all(
                             color: DripTheme.cosmicTeal.withOpacity(0.2),
                           ),
@@ -271,8 +242,6 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
               ),
             ),
           ),
-        ],
-      ),
     );
   }
 
@@ -284,34 +253,26 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            letterSpacing: 3,
-            color: DripTheme.cosmicTeal.withOpacity(0.7),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text(label, style: DripTheme.overline),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(color: DripTheme.warmWhite),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.white24),
+            hintStyle: const TextStyle(color: DripTheme.muted),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.03),
+            fillColor: DripTheme.surface,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(DripTheme.radiusMd),
               borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(DripTheme.radiusMd),
               borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(DripTheme.radiusMd),
               borderSide: BorderSide(color: DripTheme.cosmicTeal),
             ),
           ),
@@ -329,29 +290,21 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            letterSpacing: 3,
-            color: DripTheme.cosmicTeal.withOpacity(0.7),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text(label, style: DripTheme.overline),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.03),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            color: DripTheme.surface,
+            borderRadius: BorderRadius.circular(DripTheme.radiusMd),
+            border: Border.all(color: DripTheme.hairline),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
-              dropdownColor: const Color(0xFF0A0E1A),
-              style: const TextStyle(color: Colors.white),
+              dropdownColor: DripTheme.surfaceRaised,
+              style: const TextStyle(color: DripTheme.warmWhite),
               items: items.map((item) => DropdownMenuItem(
                 value: item,
                 child: Text(item),
@@ -368,28 +321,20 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'YOUR STORY',
-          style: TextStyle(
-            fontSize: 12,
-            letterSpacing: 3,
-            color: DripTheme.cosmicTeal.withOpacity(0.7),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        const Text('YOUR STORY', style: DripTheme.overline),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.03),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            color: DripTheme.surface,
+            borderRadius: BorderRadius.circular(DripTheme.radiusMd),
+            border: Border.all(color: DripTheme.hairline),
           ),
           child: TextField(
             controller: _storyController,
-            maxLines: 6,
+            maxLines: 5,
             style: const TextStyle(
-              color: Colors.white,
-              height: 1.6,
+              color: DripTheme.warmWhite,
+              height: 1.55,
               fontSize: 15,
             ),
             decoration: InputDecoration(

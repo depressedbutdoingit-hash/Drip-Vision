@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../models/character_dna.dart';
-import '../../views/widgets/galaxy_background.dart';
 
 class CharacterClosetScreen extends ConsumerStatefulWidget {
   final CharacterDNA character;
@@ -30,57 +29,6 @@ class _CharacterClosetScreenState extends ConsumerState<CharacterClosetScreen> {
       backgroundColor: DripTheme.voidBlack,
       body: Stack(
         children: [
-          const GalaxyBackground(starCount: 50, intensity: 0.2),
-
-          SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _character.name.toUpperCase(),
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                letterSpacing: 4,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'WARDROBE',
-                              style: TextStyle(
-                                fontSize: 12,
-                                letterSpacing: 4,
-                                color: DripTheme.cosmicTeal.withOpacity(0.7),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                Expanded(
-                  child: _character.closet.isEmpty
-                    ? _buildEmptyState()
-                    : GridView.builder(
-                        padding: const EdgeInsets.all(20),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.75,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                        ),
                         itemCount: _character.closet.length + 1,
                         itemBuilder: (context, index) {
                           if (index == _character.closet.length) {
