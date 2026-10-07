@@ -731,9 +731,9 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
                           onTap: _pickFromGallery,
                         ),
                         const SizedBox(width: 10),
-                        const Text('No scene media yet',
+                        const Text('NO MEDIA IN BIN',
                             style: TextStyle(
-                                fontSize: 11, color: Color(0xFF5A6260))),
+                                fontSize: 10, letterSpacing: 1.6, color: Color(0xFF5A6260))),
                       ],
                     ),
                   )
@@ -871,7 +871,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
             child: bay.project.clips.isEmpty
                 ? const Center(
                     child: Text(
-                      'Import a video (＋ above) — it appears on the timeline here.',
+                      'IMPORT TO TIMELINE',
                       style: TextStyle(fontSize: 12, color: Color(0xFF5A6260)),
                       textAlign: TextAlign.center,
                     ),

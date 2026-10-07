@@ -10,6 +10,8 @@ import '../../models/scene.dart';
 import '../../services/watermark_export_service.dart';
 import '../widgets/cinematic_button.dart';
 import '../widgets/cinematic_card.dart';
+import '../widgets/studio_empty.dart';
+import '../widgets/drip_button.dart';
 
 enum _ExportMode { fullCut, trailer }
 
@@ -47,14 +49,12 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
 
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
-      appBar: AppBar(title: const Text('EXPORT', style: TextStyle(fontSize: 12, letterSpacing: 3))),
+      appBar: AppBar(title: const Text('EXPORT', style: DripTheme.brandMark)),
       body: SafeArea(
         child: scenes.isEmpty
-            ? const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Text('No finished scenes yet. Generate and render at least one shot before exporting.', textAlign: TextAlign.center, style: TextStyle(color: DripTheme.muted, height: 1.5)),
-                ),
+            ? const StudioEmpty(
+                title: 'No master yet',
+                subtitle: 'Render at least one shot before export.',
               )
             : SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(22, 12, 22, 40),
@@ -70,24 +70,24 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                     ),
                     const SizedBox(height: 22),
 
-                    const Text('ASPECT RATIO', style: TextStyle(fontSize: 9.5, letterSpacing: 2.2, color: DripTheme.muted, fontWeight: FontWeight.w600)),
+                    const Text('FORMAT', style: DripTheme.overline),
                     const SizedBox(height: 9),
                     Row(
                       children: [
-                        Expanded(child: _ratioChip('16:9', 'CINEMA · YouTube')),
+                        Expanded(child: _ratioChip('16:9', '1080 · CINEMA')),
                         const SizedBox(width: 8),
-                        Expanded(child: _ratioChip('9:16', 'VERTICAL · TikTok/Shorts')),
+                        Expanded(child: _ratioChip('9:16', 'VERTICAL')),
                         const SizedBox(width: 8),
-                        Expanded(child: _ratioChip('1:1', 'SQUARE · Instagram')),
+                        Expanded(child: _ratioChip('1:1', 'SQUARE')),
                       ],
                     ),
                     const SizedBox(height: 22),
 
-                    Text(_mode == _ExportMode.trailer ? 'SELECT SCENES FOR THE TRAILER' : 'SCENES IN THIS EXPORT', style: const TextStyle(fontSize: 9.5, letterSpacing: 2.2, color: DripTheme.muted, fontWeight: FontWeight.w600)),
+                    Text(_mode == _ExportMode.trailer ? 'TRAILER SCENES' : 'EXPORT REEL', style: DripTheme.overline),
                     const SizedBox(height: 9),
                     ...scenes.asMap().entries.map((e) => _sceneRow(e.value, e.key)),
                     const SizedBox(height: 8),
-                    Text('${_selected.length} of ${scenes.length} scenes selected · watermark ${isPro ? 'off (Pro)' : 'on — remove with DripVision Pro'}', style: const TextStyle(fontSize: 10.5, color: DripTheme.muted)),
+                    Text('${_selected.length} of ${scenes.length} selected  ·  ${isPro ? 'Master · no watermark' : 'Studio watermark on'}', style: DripTheme.meta),
                     const SizedBox(height: 24),
 
                     if (_exporting)
@@ -133,11 +133,21 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         padding: const EdgeInsets.symmetric(vertical: 12),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected ? DripTheme.cosmicTeal.withOpacity(.14) : Colors.white.withOpacity(.03),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: selected ? DripTheme.cosmicTeal.withOpacity(.5) : Colors.white.withOpacity(.07)),
+          color: selected ? DripTheme.surfaceLight : DripTheme.surface,
+          borderRadius: BorderRadius.circular(DripTheme.radiusMd),
+          border: Border.all(
+            color: selected ? DripTheme.cosmicTeal.withOpacity(0.45) : DripTheme.hairline,
+          ),
         ),
-        child: Text(label, style: TextStyle(fontSize: 11.5, letterSpacing: 1, fontWeight: FontWeight.w700, color: selected ? DripTheme.aquaGlow : DripTheme.chrome)),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            letterSpacing: 1.4,
+            fontWeight: FontWeight.w600,
+            color: selected ? DripTheme.cosmicTeal : DripTheme.chrome,
+          ),
+        ),
       ),
     );
   }
@@ -147,17 +157,30 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     return GestureDetector(
       onTap: () => setState(() => _aspectRatio = ratio),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: selected ? DripTheme.cosmicTeal.withOpacity(.14) : Colors.white.withOpacity(.03),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: selected ? DripTheme.cosmicTeal.withOpacity(.5) : Colors.white.withOpacity(.07)),
+          color: selected ? DripTheme.surfaceLight : DripTheme.surface,
+          borderRadius: BorderRadius.circular(DripTheme.radiusMd),
+          border: Border.all(
+            color: selected ? DripTheme.cosmicTeal.withOpacity(0.45) : DripTheme.hairline,
+          ),
         ),
         child: Column(
           children: [
-            Text(ratio, style: TextStyle(fontWeight: FontWeight.w700, color: selected ? DripTheme.aquaGlow : DripTheme.warmWhite)),
-            const SizedBox(height: 3),
-            Text(preset, textAlign: TextAlign.center, style: const TextStyle(fontSize: 8.5, color: DripTheme.muted)),
+            Text(
+              ratio,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: selected ? DripTheme.warmWhite : DripTheme.chrome,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              preset,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 9, letterSpacing: 0.6, color: DripTheme.muted),
+            ),
           ],
         ),
       ),

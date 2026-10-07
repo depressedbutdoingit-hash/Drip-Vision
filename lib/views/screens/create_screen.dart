@@ -91,7 +91,7 @@ class CreateScreen extends ConsumerWidget {
                   Expanded(
                     child: _Dept(
                       title: 'LOCATION',
-                      subtitle: 'Coming soon',
+                      subtitle: 'SOON',
                       icon: Icons.location_on_outlined,
                       compact: true,
                       onTap: null,
@@ -255,7 +255,7 @@ class _Dept extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    enabled ? subtitle : 'Coming soon',
+                    enabled ? subtitle : 'SOON',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: DripTheme.meta.copyWith(fontSize: compact ? 11 : 12),

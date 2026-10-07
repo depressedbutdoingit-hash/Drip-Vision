@@ -79,13 +79,14 @@ class MainNavigation extends ConsumerWidget {
         bottomNavigationBar: Container(
           decoration: const BoxDecoration(
             color: DripTheme.deepBlack,
-            border: Border(top: BorderSide(color: DripTheme.hairline)),
+            border: Border(top: BorderSide(color: DripTheme.hairline, width: 0.5)),
           ),
           child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
+            top: false,
+            child: SizedBox(
+              height: 52,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _nav(ref, 0, Icons.home_outlined, 'HOME', i),
                   _nav(ref, 1, Icons.add_box_outlined, 'CREATE', i),
@@ -103,35 +104,37 @@ class MainNavigation extends ConsumerWidget {
 
   Widget _nav(WidgetRef ref, int index, IconData icon, String label, int current) {
     final selected = index == current;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => ref.read(navIndexProvider.notifier).state = index,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => ref.read(navIndexProvider.notifier).state = index,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
               color: selected ? DripTheme.warmWhite : DripTheme.faint,
               size: 20,
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 8,
-                letterSpacing: 1.5,
-                color: selected ? DripTheme.warmWhite : DripTheme.faint,
+                letterSpacing: 1.4,
+                color: selected ? DripTheme.chrome : DripTheme.faint,
                 fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
               ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 3),
             AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: selected ? 12 : 0,
+              duration: const Duration(milliseconds: 160),
+              width: selected ? 14 : 0,
               height: 1.5,
-              color: selected ? DripTheme.cosmicTeal : Colors.transparent,
+              decoration: BoxDecoration(
+                color: selected ? DripTheme.cosmicTeal : Colors.transparent,
+                borderRadius: BorderRadius.circular(1),
+              ),
             ),
           ],
         ),

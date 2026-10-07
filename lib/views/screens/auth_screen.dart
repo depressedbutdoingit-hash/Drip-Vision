@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../services/auth_service.dart';
+import '../widgets/drip_button.dart';
 
 final authScreenProvider = StateNotifierProvider<AuthScreenNotifier, AuthScreenState>((ref) {
   return AuthScreenNotifier(ref.read(authServiceProvider));
@@ -87,258 +88,184 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     super.dispose();
   }
 
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authScreenProvider);
-    final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(32),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: RadialGradient(
-                                  colors: [
-                                    DripTheme.cosmicTeal.withOpacity(0.3),
-                                    Colors.transparent,
-                                  ],
-                                ),
-                                border: Border.all(
-                                  color: DripTheme.cosmicTeal.withOpacity(0.3),
-                                  width: 1,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.movie_creation,
-                                size: 36,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              'DRIPVISION',
-                              style: theme.textTheme.headlineMedium?.copyWith(
-                                letterSpacing: 6,
-                                fontWeight: FontWeight.w300,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'CINEMATIC STUDIO',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                letterSpacing: 6,
-                                color: DripTheme.cosmicTeal,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 48),
-
-                      Container(
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.03),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: Colors.white.withOpacity(0.08)),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  if (!authState.isLogin) {
-                                    ref.read(authScreenProvider.notifier).toggleMode();
-                                  }
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: authState.isLogin
-                                      ? DripTheme.cosmicTeal.withOpacity(0.2)
-                                      : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      'SIGN IN',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        letterSpacing: 2,
-                                        fontWeight: FontWeight.w600,
-                                        color: authState.isLogin
-                                          ? DripTheme.cosmicTeal
-                                          : DripColors.white40,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  if (authState.isLogin) {
-                                    ref.read(authScreenProvider.notifier).toggleMode();
-                                  }
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: !authState.isLogin
-                                      ? DripTheme.cosmicTeal.withOpacity(0.2)
-                                      : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      'CREATE ACCOUNT',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        letterSpacing: 2,
-                                        fontWeight: FontWeight.w600,
-                                        color: !authState.isLogin
-                                          ? DripTheme.cosmicTeal
-                                          : DripColors.white40,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      _buildTextField(
-                        controller: _emailController,
-                        label: 'EMAIL',
-                        hint: 'director@dripvision.app',
-                        icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      _buildTextField(
-                        controller: _passwordController,
-                        label: 'PASSWORD',
-                        hint: '••••••••',
-                        icon: Icons.lock_outline,
-                        isPassword: true,
-                      ),
-
-                      if (!authState.isLogin) ...[
-                        const SizedBox(height: 16),
-                        _buildTextField(
-                          controller: _confirmController,
-                          label: 'CONFIRM PASSWORD',
-                          hint: '••••••••',
-                          icon: Icons.lock_outline,
-                          isPassword: true,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(28, 24, 28, 32),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 28),
+                  const Center(
+                    child: Column(
+                      children: [
+                        Text('DRIPVISION', style: DripTheme.brandMark),
+                        SizedBox(height: 10),
+                        Text('CINEMATIC STUDIO', style: DripTheme.overline),
+                        SizedBox(height: 12),
+                        Text(
+                          'An AI filmmaking studio that remembers your universe.',
+                          textAlign: TextAlign.center,
+                          style: DripTheme.meta,
                         ),
                       ],
-
-                      if (authState.error != null) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.red.withOpacity(0.3)),
-                          ),
-                          child: Text(
-                            authState.error!,
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontSize: 13,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-
-                      const SizedBox(height: 24),
-
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: authState.isLoading ? null : _submit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: DripTheme.cosmicTeal,
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 12,
-                            shadowColor: DripTheme.cosmicTeal.withOpacity(0.4),
-                          ),
-                          child: authState.isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.black,
-                                ),
-                              )
-                            : Text(
-                                authState.isLogin ? 'ENTER STUDIO' : 'CREATE ACCOUNT',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 3,
-                                ),
-                              ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      Center(
-                        child: TextButton(
-                          onPressed: authState.isLoading
-                            ? null
-                            : () => ref.read(authScreenProvider.notifier).anonymousSignIn(),
-                          child: Text(
-                            'SKIP FOR NOW →',
-                            style: TextStyle(
-                              color: DripColors.white30,
-                              letterSpacing: 2,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 40),
+
+                  // Mode switch — quiet segmented control
+                  Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: DripTheme.surface,
+                      borderRadius: BorderRadius.circular(DripTheme.radiusMd),
+                      border: Border.all(color: DripTheme.hairline),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _modeTab(
+                            label: 'SIGN IN',
+                            selected: authState.isLogin,
+                            onTap: () {
+                              if (!authState.isLogin) {
+                                ref.read(authScreenProvider.notifier).toggleMode();
+                              }
+                            },
+                          ),
+                        ),
+                        Expanded(
+                          child: _modeTab(
+                            label: 'REGISTER',
+                            selected: !authState.isLogin,
+                            onTap: () {
+                              if (authState.isLogin) {
+                                ref.read(authScreenProvider.notifier).toggleMode();
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+
+                  _buildTextField(
+                    controller: _emailController,
+                    label: 'EMAIL',
+                    hint: 'you@studio.com',
+                    icon: Icons.mail_outline,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    controller: _passwordController,
+                    label: 'PASSWORD',
+                    hint: '••••••••',
+                    icon: Icons.lock_outline,
+                    isPassword: true,
+                  ),
+                  if (!authState.isLogin) ...[
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      controller: _confirmController,
+                      label: 'CONFIRM',
+                      hint: '••••••••',
+                      icon: Icons.lock_outline,
+                      isPassword: true,
+                    ),
+                  ],
+
+                  if (authState.error != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      authState.error!,
+                      style: const TextStyle(
+                        color: Color(0xFFE8A0A0),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 28),
+                  DripButton(
+                    width: double.infinity,
+                    height: 52,
+                    onPressed: authState.isLoading ? null : _submit,
+                    child: authState.isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: DripTheme.voidBlack,
+                            ),
+                          )
+                        : Text(authState.isLogin ? 'ENTER STUDIO' : 'CREATE ACCOUNT'),
+                  ),
+
+                  const SizedBox(height: 20),
+                  Center(
+                    child: TextButton(
+                      onPressed: authState.isLoading
+                          ? null
+                          : () => ref.read(authScreenProvider.notifier).anonymousSignIn(),
+                      child: const Text(
+                        'CONTINUE AS GUEST',
+                        style: TextStyle(
+                          fontSize: 11,
+                          letterSpacing: 1.6,
+                          color: DripTheme.muted,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _modeTab({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        alignment: Alignment.center,
+        margin: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          color: selected ? DripTheme.surfaceLight : Colors.transparent,
+          borderRadius: BorderRadius.circular(DripTheme.radiusSm),
+          border: selected
+              ? Border.all(color: DripTheme.hairlineStrong)
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            letterSpacing: 1.8,
+            fontWeight: FontWeight.w600,
+            color: selected ? DripTheme.warmWhite : DripTheme.muted,
+          ),
+        ),
       ),
     );
   }
@@ -354,38 +281,30 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            letterSpacing: 3,
-            color: DripTheme.cosmicTeal.withOpacity(0.7),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text(label, style: DripTheme.overline),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           obscureText: isPassword,
           keyboardType: keyboardType,
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(color: DripTheme.warmWhite, fontSize: 15),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: DripColors.white20),
-            prefixIcon: Icon(icon, color: DripColors.white30, size: 20),
+            hintStyle: const TextStyle(color: DripTheme.muted),
+            prefixIcon: Icon(icon, color: DripTheme.muted, size: 20),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.03),
+            fillColor: DripTheme.surface,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+              borderRadius: BorderRadius.circular(DripTheme.radiusMd),
+              borderSide: const BorderSide(color: DripTheme.hairline),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+              borderRadius: BorderRadius.circular(DripTheme.radiusMd),
+              borderSide: const BorderSide(color: DripTheme.hairline),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: DripTheme.cosmicTeal),
+              borderRadius: BorderRadius.circular(DripTheme.radiusMd),
+              borderSide: const BorderSide(color: DripTheme.cosmicTeal),
             ),
           ),
         ),

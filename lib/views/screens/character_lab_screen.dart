@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
 import '../../core/theme.dart';
+import '../widgets/studio_empty.dart';
 import '../../core/providers.dart';
 import '../../models/character.dart';
 import '../../models/character_dna.dart' as dna;
@@ -269,7 +270,7 @@ class _CharacterProfile extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('No looks saved yet.', style: TextStyle(color: DripTheme.muted)),
+                const Text('NO LOOKS IN WARDROBE', style: TextStyle(fontSize: 11, letterSpacing: 1.8, color: DripTheme.muted)),
                 const SizedBox(height: 10),
                 CinematicButton(label: 'ADD FIRST OUTFIT', icon: Icons.checkroom_outlined, primary: false, onPressed: () => _openOutfitCreator(context, ref, character)),
               ],
