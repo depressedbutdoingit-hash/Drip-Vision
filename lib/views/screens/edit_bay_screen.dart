@@ -40,6 +40,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
 
   VideoPlayerController? _controller;
   String? _currentPath;
+  String? _sourcePath; // original before baked filters
   bool _loading = false;
   String? _status;
   bool _seeded = false;
@@ -157,6 +158,7 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
     setState(() {
       _controller = c;
       _currentPath = path;
+      _sourcePath ??= path;
       _duration = dur > 0 ? dur : 5;
       _trimStart = 0;
       _trimEnd = _duration;
@@ -170,6 +172,14 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
   Future<void> _pickFromGallery() async {
     final file = await _picker.pickVideo(source: ImageSource.gallery);
     if (file == null) return;
+    setState(() {
+      _sourcePath = null; // new import becomes the new original
+      _activeFilter = null;
+      _brightness = 0;
+      _contrast = 0;
+      _saturation = 0;
+      _warmth = 0;
+    });
     await _loadSource(file.path);
     if (!mounted || _currentPath == null) return;
     // Import must land on the timeline, not only in the monitor
@@ -1186,42 +1196,143 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
   }
 
   Widget _filtersPanel() {
-    return ListView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.all(12),
-      children: _filters.map((f) {
-        final on =
-            _activeFilter == f.$1 || (f.$1 == 'none' && _activeFilter == null);
-        return Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: ChoiceChip(
-            label: Text(f.$2, style: const TextStyle(fontSize: 11)),
-            selected: on,
-            selectedColor: DripTheme.cosmicTeal.withOpacity(0.25),
-            onSelected: (_) {
-              final id = f.$1 == 'none' ? null : f.$1;
-              setState(() => _activeFilter = id);
-              if (id == null) {
-                _toast('Filter cleared');
-                return;
-              }
-              if (_loading || _currentPath == null) return;
-              // Preview is instant; bake is best-effort
-              _runEdit(
-                () => _editor.applyFilter(
-                  inputPath: _currentPath!,
-                  filterId: id,
+    // Live ColorMatrix preview only — bake on explicit Apply.
+    // Auto-baking every chip caused double-filters, FFmpeg errors, and "None" not restoring.
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+            children: _filters.map((f) {
+              final on = _activeFilter == f.$1 ||
+                  (f.$1 == 'none' && _activeFilter == null);
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(f.$2, style: const TextStyle(fontSize: 11)),
+                  selected: on,
+                  selectedColor: DripTheme.cosmicTeal.withOpacity(0.25),
+                  onSelected: (_) {
+                    final id = f.$1 == 'none' ? null : f.$1;
+                    setState(() {
+                      _activeFilter = id;
+                      if (id == null) {
+                        // Full clear of live grade
+                        _brightness = 0;
+                        _contrast = 0;
+                        _saturation = 0;
+                        _warmth = 0;
+                      }
+                    });
+                    if (id == null) {
+                      _toast('Filter cleared');
+                    }
+                  },
+                  labelStyle: TextStyle(
+                    color: on ? DripTheme.cosmicTeal : DripTheme.warmWhite,
+                  ),
+                  backgroundColor: _panel,
                 ),
-                'Filter ${f.$2}',
               );
-            },
-            labelStyle: TextStyle(
-              color: on ? DripTheme.cosmicTeal : DripTheme.warmWhite,
-            ),
-            backgroundColor: _panel,
+            }).toList(),
           ),
-        );
-      }).toList(),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: (_loading || _currentPath == null)
+                      ? null
+                      : () async {
+                          setState(() {
+                            _activeFilter = null;
+                            _brightness = 0;
+                            _contrast = 0;
+                            _saturation = 0;
+                            _warmth = 0;
+                          });
+                          final src = _sourcePath ?? _currentPath;
+                          if (src != null && src != _currentPath) {
+                            await _loadSource(src);
+                          }
+                          _toast('Grade reset');
+                        },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: DripTheme.chrome,
+                    side: const BorderSide(color: Color(0x22FFFFFF)),
+                    minimumSize: const Size(0, 40),
+                  ),
+                  child: const Text('RESET', style: TextStyle(fontSize: 11, letterSpacing: 1.2)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: FilledButton(
+                  onPressed: (_loading ||
+                          _currentPath == null ||
+                          (_activeFilter == null &&
+                              _brightness == 0 &&
+                              _contrast == 0 &&
+                              _saturation == 0 &&
+                              _warmth == 0))
+                      ? null
+                      : () async {
+                          final path = _currentPath!;
+                          final filter = _activeFilter;
+                          final b = _brightness;
+                          final c = _contrast;
+                          final s = _saturation;
+                          final w = _warmth;
+                          await _runEdit(() async {
+                            var out = path;
+                            if (filter != null) {
+                              out = await _editor.applyFilter(
+                                inputPath: out,
+                                filterId: filter,
+                              );
+                            }
+                            if (b != 0 || c != 0 || s != 0 || w != 0) {
+                              out = await _editor.adjust(
+                                inputPath: out,
+                                brightness: b,
+                                contrast: c,
+                                saturation: s,
+                                warmth: w,
+                              );
+                            }
+                            return out;
+                          }, 'Apply grade');
+                          if (mounted) {
+                            // After bake, clear live overlay so it isn't double-applied
+                            setState(() {
+                              _activeFilter = null;
+                              _brightness = 0;
+                              _contrast = 0;
+                              _saturation = 0;
+                              _warmth = 0;
+                            });
+                          }
+                        },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: DripTheme.cosmicTeal,
+                    foregroundColor: DripTheme.voidBlack,
+                    minimumSize: const Size(0, 40),
+                  ),
+                  child: const Text('APPLY TO CLIP',
+                      style: TextStyle(
+                          fontSize: 11,
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -1265,18 +1376,32 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
           CinematicButton(
             label: 'APPLY COLOR',
             icon: Icons.tune,
-            onPressed: _loading
+            onPressed: (_loading || _currentPath == null)
                 ? null
-                : () => _runEdit(
+                : () async {
+                    final b = _brightness;
+                    final c = _contrast;
+                    final s = _saturation;
+                    final w = _warmth;
+                    await _runEdit(
                       () => _editor.adjust(
                         inputPath: _currentPath!,
-                        brightness: _brightness,
-                        contrast: _contrast,
-                        saturation: _saturation,
-                        warmth: _warmth,
+                        brightness: b,
+                        contrast: c,
+                        saturation: s,
+                        warmth: w,
                       ),
                       'Color',
-                    ),
+                    );
+                    if (mounted) {
+                      setState(() {
+                        _brightness = 0;
+                        _contrast = 0;
+                        _saturation = 0;
+                        _warmth = 0;
+                      });
+                    }
+                  },
           ),
         ],
       ),
@@ -1334,6 +1459,11 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
       case 'warm':
       case 'bleach':
         warm += 0.2;
+        break;
+      case 'grain':
+      case 'vhs':
+        c *= 1.05;
+        sat *= 0.95;
         break;
       case 'horror':
         sat *= 0.55;
