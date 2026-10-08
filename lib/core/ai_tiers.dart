@@ -1,7 +1,7 @@
 /// DripVision subscription → AI routing + credit costs.
 ///
 /// Text models: OpenRouter IDs.
-/// Video: token costs are *customer* charges (app tokens), not raw API $.
+/// Image + video token costs are *customer* charges (app tokens), not raw API $.
 class AiTiers {
   AiTiers._();
 
@@ -62,6 +62,61 @@ class AiTiers {
 
   /// Prompt enhance / style DNA extract
   static int lightTextTokens(String? tier) => 2;
+
+  // ── Image generation (customer-facing app tokens) ──────────────────
+  // COGS reality (2026): draft ~$0.005–0.02, standard ~$0.03–0.06,
+  // pro/cinematic ~$0.07–0.15 per image. Bill ~2.5–3× in app tokens
+  // (1 token ≈ $0.02–0.03 retail on packs).
+
+  /// Quick ref / test still (FLUX schnell-class)
+  static const imageDraftTokens = 3;
+
+  /// Storyboard, wardrobe, character still (FLUX.2 Pro-class)
+  static const imageStandardTokens = 8;
+
+  /// Poster / hero keyframe / high-res (FLUX Max / GPT Image high)
+  static const imageProTokens = 15;
+
+  /// Four-up storyboard board (4 × standard, slight pack discount)
+  static const imageStoryboardBoardTokens = 28;
+
+  /// draft | standard | pro
+  static int imageTokens(String quality) {
+    switch (quality.toLowerCase().trim()) {
+      case 'pro':
+      case 'cinema':
+      case 'poster':
+        return imageProTokens;
+      case 'standard':
+      case 'storyboard':
+      case 'character':
+      case 'wardrobe':
+        return imageStandardTokens;
+      case 'board':
+      case 'storyboard_board':
+        return imageStoryboardBoardTokens;
+      case 'draft':
+      default:
+        return imageDraftTokens;
+    }
+  }
+
+  /// Free = draft only; starter+ = standard; pro/studio = pro.
+  static bool imageQualityAllowed(String? subscriptionTier, String quality) {
+    final t = (subscriptionTier ?? free).toLowerCase().trim();
+    final q = quality.toLowerCase().trim();
+    if (q == 'draft' || q.isEmpty) return true;
+    if (q == 'standard' ||
+        q == 'storyboard' ||
+        q == 'character' ||
+        q == 'wardrobe' ||
+        q == 'board' ||
+        q == 'storyboard_board') {
+      return t == starter || t == pro || t == studio;
+    }
+    // pro / cinema / poster
+    return t == pro || t == studio;
+  }
 
   // ── Video generation (customer-facing app tokens) ──────────────────
   // COGS reality (2026): ~$0.05–$0.15/s mid, ~$0.12–$0.40/s flagship.
