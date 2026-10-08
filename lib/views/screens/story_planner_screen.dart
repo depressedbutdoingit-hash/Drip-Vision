@@ -583,6 +583,16 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
   }
 
   Future<void> _planProduction() async {
+    // Keep Director's Bible aligned with this production pass
+    final prev = ref.read(filmBibleProvider);
+    ref.read(filmBibleProvider.notifier).state = prev.copyWith(
+      title: _titleController.text.trim().isEmpty ? prev.title : _titleController.text.trim(),
+      genre: _selectedGenre,
+      logline: _storyController.text.trim().isEmpty
+          ? prev.logline
+          : _storyController.text.trim().split('\n').first,
+    );
+
     if (_storyController.text.trim().isEmpty) return;
 
     ref.read(isPlanningProvider.notifier).state = true;

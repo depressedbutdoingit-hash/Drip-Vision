@@ -9,6 +9,9 @@ import '../widgets/director_chip.dart';
 import 'generator_screen.dart';
 import 'edit_bay_screen.dart';
 import 'timeline_screen.dart';
+import 'continuity_health_screen.dart';
+import 'directors_bible_screen.dart';
+import 'story_pipeline_screen.dart';
 
 /// DIRECTOR MODE — shape the shot; generation services consume the brief.
 class StudioScreen extends ConsumerWidget {
@@ -63,6 +66,47 @@ class StudioScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: CinematicButton(
+                      label: 'CONTINUITY',
+                      icon: Icons.monitor_heart_outlined,
+                      primary: false,
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ContinuityHealthScreen()),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: CinematicButton(
+                      label: 'BIBLE',
+                      icon: Icons.menu_book_outlined,
+                      primary: false,
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const DirectorsBibleScreen()),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              CinematicButton(
+                label: 'STORY → FILM PIPELINE',
+                icon: Icons.auto_stories_outlined,
+                primary: false,
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const StoryPipelineScreen()),
+                ),
               ),
               const SizedBox(height: 28),
 

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/character.dart';
+import '../models/film_bible.dart';
 import '../models/scene.dart';
 import '../models/user_profile.dart';
 import '../services/openrouter_service.dart';
@@ -243,3 +244,10 @@ class SceneListNotifier extends StateNotifier<List<SceneNode>> {
     _persist();
   }
 }
+
+
+/// Living Director's Bible for the active production.
+final filmBibleProvider = StateProvider<FilmBible>((ref) => const FilmBible());
+
+/// Active production id (Firestore projects/{id}) — empty means local-only.
+final activeProjectIdProvider = StateProvider<String>((ref) => '');

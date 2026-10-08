@@ -8,6 +8,9 @@ import '../screens/edit_bay_screen.dart';
 import '../screens/god_mode/god_mode_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/story_planner_screen.dart';
+import '../screens/story_pipeline_screen.dart';
+import '../screens/continuity_health_screen.dart';
+import '../screens/directors_bible_screen.dart';
 import '../screens/timeline_screen.dart';
 import '../screens/character_lab_screen.dart';
 import '../screens/export_screen.dart';
@@ -103,7 +106,17 @@ class StudioDrawer extends ConsumerWidget {
                   _item(
                     icon: Icons.auto_stories_outlined,
                     label: 'Story → Film',
-                    onTap: () => _push(context, const StoryPlannerScreen()),
+                    onTap: () => _push(context, const StoryPipelineScreen()),
+                  ),
+                  _item(
+                    icon: Icons.menu_book_outlined,
+                    label: "Director's Bible",
+                    onTap: () => _push(context, const DirectorsBibleScreen()),
+                  ),
+                  _item(
+                    icon: Icons.monitor_heart_outlined,
+                    label: 'Continuity',
+                    onTap: () => _push(context, const ContinuityHealthScreen()),
                   ),
                   _item(
                     icon: Icons.person_outline,
