@@ -74,6 +74,18 @@ class AuthService {
     }
   }
 
+  /// Sends Firebase password-reset email. User must use the link in that email.
+  Future<void> sendPasswordReset(String email) async {
+    final trimmed = email.trim();
+    if (trimmed.isEmpty) {
+      throw FirebaseAuthException(
+        code: 'invalid-email',
+        message: 'Enter your email address first.',
+      );
+    }
+    await _auth.sendPasswordResetEmail(email: trimmed);
+  }
+
   Future<void> signOut() async {
     await _auth.signOut();
   }

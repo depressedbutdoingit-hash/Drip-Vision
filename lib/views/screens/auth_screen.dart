@@ -66,6 +66,24 @@ class AuthScreenNotifier extends StateNotifier<AuthScreenState> {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
+
+  /// Returns null on success, or an error message.
+  Future<String?> resetPassword(String email) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _auth.sendPasswordReset(email);
+      state = state.copyWith(isLoading: false, error: null);
+      return null;
+    } on FirebaseAuthException catch (e) {
+      final msg = e.message ?? e.code;
+      state = state.copyWith(isLoading: false, error: msg);
+      return msg;
+    } catch (e) {
+      final msg = e.toString();
+      state = state.copyWith(isLoading: false, error: msg);
+      return msg;
+    }
+  }
 }
 
 class AuthScreen extends ConsumerStatefulWidget {
@@ -174,6 +192,33 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     icon: Icons.lock_outline,
                     isPassword: true,
                   ),
+                  if (authState.isLogin) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: authState.isLoading
+                            ? null
+                            : () => _forgotPassword(),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 4,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'FORGOT PASSWORD',
+                          style: TextStyle(
+                            fontSize: 10,
+                            letterSpacing: 1.4,
+                            color: DripTheme.muted,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                   if (!authState.isLogin) ...[
                     const SizedBox(height: 16),
                     _buildTextField(
