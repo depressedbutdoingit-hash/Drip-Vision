@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/ai_tiers.dart';
 import '../widgets/drip_button.dart';
 import '../widgets/cinematic_button.dart';
 import '../../core/providers.dart';
@@ -610,6 +611,8 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
         genre: _selectedGenre,
         targetDuration: _selectedDuration,
         includeDialogue: _includeDialogue,
+        subscriptionTier:
+            ref.read(userProfileProvider).value?.subscriptionTier,
       );
 
       // Deduct the actual cost with 5% markup

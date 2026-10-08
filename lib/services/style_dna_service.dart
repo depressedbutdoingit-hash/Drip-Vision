@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/style_dna.dart';
+import '../core/ai_tiers.dart';
 import 'cost_tracking_service.dart';
 
 /// Extracts a reusable Style DNA from either a reference image or a plain
@@ -9,7 +10,7 @@ import 'cost_tracking_service.dart';
 /// SmartPromptService — no separate backend, no mock data.
 class StyleDnaService {
   final String _openRouterKey;
-  static const _model = 'anthropic/claude-3.5-sonnet';
+  String _modelFor(String? tier) => AiTiers.textModelFor(tier);
 
   StyleDnaService(this._openRouterKey);
 
@@ -26,7 +27,8 @@ Respond ONLY as valid JSON, no markdown fences, in exactly this structure:
 }
 ''';
 
-  Future<StyleDna> analyzeImage(String base64Image, {String mimeType = 'image/jpeg'}) async {
+  Future<StyleDna> analyzeImage(String base64Image, {String mimeType = 'image/jpeg', String? subscriptionTier}) async {
+    final model = _modelFor(subscriptionTier);
     final response = await http.post(
       Uri.parse('https://openrouter.ai/api/v1/chat/completions'),
       headers: {
@@ -36,7 +38,7 @@ Respond ONLY as valid JSON, no markdown fences, in exactly this structure:
         'X-Title': 'DripVision',
       },
       body: jsonEncode({
-        'model': _model,
+        'model': model,
         'messages': [
           {
             'role': 'system',
@@ -58,10 +60,11 @@ Respond ONLY as valid JSON, no markdown fences, in exactly this structure:
       }),
     );
 
-    return _parse(response, sourceImageUrl: null);
+    return _parse(response, sourceImageUrl: null, model: model);
   }
 
-  Future<StyleDna> analyzeText(String description) async {
+  Future<StyleDna> analyzeText(String description, {String? subscriptionTier}) async {
+    final model = _modelFor(subscriptionTier);
     final response = await http.post(
       Uri.parse('https://openrouter.ai/api/v1/chat/completions'),
       headers: {
@@ -71,7 +74,7 @@ Respond ONLY as valid JSON, no markdown fences, in exactly this structure:
         'X-Title': 'DripVision',
       },
       body: jsonEncode({
-        'model': _model,
+        'model': model,
         'messages': [
           {'role': 'system', 'content': 'You are a cinematographer translating a visual description into a reusable Style DNA.'},
           {'role': 'user', 'content': 'Extract a Style DNA from this description: "$description"\n$_schemaInstruction'},
@@ -81,15 +84,15 @@ Respond ONLY as valid JSON, no markdown fences, in exactly this structure:
       }),
     );
 
-    return _parse(response, sourceImageUrl: null);
+    return _parse(response, sourceImageUrl: null, model: model);
   }
 
-  Future<StyleDna> _parse(http.Response response, {String? sourceImageUrl}) async {
+  Future<StyleDna> _parse(http.Response response, {String? sourceImageUrl, String model = ''}) async {
     if (response.statusCode != 200) {
       throw Exception('Style DNA extraction failed: ${response.body}');
     }
     final data = jsonDecode(response.body);
-    CostTrackingService.parseAndCharge(callType: 'style_dna_extract', model: _model, responseData: data);
+    CostTrackingService.parseAndCharge(callType: 'style_dna_extract', model: model, responseData: data);
 
     final content = data['choices'][0]['message']['content'] as String;
     final jsonStr = content.replaceAll('```json', '').replaceAll('```', '').trim();

@@ -4,6 +4,7 @@ import '../models/character_dna.dart';
 import '../views/screens/story_planner_screen.dart';
 import '../services/cost_tracking_service.dart';
 import '../core/env.dart';
+import '../core/ai_tiers.dart';
 
 class AIDirectorService {
   final String _openRouterKey;
@@ -16,7 +17,13 @@ class AIDirectorService {
     required String genre,
     required String targetDuration,
     required bool includeDialogue,
+    String? subscriptionTier,
+    bool premiumBoost = false,
   }) async {
+    final model = AiTiers.textModelFor(
+      subscriptionTier,
+      premiumBoost: premiumBoost,
+    );
     final prompt = '''
 You are an AI Film Director. Break the following user story into a production-ready film plan.
 
@@ -92,7 +99,7 @@ Respond ONLY as valid JSON in this exact structure:
         'X-Title': 'DripVision',
       },
       body: jsonEncode({
-        'model': 'anthropic/claude-3.5-sonnet',
+        'model': model,
         'messages': [
           {'role': 'system', 'content': 'You are a professional film director and screenwriter.'},
           {'role': 'user', 'content': prompt},
@@ -109,7 +116,7 @@ Respond ONLY as valid JSON in this exact structure:
     final data = jsonDecode(response.body);
     final costResult = CostTrackingService.parseAndCharge(
       callType: 'story_plan',
-      model: 'anthropic/claude-3.5-sonnet',
+      model: model,
       responseData: data,
     );
 
