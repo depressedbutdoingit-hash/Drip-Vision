@@ -27,9 +27,9 @@ class ProductModels {
   static const textFlagship = 'anthropic/claude-opus-5.5';
 
   // ── IMAGE ──────────────────────────────────────────────────────────
-  static const imageDraft = 'black-forest-labs/flux-schnell';
-  static const imageStandard = 'black-forest-labs/flux-2-pro';
-  static const imagePro = 'black-forest-labs/flux-2-max';
+  static const imageDraft = 'black-forest-labs/flux.2-klein';
+  static const imageStandard = 'black-forest-labs/flux.2-pro';
+  static const imagePro = 'black-forest-labs/flux.2-max';
 
   // ── VIDEO ──────────────────────────────────────────────────────────
   static const videoDraft = 'alibaba/wan-2.7';

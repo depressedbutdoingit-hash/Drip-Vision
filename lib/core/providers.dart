@@ -24,6 +24,8 @@ import '../services/token_service.dart';
 import '../services/cost_tracking_service.dart';
 import '../services/voice_lock_service.dart';
 import '../services/poster_generator_service.dart';
+import '../services/image_generation_service.dart';
+import '../services/ai_generation_service.dart';
 import '../services/drip_score_service.dart';
 import '../services/location_bible_service.dart';
 import '../services/smart_prompt_service.dart';
@@ -67,6 +69,8 @@ final tokenServiceProvider = Provider((ref) => TokenService());
 // Standout feature services
 final voiceLockServiceProvider = Provider((ref) => VoiceLockService());
 final posterGeneratorProvider = Provider((ref) => PosterGeneratorService(Env.openRouterKey));
+final imageGenerationServiceProvider = Provider((ref) => ImageGenerationService());
+final aiGenerationServiceProvider = Provider((ref) => AIGenerationService());
 final styleDnaServiceProvider = Provider((ref) => StyleDnaService(Env.openRouterKey));
 final dripScoreServiceProvider = Provider((ref) => DripScoreService(FirebaseFirestore.instance));
 final locationBibleProvider = Provider((ref) => LocationBibleService(FirebaseFirestore.instance));

@@ -236,14 +236,14 @@ class AiModelCatalog {
 
   static const List<CatalogModel> imageFree = [
     CatalogModel(
-      id: 'black-forest-labs/flux-schnell',
+      id: 'black-forest-labs/flux.2-klein',
       label: 'FLUX Schnell',
       modality: ModelModality.image,
       band: ModelBand.free,
       notes: 'Fast draft stills (often low-cost / free hosts)',
     ),
     CatalogModel(
-      id: 'black-forest-labs/flux-2-klein',
+      id: 'black-forest-labs/flux.2-klein',
       label: 'FLUX.2 Klein',
       modality: ModelModality.image,
       band: ModelBand.free,
@@ -253,7 +253,7 @@ class AiModelCatalog {
 
   static const List<CatalogModel> imageMid = [
     CatalogModel(
-      id: 'black-forest-labs/flux-2-pro',
+      id: 'black-forest-labs/flux.2-pro',
       label: 'FLUX.2 Pro',
       modality: ModelModality.image,
       band: ModelBand.mid,
@@ -284,7 +284,7 @@ class AiModelCatalog {
 
   static const List<CatalogModel> imageHigh = [
     CatalogModel(
-      id: 'black-forest-labs/flux-2-max',
+      id: 'black-forest-labs/flux.2-max',
       label: 'FLUX.2 Max',
       modality: ModelModality.image,
       band: ModelBand.high,

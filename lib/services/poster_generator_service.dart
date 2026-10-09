@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../core/product_models.dart';
 import '../core/ai_tiers.dart';
+import 'image_generation_service.dart';
 import '../core/env.dart';
 
 /// Auto Poster Generator — Creates a shareable movie poster from a completed film.
@@ -83,8 +84,14 @@ Respond as JSON: {"prompt": "...", "tagline": "...", "colors": ["#000000", "#FFF
 
   /// Stub: Replace with FAL AI or Stable Diffusion API
   Future<String> _generateImage(String prompt) async {
-    await Future.delayed(const Duration(seconds: 2));
-    return 'https://example.com/poster_${DateTime.now().millisecondsSinceEpoch}.png';
+    final images = ImageGenerationService();
+    return images.generate(
+      prompt: prompt,
+      tier: ImageGenTier.pro,
+      modelOverride: ProductModels.imagePro,
+      aspectRatio: '1:1',
+      resolution: '1K',
+    );
   }
 }
 

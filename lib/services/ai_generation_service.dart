@@ -1,13 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/ai_tiers.dart';
-import '../core/product_models.dart';
 import 'drip_engine_service.dart';
+import 'image_generation_service.dart';
 
-/// Unified generation entry — image + video tiers, costs, model routing.
+/// Unified generation — live OpenRouter image + video engine.
 class AIGenerationService {
-  final DripEngineService? _engine;
+  final DripEngineService _engine;
+  final ImageGenerationService _images;
 
-  AIGenerationService({DripEngineService? engine}) : _engine = engine;
+  AIGenerationService({
+    DripEngineService? engine,
+    ImageGenerationService? images,
+  })  : _engine = engine ?? DripEngineService(),
+        _images = images ?? ImageGenerationService();
+
+  DripEngineService get engine => _engine;
+  ImageGenerationService get images => _images;
 
   AiActionCost videoCost({
     required int durationSeconds,
@@ -56,13 +64,11 @@ class AIGenerationService {
         'Upgrade required for ${AiTiers.videoTierLabel(tier)} video.',
       );
     }
-    final model = videoModel(tier, override: modelOverride);
-    // Prefer continuity-aware engine when callers have character context.
-    if (_engine != null) {
-      // Model is resolved; full scene path uses DripEngineService.generateNextScene.
-    }
-    await Future.delayed(const Duration(seconds: 2));
-    return 'https://example.com/${model.replaceAll('/', '_')}.mp4';
+    // Full continuity path is DripEngineService.generateNextScene from Studio.
+    throw Exception(
+      'Use Studio generate with a character for continuity-aware video '
+      '(model: ${videoModel(tier, override: modelOverride)}).',
+    );
   }
 
   int tokenCost({
@@ -86,11 +92,13 @@ class AIGenerationService {
   bool canGenerateImage(String? subscriptionTier, ImageGenTier tier) =>
       AiTiers.imageTierAllowed(subscriptionTier, tier);
 
+  /// Live OpenRouter image generation.
   Future<String> generateImage({
     required String prompt,
     String quality = 'standard',
     String? subscriptionTier,
     String? modelOverride,
+    List<String>? referenceImageUrls,
   }) async {
     final tier = quality.toLowerCase().contains('pro') ||
             quality.toLowerCase().contains('poster')
@@ -105,9 +113,12 @@ class AIGenerationService {
         'Upgrade required for ${AiTiers.imageTierLabel(tier)} images.',
       );
     }
-    final model = imageModel(tier, override: modelOverride);
-    await Future.delayed(const Duration(seconds: 1));
-    return 'https://example.com/${model.replaceAll('/', '_')}.png';
+    return _images.generate(
+      prompt: prompt,
+      tier: tier,
+      modelOverride: modelOverride,
+      referenceImageUrls: referenceImageUrls,
+    );
   }
 
   AiActionCost get phoneImportCost =>
@@ -115,7 +126,3 @@ class AIGenerationService {
 
   AiActionCost get phoneEnhanceCost => AiTiers.phoneEnhanceCost();
 }
-
-final aiGenerationServiceProvider = Provider(
-  (ref) => AIGenerationService(engine: DripEngineService()),
-);

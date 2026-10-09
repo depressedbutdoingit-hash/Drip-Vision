@@ -53,6 +53,12 @@ class DripEngineService {
       );
     }
 
+    // Prefer selected model, then product fallbacks for this tier.
+    final modelCandidates = <String>[
+      model!,
+      ...AiTiers.videoModelFallbacks(tier).where((m) => m != model),
+    ];
+
     final activeOutfit = character.activeOutfit;
     final fullPrompt =
         '${character.name}, wearing ${activeOutfit.description}, $enhancedPrompt'
@@ -83,7 +89,7 @@ class DripEngineService {
     }
 
     final payload = <String, dynamic>{
-      'model': model,
+      'model': modelCandidates.first,
       'prompt': fullPrompt,
       'duration': 5,
       'resolution': '720p',
@@ -93,61 +99,72 @@ class DripEngineService {
       if (inputReferences.isNotEmpty) 'input_references': inputReferences,
     };
 
-    try {
-      onProgress?.call(0.05);
+    Object? lastError;
+    for (var i = 0; i < modelCandidates.length; i++) {
+      final candidate = modelCandidates[i];
+      payload['model'] = candidate;
+      try {
+        onProgress?.call(0.05 + (i * 0.02));
 
-      // 1. Submit the job
-      final submitResponse = await _dio.post('videos', data: payload);
-      final job = submitResponse.data as Map<String, dynamic>;
-      final jobId = job['id'] as String?;
-      final pollingUrl = job['polling_url'] as String?;
+        final submitResponse = await _dio.post('videos', data: payload);
+        final job = submitResponse.data as Map<String, dynamic>;
+        final jobId = job['id'] as String?;
+        final pollingUrl = job['polling_url'] as String?;
 
-      if (jobId == null) {
-        throw DripEngineException('OpenRouter did not return a job id.');
+        if (jobId == null) {
+          throw DripEngineException('OpenRouter did not return a job id.');
+        }
+
+        onProgress?.call(0.15);
+
+        final completed = await _pollUntilDone(
+          jobId: jobId,
+          pollingUrl: pollingUrl,
+          onProgress: onProgress,
+        );
+
+        final unsignedUrls = completed['unsigned_urls'] as List?;
+        String? videoUrl;
+        if (unsignedUrls != null && unsignedUrls.isNotEmpty) {
+          videoUrl = unsignedUrls.first as String;
+        } else {
+          videoUrl =
+              'https://openrouter.ai/api/v1/videos/$jobId/content?index=0';
+        }
+
+        onProgress?.call(1.0);
+
+        return SceneNode(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          sequenceIndex: (previousScene?.sequenceIndex ?? -1) + 1,
+          prompt: rawPrompt,
+          enhancedPrompt: enhancedPrompt,
+          character: character,
+          inputLastFrameUrl: previousScene?.generatedLastFrameUrl,
+          outputVideoUrl: videoUrl,
+          generatedLastFrameUrl: null,
+          cameraMotion: cameraMotion,
+        );
+      } on DioException catch (e) {
+        final detail = e.response?.data;
+        final message = detail is Map
+            ? (detail['error']?['message'] ?? detail['message'] ?? e.message)
+            : e.message;
+        lastError = '[$candidate] $message';
+        // Try next fallback
+        continue;
+      } catch (e) {
+        if (e is DripEngineException) {
+          lastError = '[$candidate] ${e.message}';
+          continue;
+        }
+        lastError = '[$candidate] $e';
+        continue;
       }
-
-      onProgress?.call(0.15);
-
-      // 2. Poll until completed or failed
-      final completed = await _pollUntilDone(
-        jobId: jobId,
-        pollingUrl: pollingUrl,
-        onProgress: onProgress,
-      );
-
-      // 3. Extract video URL
-      final unsignedUrls = completed['unsigned_urls'] as List?;
-      String? videoUrl;
-      if (unsignedUrls != null && unsignedUrls.isNotEmpty) {
-        videoUrl = unsignedUrls.first as String;
-      } else {
-        videoUrl =
-            'https://openrouter.ai/api/v1/videos/$jobId/content?index=0';
-      }
-
-      onProgress?.call(1.0);
-
-      return SceneNode(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        sequenceIndex: (previousScene?.sequenceIndex ?? -1) + 1,
-        prompt: rawPrompt,
-        enhancedPrompt: enhancedPrompt,
-        character: character,
-        inputLastFrameUrl: previousScene?.generatedLastFrameUrl,
-        outputVideoUrl: videoUrl,
-        generatedLastFrameUrl: null,
-        cameraMotion: cameraMotion,
-      );
-    } on DioException catch (e) {
-      final detail = e.response?.data;
-      final message = detail is Map
-          ? (detail['error']?['message'] ?? detail['message'] ?? e.message)
-          : e.message;
-      throw DripEngineException('Generation failed: $message');
-    } catch (e) {
-      if (e is DripEngineException) rethrow;
-      throw DripEngineException('Generation failed: $e');
     }
+    throw DripEngineException(
+      'Generation failed after ${modelCandidates.length} model(s): $lastError',
+    );
   }
 
   Future<Map<String, dynamic>> _pollUntilDone({
