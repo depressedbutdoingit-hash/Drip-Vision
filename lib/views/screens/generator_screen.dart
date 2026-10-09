@@ -212,46 +212,93 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
       quality: quality.name,
     );
 
+    // Prefer last generated frame / video still; else active cast face.
+    final previewUrl = lastScene?.generatedLastFrameUrl ??
+        (character != null && character.faceReferenceUrls.isNotEmpty
+            ? character.faceReferenceUrls.first
+            : null);
+    final hasVideo = lastScene?.outputVideoUrl != null &&
+        lastScene!.outputVideoUrl!.isNotEmpty;
+
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       body: Column(
         children: [
-          // Preview / last frame
+          // ── Large cinematic scene / cast frame ─────────────────────
           Expanded(
-            flex: 5,
-            child: Container(
-              width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-              color: DripTheme.deepBlack,
-              child: lastScene?.outputVideoUrl != null
-                  ? VideoPlayerWidget(url: lastScene!.outputVideoUrl!)
-                  : (character != null && character.faceReferenceUrls.isNotEmpty)
-                      ? Image.network(
-                          character.faceReferenceUrls.first,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          errorBuilder: (_, __, ___) => _emptyPreview(),
-                        )
-                      : _emptyPreview(),
+            flex: 42,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (hasVideo)
+                  VideoPlayerWidget(
+                    url: lastScene!.outputVideoUrl!,
+                    autoPlay: true,
+                    showControls: false,
+                    loop: true,
+                  )
+                else if (previewUrl != null)
+                  Image.network(
+                    previewUrl,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, __, ___) => _emptyPreview(),
+                  )
+                else
+                  _emptyPreview(),
+                // Soft bottom fade into controls
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 56,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          DripTheme.voidBlack.withOpacity(0),
+                          DripTheme.voidBlack,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (isGenerating)
+                  const Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: LinearProgressIndicator(
+                      minHeight: 2,
+                      backgroundColor: Colors.transparent,
+                      color: DripTheme.cosmicTeal,
+                    ),
+                  ),
+              ],
             ),
           ),
-          if (isGenerating)
-            LinearProgressIndicator(
-              value: progress > 0 ? progress : null,
-              backgroundColor: DripTheme.surface,
-              color: DripTheme.cosmicTeal,
-              minHeight: 2,
-            ),
+
+          // ── Controls ───────────────────────────────────────────────
           Expanded(
-            flex: 6,
+            flex: 58,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // CAST header
                   Row(
                     children: [
-                      const Text('CAST', style: DripTheme.technical),
+                      Text(
+                        'CAST',
+                        style: DripTheme.technical.copyWith(
+                          color: DripTheme.muted,
+                          letterSpacing: 2.2,
+                        ),
+                      ),
                       const Spacer(),
                       GestureDetector(
                         onTap: () => Navigator.push(
@@ -260,22 +307,25 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
                             builder: (_) => const CharacterCreationScreen(),
                           ),
                         ),
-                        child: const Text('NEW', style: DripTheme.overline),
+                        child: Text(
+                          'NEW',
+                          style: DripTheme.overline.copyWith(fontSize: 11),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 10),
                   SizedBox(
-                    height: 78,
+                    height: 64,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: characters.isEmpty ? 1 : characters.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 10),
                       itemBuilder: (context, index) {
                         if (characters.isEmpty) {
-                          return _castChip(
+                          return _castPill(
                             name: 'Add cast',
-                            locked: false,
+                            subtitle: 'New',
                             selected: false,
                             avatar: null,
                             onTap: () => Navigator.push(
@@ -288,9 +338,9 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
                         }
                         final c = characters[index];
                         final selected = character?.id == c.id;
-                        return _castChip(
+                        return _castPill(
                           name: c.name,
-                          locked: true,
+                          subtitle: 'Locked',
                           selected: selected,
                           avatar: c.faceReferenceUrls.isNotEmpty
                               ? c.faceReferenceUrls.first
@@ -306,172 +356,182 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
                   const SizedBox(height: 6),
                   Text(
                     'Tap to cast. Double-tap to open the closet.',
-                    style: DripTheme.meta.copyWith(fontSize: 11),
+                    style: DripTheme.meta.copyWith(
+                      fontSize: 11,
+                      color: DripTheme.faint,
+                    ),
                   ),
                   const SizedBox(height: 18),
-                  const Text('DIRECT', style: DripTheme.technical),
+
+                  // DIRECT
+                  Text(
+                    'DIRECT',
+                    style: DripTheme.technical.copyWith(
+                      color: DripTheme.muted,
+                      letterSpacing: 2.2,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                     decoration: BoxDecoration(
-                      color: DripTheme.surface,
-                      borderRadius: BorderRadius.circular(16),
+                      color: const Color(0xFF1A1F24),
+                      borderRadius: BorderRadius.circular(18),
                       border: Border.all(color: DripTheme.hairlineStrong),
                     ),
-                    child: TextField(
-                      controller: _promptController,
-                      maxLines: 3,
-                      style: const TextStyle(
-                        color: DripTheme.warmWhite,
-                        fontSize: 14,
-                        height: 1.4,
-                      ),
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        isDense: true,
-                        hintText:
-                            'A woman discovers a door in her apartment that wasn\'t there yesterday',
-                        hintStyle: TextStyle(color: DripTheme.faint, fontSize: 14),
-                        prefixIcon: Icon(Icons.auto_awesome,
-                            size: 18, color: DripTheme.cosmicTeal),
-                        prefixIconConstraints: BoxConstraints(minWidth: 32),
-                      ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2, right: 10),
+                          child: Icon(Icons.auto_awesome,
+                              size: 18, color: DripTheme.cosmicTeal),
+                        ),
+                        Expanded(
+                          child: TextField(
+                            controller: _promptController,
+                            maxLines: 3,
+                            minLines: 2,
+                            style: const TextStyle(
+                              color: DripTheme.warmWhite,
+                              fontSize: 14,
+                              height: 1.45,
+                            ),
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                              hintText:
+                                  'A woman discovers a door in her apartment that wasn\'t there yesterday',
+                              hintStyle: TextStyle(
+                                color: DripTheme.faint,
+                                fontSize: 14,
+                                height: 1.45,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Camera modes — icon + label like sandbox
                   SizedBox(
-                    height: 40,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
+                    height: 56,
+                    child: Row(
                       children: [
                         for (final mode in _cameraModes)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              label: Text(
-                                mode,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  letterSpacing: 1.2,
-                                  fontWeight: FontWeight.w600,
-                                  color: _selectedCameraMotion == mode
-                                      ? DripTheme.voidBlack
-                                      : DripTheme.chrome,
-                                ),
+                          Expanded(
+                            child: _cameraModeBtn(
+                              mode: mode,
+                              selected: _selectedCameraMotion.toUpperCase() ==
+                                      mode ||
+                                  (_selectedCameraMotion == 'static' &&
+                                      mode == 'LOCK'),
+                              onTap: () => setState(
+                                () => _selectedCameraMotion = mode,
                               ),
-                              selected: _selectedCameraMotion == mode,
-                              selectedColor: DripTheme.cosmicTeal,
-                              backgroundColor: DripTheme.surfaceRaised,
-                              side: BorderSide(
-                                color: _selectedCameraMotion == mode
-                                    ? DripTheme.cosmicTeal
-                                    : DripTheme.hairline,
-                              ),
-                              onSelected: (_) =>
-                                  setState(() => _selectedCameraMotion = mode),
                             ),
                           ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
+
+                  // Mic · image · GENERATE
                   Row(
                     children: [
-                      IconButton(
-                        onPressed: _recordVoicePrompt,
-                        style: IconButton.styleFrom(
-                          backgroundColor: DripTheme.surfaceRaised,
-                        ),
-                        icon: Icon(
-                          _isRecording ? Icons.mic : Icons.mic_none,
-                          color: _isRecording
-                              ? DripTheme.cosmicTeal
-                              : DripTheme.chrome,
-                        ),
+                      _roundToolBtn(
+                        icon: _isRecording ? Icons.mic : Icons.mic_none,
+                        active: _isRecording,
+                        onTap: _recordVoicePrompt,
                       ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: () {
-                          final tier =
-                              ref.read(userProfileProvider).value?.subscriptionTier;
+                      const SizedBox(width: 10),
+                      _roundToolBtn(
+                        icon: Icons.image_outlined,
+                        onTap: () {
+                          final tier = ref
+                              .read(userProfileProvider)
+                              .value
+                              ?.subscriptionTier;
                           showModelPickerSheet(
                             context,
                             initial: ModelPickerTab.video,
                             subscriptionTier: tier,
                           );
                         },
-                        style: IconButton.styleFrom(
-                          backgroundColor: DripTheme.surfaceRaised,
-                        ),
-                        icon: const Icon(Icons.tune_rounded, color: DripTheme.chrome),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 12),
                       Expanded(
-                        flex: 3,
                         child: SizedBox(
                           height: 52,
                           child: DecoratedBox(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(26),
+                              borderRadius: BorderRadius.circular(28),
                               gradient: const LinearGradient(
                                 colors: [
-                                  Color(0xFF00D4AA),
-                                  Color(0xFF1A6BFF),
+                                  Color(0xFF00C9A0),
+                                  Color(0xFF1B5FFF),
                                 ],
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: DripTheme.cosmicTeal.withOpacity(0.35),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 4),
+                                  color: DripTheme.cosmicTeal.withOpacity(0.4),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 6),
                                 ),
                               ],
                             ),
-                            child: ElevatedButton(
-                              onPressed: isGenerating ? null : _generate,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(26),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(28),
+                                onTap: isGenerating ? null : _generate,
+                                child: Center(
+                                  child: isGenerating
+                                      ? const SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.bolt,
+                                                color: Colors.white, size: 20),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              'GENERATE',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w800,
+                                                letterSpacing: 1.8,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                 ),
                               ),
-                              child: isGenerating
-                                  ? const SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.bolt, size: 20),
-                                        SizedBox(width: 6),
-                                        Text(
-                                          'GENERATE',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w800,
-                                            letterSpacing: 1.6,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
                             ),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     '${cost.tokens} tokens · you have $tokens',
-                    style: DripTheme.meta.copyWith(fontSize: 11),
+                    style: DripTheme.meta.copyWith(
+                      fontSize: 11,
+                      color: DripTheme.faint,
+                    ),
                   ),
                 ],
               ),
@@ -483,21 +543,30 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
   }
 
   Widget _emptyPreview() {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.movie_creation_outlined, size: 40, color: DripTheme.faint),
-          SizedBox(height: 10),
-          Text('Frame your next drip', style: DripTheme.meta),
-        ],
+    return Container(
+      color: DripTheme.deepBlack,
+      child: const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.movie_creation_outlined,
+                size: 44, color: DripTheme.faint),
+            SizedBox(height: 12),
+            Text('Frame your next drip', style: DripTheme.meta),
+            SizedBox(height: 4),
+            Text(
+              'Select a cast member or generate a scene',
+              style: TextStyle(color: DripTheme.faint, fontSize: 11),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _castChip({
+  Widget _castPill({
     required String name,
-    required bool locked,
+    required String subtitle,
     required bool selected,
     required String? avatar,
     required VoidCallback onTap,
@@ -506,23 +575,26 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
     return GestureDetector(
       onTap: onTap,
       onDoubleTap: onDoubleTap,
-      child: Container(
-        width: 108,
-        padding: const EdgeInsets.all(8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.fromLTRB(8, 8, 14, 8),
         decoration: BoxDecoration(
           color: selected
-              ? DripTheme.cosmicTeal.withOpacity(0.12)
-              : DripTheme.surface,
-          borderRadius: BorderRadius.circular(14),
+              ? DripTheme.cosmicTeal.withOpacity(0.10)
+              : const Color(0xFF1A1F24),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? DripTheme.cosmicTeal : DripTheme.hairlineStrong,
-            width: selected ? 1.4 : 1,
+            color: selected
+                ? DripTheme.cosmicTeal.withOpacity(0.85)
+                : DripTheme.hairlineStrong,
+            width: selected ? 1.5 : 1,
           ),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             CircleAvatar(
-              radius: 18,
+              radius: 20,
               backgroundColor: DripTheme.surfaceRaised,
               backgroundImage:
                   avatar != null ? NetworkImage(avatar) : null,
@@ -530,33 +602,108 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
                   ? const Icon(Icons.person, size: 18, color: DripTheme.chrome)
                   : null,
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: DripTheme.warmWhite,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  name.length > 12 ? '${name.substring(0, 11)}…' : name,
+                  style: const TextStyle(
+                    color: DripTheme.warmWhite,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
-                  Text(
-                    locked ? 'Locked' : 'Open',
-                    style: TextStyle(
-                      color: locked ? DripTheme.muted : DripTheme.cosmicTeal,
-                      fontSize: 10,
-                    ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: selected ? DripTheme.cosmicTeal : DripTheme.muted,
+                    fontSize: 10,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _cameraModeBtn({
+    required String mode,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final icons = <String, IconData>{
+      'LOCK': Icons.center_focus_strong,
+      'PAN': Icons.swap_horiz,
+      'ZOOM': Icons.zoom_in,
+      'ORBIT': Icons.sync,
+      'WHIP': Icons.flash_on,
+      'DRONE': Icons.flight,
+    };
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            width: 40,
+            height: 36,
+            decoration: BoxDecoration(
+              color: selected
+                  ? DripTheme.cosmicTeal.withOpacity(0.18)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selected
+                    ? DripTheme.cosmicTeal.withOpacity(0.5)
+                    : Colors.transparent,
+              ),
+            ),
+            child: Icon(
+              icons[mode] ?? Icons.videocam,
+              size: 20,
+              color: selected ? DripTheme.cosmicTeal : DripTheme.muted,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            mode,
+            style: TextStyle(
+              fontSize: 8,
+              letterSpacing: 0.6,
+              fontWeight: FontWeight.w600,
+              color: selected ? DripTheme.cosmicTeal : DripTheme.faint,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _roundToolBtn({
+    required IconData icon,
+    required VoidCallback onTap,
+    bool active = false,
+  }) {
+    return Material(
+      color: const Color(0xFF1A1F24),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: Icon(
+            icon,
+            color: active ? DripTheme.cosmicTeal : DripTheme.chrome,
+            size: 22,
+          ),
         ),
       ),
     );
