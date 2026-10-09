@@ -97,11 +97,11 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
   final _storyController = TextEditingController();
   final _titleController = TextEditingController();
   String _selectedGenre = 'Horror';
-  String _selectedDuration = '60 seconds';
+  String _selectedDuration = '60s';
   bool _includeDialogue = true;
 
   final _genres = ['Horror', 'Romance', 'Sci-Fi', 'Noir', 'Comedy', 'Drama', 'Thriller'];
-  final _durations = ['30 seconds', '60 seconds', '2 minutes', '5 minutes'];
+  final _durations = ['30s', '60s', '2min', '5min'];
 
   @override
   void dispose() {
@@ -125,10 +125,10 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('STORY → FILM', style: DripTheme.brandMark),
+                  const Text('Story to movie', style: DripTheme.display),
                   const SizedBox(height: 6),
                   Text(
-                    'Describe the film. The Director plans production.',
+                    'The director breaks your story into a coherent film.',
                     style: DripTheme.meta,
                   ),
                   const SizedBox(height: 28),

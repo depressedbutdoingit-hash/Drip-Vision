@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers.dart';
 import '../../core/theme.dart';
+import '../widgets/video_player_widget.dart';
+import 'character_creation_screen.dart';
 import '../../core/director_settings.dart';
 import '../../core/ai_tiers.dart';
 import '../../core/model_prefs.dart';
@@ -24,6 +26,8 @@ class DripVisionStudioScreen extends ConsumerStatefulWidget {
 }
 
 class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen> {
+  static const _cameraModes = ['LOCK', 'PAN', 'ZOOM', 'ORBIT', 'WHIP', 'DRONE'];
+
   final _promptController = TextEditingController();
   String _selectedCameraMotion = 'static';
   bool _isRecording = false;
@@ -198,289 +202,363 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
     final progress = ref.watch(generationProgressProvider);
     final scenes = ref.watch(sceneListProvider);
     final character = ref.watch(activeCharacterProvider);
+    final characters = ref.watch(characterListProvider);
+    final profile = ref.watch(userProfileProvider).value;
+    final tokens = profile?.tokenBalance ?? 0;
     final lastScene = scenes.lastOrNull;
-    final directorSettings = ref.watch(directorSettingsProvider);
-    final appliedStyle = ref.watch(activeStyleProvider);
+    final quality = ref.watch(videoQualityProvider);
+    final cost = AiTiers.videoCost(
+      durationSeconds: 5,
+      quality: quality.name,
+    );
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          'DRIPVISION',
-          style: TextStyle(
-            color: DripTheme.nebulaCyan,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 3,
-            fontSize: 18,
-            shadows: [
-              Shadow(
-                color: DripTheme.cosmicTeal,
-                blurRadius: 15,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tune_rounded, color: DripTheme.chrome),
-            tooltip: 'Models',
-            onPressed: () {
-              final tier = ref.read(userProfileProvider).value?.subscriptionTier;
-              showModelPickerSheet(
-                context,
-                initial: ModelPickerTab.video,
-                subscriptionTier: tier,
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.checkroom, color: DripTheme.cosmicTeal),
-            onPressed: () => _showCharacterCloset(context, character),
-          ),
-          IconButton(
-            icon: const Icon(Icons.movie_filter_outlined, color: DripTheme.chrome),
-            onPressed: scenes.length > 1 ? _stitchMasterCut : null,
-          ),
-        ],
-      ),
+      backgroundColor: DripTheme.voidBlack,
       body: Column(
         children: [
-          GestureDetector(
-            onTap: () => setState(() => _useDirectorBrief = !_useDirectorBrief),
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: _useDirectorBrief ? DripTheme.cosmicTeal.withOpacity(.08) : Colors.white.withOpacity(.03),
-                borderRadius: BorderRadius.circular(13),
-                border: Border.all(color: _useDirectorBrief ? DripTheme.cosmicTeal.withOpacity(.35) : Colors.white.withOpacity(.07)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.videocam_outlined, size: 15, color: _useDirectorBrief ? DripTheme.aquaGlow : DripTheme.muted),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: Text(
-                      _useDirectorBrief ? "DIRECTOR'S BRIEF · ${directorSettings.toSummary()}${appliedStyle != null ? ' · ${appliedStyle.name}' : ''}" : "Director's Brief off — generating from prompt only",
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 10.5, letterSpacing: .3, fontWeight: FontWeight.w600, color: _useDirectorBrief ? DripTheme.warmWhite : DripTheme.muted),
-                    ),
-                  ),
-                  Icon(_useDirectorBrief ? Icons.toggle_on : Icons.toggle_off, size: 22, color: _useDirectorBrief ? DripTheme.cosmicTeal : Colors.white24),
-                ],
-              ),
-            ),
-          ),
-          // Video quality · tokens charged from AiTiers
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-            child: Row(
-              children: [
-                for (final q in VideoGenTier.values) ...[
-                  if (q != VideoGenTier.values.first) const SizedBox(width: 8),
-                  Expanded(
-                    child: Builder(builder: (context) {
-                      final selected = ref.watch(videoQualityProvider) == q;
-                      final cost = AiTiers.videoCostFor(durationSeconds: 5, tier: q);
-                      return GestureDetector(
-                        onTap: isGenerating
-                            ? null
-                            : () => ref.read(videoQualityProvider.notifier).state = q,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 9),
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? DripTheme.cosmicTeal.withOpacity(0.12)
-                                : Colors.white.withOpacity(0.03),
-                            borderRadius: BorderRadius.circular(11),
-                            border: Border.all(
-                              color: selected
-                                  ? DripTheme.cosmicTeal.withOpacity(0.45)
-                                  : Colors.white.withOpacity(0.06),
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                AiTiers.videoTierLabel(q),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  letterSpacing: 1.1,
-                                  fontWeight: FontWeight.w700,
-                                  color: selected
-                                      ? DripTheme.warmWhite
-                                      : DripTheme.muted,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${cost.tokens} tok',
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  color: selected
-                                      ? DripTheme.aquaGlow
-                                      : DripTheme.muted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
-            child: Text(
-              'Model · ${ref.watch(videoModelOverrideProvider) ?? ProductModels.videoForName(ref.watch(videoQualityProvider).name)}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: DripTheme.meta.copyWith(fontSize: 10),
-            ),
-          ),
+          // Preview / last frame
           Expanded(
-            flex: 3,
+            flex: 5,
             child: Container(
-              margin: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: DripTheme.surface.withOpacity(0.6),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: DripTheme.cosmicTeal.withOpacity(0.2)),
-                boxShadow: [
-                  BoxShadow(
-                    color: DripTheme.cosmicTeal.withOpacity(0.1),
-                    blurRadius: 30,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: lastScene?.outputVideoUrl != null
-                    ? Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Container(
-                            color: Colors.black,
-                            child: const Center(
-                              child: Icon(
-                                Icons.play_circle_fill,
-                                color: DripTheme.cosmicTeal,
-                                size: 64,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 16,
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: VideoActionBar(
-                                videoUrl: lastScene!.outputVideoUrl!,
-                                prompt: lastScene.prompt,
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    : const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.movie_creation_outlined,
-                              color: Colors.white24,
-                              size: 64,
-                            ),
-                            SizedBox(height: 12),
-                            Text(
-                              'Tap bolt to generate',
-                              style: TextStyle(color: Colors.white30, fontSize: 14),
-                            ),
-                          ],
-                        ),
-                      ),
-              ),
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+              color: DripTheme.deepBlack,
+              child: lastScene?.outputVideoUrl != null
+                  ? VideoPlayerWidget(url: lastScene!.outputVideoUrl!)
+                  : (character != null && character.faceReferenceUrls.isNotEmpty)
+                      ? Image.network(
+                          character.faceReferenceUrls.first,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (_, __, ___) => _emptyPreview(),
+                        )
+                      : _emptyPreview(),
             ),
           ),
           if (isGenerating)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: CinematicProgress(progress: progress, stage: progress < .35 ? 'DIRECTING SCENE' : progress < .7 ? 'BUILDING CAMERA' : 'GENERATING'),
+            LinearProgressIndicator(
+              value: progress > 0 ? progress : null,
+              backgroundColor: DripTheme.surface,
+              color: DripTheme.cosmicTeal,
+              minHeight: 2,
             ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: CameraMotionJoystick(
-              initialSelection: _selectedCameraMotion,
-              onMotionSelected: (m) => _selectedCameraMotion = m,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                MediaPickerButton(
-                  label: 'Ref',
-                  onMediaSelected: (file) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Image added: ${file.path.split('/').last}'),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _promptController,
-                    style: const TextStyle(color: Colors.white),
-                    maxLines: 1,
-                    decoration: InputDecoration(
-                      hintText: "3-word scene action...",
-                      hintStyle: const TextStyle(color: Colors.white30),
-                      filled: true,
-                      fillColor: DripTheme.surfaceLight.withOpacity(0.8),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isRecording ? Icons.mic : Icons.mic_none,
-                          color: _isRecording ? DripTheme.cosmicTeal : Colors.white30,
+          Expanded(
+            flex: 6,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text('CAST', style: DripTheme.technical),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CharacterCreationScreen(),
+                          ),
                         ),
-                        onPressed: _recordVoicePrompt,
+                        child: const Text('NEW', style: DripTheme.overline),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 78,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: characters.isEmpty ? 1 : characters.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 10),
+                      itemBuilder: (context, index) {
+                        if (characters.isEmpty) {
+                          return _castChip(
+                            name: 'Add cast',
+                            locked: false,
+                            selected: false,
+                            avatar: null,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CharacterCreationScreen(),
+                              ),
+                            ),
+                          );
+                        }
+                        final c = characters[index];
+                        final selected = character?.id == c.id;
+                        return _castChip(
+                          name: c.name,
+                          locked: true,
+                          selected: selected,
+                          avatar: c.faceReferenceUrls.isNotEmpty
+                              ? c.faceReferenceUrls.first
+                              : null,
+                          onTap: () {
+                            ref.read(activeCharacterProvider.notifier).state = c;
+                          },
+                          onDoubleTap: () => _showCharacterCloset(context, c),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Tap to cast. Double-tap to open the closet.',
+                    style: DripTheme.meta.copyWith(fontSize: 11),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text('DIRECT', style: DripTheme.technical),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: DripTheme.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: DripTheme.hairlineStrong),
+                    ),
+                    child: TextField(
+                      controller: _promptController,
+                      maxLines: 3,
+                      style: const TextStyle(
+                        color: DripTheme.warmWhite,
+                        fontSize: 14,
+                        height: 1.4,
+                      ),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        isDense: true,
+                        hintText:
+                            'A woman discovers a door in her apartment that wasn\'t there yesterday',
+                        hintStyle: TextStyle(color: DripTheme.faint, fontSize: 14),
+                        prefixIcon: Icon(Icons.auto_awesome,
+                            size: 18, color: DripTheme.cosmicTeal),
+                        prefixIconConstraints: BoxConstraints(minWidth: 32),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                FloatingActionButton(
-                  backgroundColor: DripTheme.cosmicTeal,
-                  elevation: 0,
-                  onPressed: isGenerating ? null : _generate,
-                  child: isGenerating
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: DripTheme.voidBlack,
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 40,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        for (final mode in _cameraModes)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ChoiceChip(
+                              label: Text(
+                                mode,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  letterSpacing: 1.2,
+                                  fontWeight: FontWeight.w600,
+                                  color: _selectedCameraMotion == mode
+                                      ? DripTheme.voidBlack
+                                      : DripTheme.chrome,
+                                ),
+                              ),
+                              selected: _selectedCameraMotion == mode,
+                              selectedColor: DripTheme.cosmicTeal,
+                              backgroundColor: DripTheme.surfaceRaised,
+                              side: BorderSide(
+                                color: _selectedCameraMotion == mode
+                                    ? DripTheme.cosmicTeal
+                                    : DripTheme.hairline,
+                              ),
+                              onSelected: (_) =>
+                                  setState(() => _selectedCameraMotion = mode),
+                            ),
                           ),
-                        )
-                      : const Icon(Icons.bolt, color: DripTheme.voidBlack, size: 28),
-                ),
-              ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: _recordVoicePrompt,
+                        style: IconButton.styleFrom(
+                          backgroundColor: DripTheme.surfaceRaised,
+                        ),
+                        icon: Icon(
+                          _isRecording ? Icons.mic : Icons.mic_none,
+                          color: _isRecording
+                              ? DripTheme.cosmicTeal
+                              : DripTheme.chrome,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: () {
+                          final tier =
+                              ref.read(userProfileProvider).value?.subscriptionTier;
+                          showModelPickerSheet(
+                            context,
+                            initial: ModelPickerTab.video,
+                            subscriptionTier: tier,
+                          );
+                        },
+                        style: IconButton.styleFrom(
+                          backgroundColor: DripTheme.surfaceRaised,
+                        ),
+                        icon: const Icon(Icons.auto_fix_images_outlined,
+                            color: DripTheme.chrome),
+                      ),
+                      const Spacer(),
+                      Expanded(
+                        flex: 3,
+                        child: SizedBox(
+                          height: 52,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(26),
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color(0xFF00D4AA),
+                                  Color(0xFF1A6BFF),
+                                ],
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: DripTheme.cosmicTeal.withOpacity(0.35),
+                                  blurRadius: 18,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: isGenerating ? null : _generate,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(26),
+                                ),
+                              ),
+                              child: isGenerating
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.bolt, size: 20),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          'GENERATE',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: 1.6,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${cost.tokens} tokens · you have $tokens',
+                    style: DripTheme.meta.copyWith(fontSize: 11),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 12),
         ],
+      ),
+    );
+  }
+
+  Widget _emptyPreview() {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.movie_creation_outlined, size: 40, color: DripTheme.faint),
+          SizedBox(height: 10),
+          Text('Frame your next drip', style: DripTheme.meta),
+        ],
+      ),
+    );
+  }
+
+  Widget _castChip({
+    required String name,
+    required bool locked,
+    required bool selected,
+    required String? avatar,
+    required VoidCallback onTap,
+    VoidCallback? onDoubleTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      onDoubleTap: onDoubleTap,
+      child: Container(
+        width: 108,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: selected
+              ? DripTheme.cosmicTeal.withOpacity(0.12)
+              : DripTheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? DripTheme.cosmicTeal : DripTheme.hairlineStrong,
+            width: selected ? 1.4 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: DripTheme.surfaceRaised,
+              backgroundImage:
+                  avatar != null ? NetworkImage(avatar) : null,
+              child: avatar == null
+                  ? const Icon(Icons.person, size: 18, color: DripTheme.chrome)
+                  : null,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: DripTheme.warmWhite,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    locked ? 'Locked' : 'Open',
+                    style: TextStyle(
+                      color: locked ? DripTheme.muted : DripTheme.cosmicTeal,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

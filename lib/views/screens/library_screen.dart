@@ -28,14 +28,91 @@ class LibraryScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('LIBRARY', style: DripTheme.overline),
-              const SizedBox(height: 10),
-              const Text('Your universe', style: DripTheme.display),
-              const SizedBox(height: 10),
+              const Text('My Drips', style: DripTheme.display),
+              const SizedBox(height: 6),
               Text(
-                '${scenes.length} scenes · ${characters.length} characters',
-                style: DripTheme.body,
+                'Your scenes, characters, and scores.',
+                style: DripTheme.meta,
               ),
+              const SizedBox(height: 22),
+              const Text('CAST', style: DripTheme.technical),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 88,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: characters.length + 1,
+                  separatorBuilder: (_, __) => const SizedBox(width: 14),
+                  itemBuilder: (context, index) {
+                    if (index == characters.length) {
+                      return GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CharacterCreationScreen(),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(color: DripTheme.hairlineStrong),
+                                color: DripTheme.surface,
+                              ),
+                              child: const Icon(Icons.add, color: DripTheme.chrome),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text('New', style: TextStyle(color: DripTheme.muted, fontSize: 11)),
+                          ],
+                        ),
+                      );
+                    }
+                    final c = characters[index];
+                    final av = c.faceReferenceUrls.isNotEmpty ? c.faceReferenceUrls.first : null;
+                    return Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 26,
+                          backgroundColor: DripTheme.surfaceRaised,
+                          backgroundImage: av != null ? NetworkImage(av) : null,
+                          child: av == null
+                              ? const Icon(Icons.person, color: DripTheme.chrome)
+                              : null,
+                        ),
+                        const SizedBox(height: 6),
+                        SizedBox(
+                          width: 64,
+                          child: Text(
+                            c.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: DripTheme.cosmicTeal,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
+              if (scenes.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    'No scenes yet. Generate from Studio or run a production.',
+                    style: DripTheme.meta,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
               const SizedBox(height: 28),
 
               const Text('PRODUCTION', style: DripTheme.technical),

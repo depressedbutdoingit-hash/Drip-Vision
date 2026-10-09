@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
-import 'home_screen.dart';
-import 'create_screen.dart';
-import 'library_screen.dart';
-import 'studio_screen.dart';
+import 'generator_screen.dart';
+import 'story_planner_screen.dart';
 import 'explore_drip_screen.dart';
+import 'library_screen.dart';
 import 'settings_screen.dart';
 import '../widgets/system_banner.dart';
 import '../widgets/studio_drawer.dart';
+import '../widgets/drip_logo.dart';
 
 class MainNavigation extends ConsumerWidget {
   const MainNavigation({super.key});
@@ -22,59 +22,81 @@ class MainNavigation extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final i = ref.watch(navIndexProvider);
-    final screens = [
-      const HomeScreen(),
-      const CreateScreen(),
-      const LibraryScreen(),
-      const StudioScreen(),
-      const ExploreDripScreen(),
+    final i = ref.watch(navIndexProvider).clamp(0, 3);
+    final profile = ref.watch(userProfileProvider).value;
+    final tokens = profile?.tokenBalance ?? 0;
+
+    final screens = const [
+      DripVisionStudioScreen(),
+      StoryPlannerScreen(),
+      ExploreDripScreen(),
+      LibraryScreen(),
     ];
 
-    // Home has its own header + menu; other tabs use app bar menu.
-    final showAppBar = i != 0;
+    // Explore is full-bleed; others get chrome header.
+    final hideChrome = i == 2;
 
     return SystemBannerHost(
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: DripTheme.voidBlack,
         drawer: const StudioDrawer(),
-        appBar: showAppBar
-            ? AppBar(
-                leading: IconButton(
-                  tooltip: 'Menu',
-                  onPressed: openDrawer,
-                  icon: const Icon(
-                    Icons.menu,
-                    size: 22,
-                    color: DripTheme.chrome,
+        body: Column(
+          children: [
+            if (!hideChrome)
+              SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'Menu',
+                        onPressed: openDrawer,
+                        icon: const Icon(Icons.menu, size: 22, color: DripTheme.chrome),
+                      ),
+                      const DripLogo(compact: true, size: 32),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: DripTheme.surfaceRaised,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: DripTheme.hairlineStrong),
+                        ),
+                        child: Text(
+                          '$tokens TOK',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: DripTheme.warmWhite,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      IconButton(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                        ),
+                        icon: const Icon(Icons.settings_outlined,
+                            size: 20, color: DripTheme.chrome),
+                      ),
+                    ],
                   ),
                 ),
-                title: const Text('DRIPVISION', style: DripTheme.brandMark),
-                actions: [
-                  IconButton(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                    ),
-                    icon: const Icon(
-                      Icons.person_outline,
-                      size: 21,
-                      color: DripTheme.chrome,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                ],
-              )
-            : null,
-        body: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          switchInCurve: Curves.easeOut,
-          switchOutCurve: Curves.easeIn,
-          child: KeyedSubtree(
-            key: ValueKey(i),
-            child: screens[i],
-          ),
+              ),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: KeyedSubtree(
+                  key: ValueKey(i),
+                  child: screens[i],
+                ),
+              ),
+            ),
+          ],
         ),
         bottomNavigationBar: Container(
           decoration: const BoxDecoration(
@@ -84,15 +106,13 @@ class MainNavigation extends ConsumerWidget {
           child: SafeArea(
             top: false,
             child: SizedBox(
-              height: 52,
+              height: 56,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _nav(ref, 0, Icons.home_outlined, 'HOME', i),
-                  _nav(ref, 1, Icons.add_box_outlined, 'CREATE', i),
-                  _nav(ref, 2, Icons.folder_open_outlined, 'LIBRARY', i),
-                  _nav(ref, 3, Icons.tune_outlined, 'STUDIO', i),
-                  _nav(ref, 4, Icons.explore_outlined, 'EXPLORE', i),
+                  _nav(ref, 0, Icons.movie_creation_outlined, 'STUDIO', i),
+                  _nav(ref, 1, Icons.menu_book_outlined, 'STORY', i),
+                  _nav(ref, 2, Icons.explore_outlined, 'EXPLORE', i),
+                  _nav(ref, 3, Icons.folder_outlined, 'MY DRIPS', i),
                 ],
               ),
             ),
@@ -113,27 +133,17 @@ class MainNavigation extends ConsumerWidget {
           children: [
             Icon(
               icon,
-              color: selected ? DripTheme.warmWhite : DripTheme.faint,
-              size: 20,
+              color: selected ? DripTheme.cosmicTeal : DripTheme.faint,
+              size: 22,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                fontSize: 8,
-                letterSpacing: 1.4,
-                color: selected ? DripTheme.chrome : DripTheme.faint,
-                fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-              ),
-            ),
-            const SizedBox(height: 3),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              width: selected ? 14 : 0,
-              height: 1.5,
-              decoration: BoxDecoration(
-                color: selected ? DripTheme.cosmicTeal : Colors.transparent,
-                borderRadius: BorderRadius.circular(1),
+                fontSize: 9,
+                letterSpacing: 1.1,
+                color: selected ? DripTheme.cosmicTeal : DripTheme.faint,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
           ],

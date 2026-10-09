@@ -9,6 +9,7 @@ import 'services/purchase_service.dart';
 import 'services/push_notification_service.dart';
 import 'services/crashlytics_service.dart';
 import 'views/screens/main_navigation.dart';
+import 'views/screens/splash_screen.dart';
 import 'views/screens/auth_screen.dart';
 import 'views/screens/story_planner_screen.dart';
 import 'views/screens/production_queue_screen.dart';
@@ -78,7 +79,7 @@ class DripVisionApp extends ConsumerWidget {
         title: 'DripVision',
         debugShowCheckedModeBanner: false,
         theme: DripTheme.theme,
-        home: const MainNavigation(),
+        home: const SplashScreen(),
         routes: _routes,
       );
     }
@@ -91,7 +92,7 @@ class DripVisionApp extends ConsumerWidget {
       theme: DripTheme.theme,
       home: authState.when(
         data: (user) => user != null
-            ? const MainNavigation()
+            ? const SplashScreen()
             : const AuthScreen(),
         loading: () => const Scaffold(
           backgroundColor: DripTheme.voidBlack,
@@ -102,7 +103,7 @@ class DripVisionApp extends ConsumerWidget {
         error: (err, _) {
           debugPrint('authState error: $err');
           // Still open the app so a misconfigured Firebase doesn't brick launch.
-          return const MainNavigation();
+          return const SplashScreen();
         },
       ),
       routes: _routes,
