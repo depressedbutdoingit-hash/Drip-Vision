@@ -4,6 +4,7 @@
 /// Continuity is the product. Models are swappable infrastructure.
 /// Full free/mid/high menus: see [AiModelCatalog].
 import 'ai_model_catalog.dart';
+import 'product_models.dart';
 
 class AiActionCost {
   final int tokens;
@@ -62,12 +63,12 @@ class AiTiers {
       );
 
   // ── Text / Director models ─────────────────────────────────────────
-  static const freeDirector = 'nvidia/nemotron-3-ultra-550b-a55b:free';
-  static const freeFast = 'nvidia/nemotron-3.5-lightning:free';
+  static const freeDirector = ProductModels.textFree;
+  static const freeFast = ProductModels.textFreeFast;
   static const freeRouter = 'openrouter/free';
-  static const starterDirector = 'anthropic/claude-haiku-5.5';
-  static const proDirector = 'anthropic/claude-sonnet-5.5';
-  static const studioDirector = 'anthropic/claude-opus-5.5';
+  static const starterDirector = ProductModels.textMid;
+  static const proDirector = ProductModels.textHigh;
+  static const studioDirector = ProductModels.textFlagship;
 
   static String textModelFor(String? subscriptionTier,
       {bool premiumBoost = false}) {
@@ -128,26 +129,12 @@ class AiTiers {
   static String imageModelId(ImageGenTier tier) {
     switch (tier) {
       case ImageGenTier.draft:
-        return 'black-forest-labs/flux-schnell';
+        return ProductModels.imageDraft;
       case ImageGenTier.standard:
-        return 'black-forest-labs/flux-2-pro';
-      case ImageGenTier.pro:
-        return 'black-forest-labs/flux-2-max';
       case ImageGenTier.board:
-        return 'black-forest-labs/flux-2-pro';
-    }
-  }
-
-  static double imageCogsUsd(ImageGenTier tier) {
-    switch (tier) {
-      case ImageGenTier.draft:
-        return 0.01;
-      case ImageGenTier.standard:
-        return 0.04;
+        return ProductModels.imageStandard;
       case ImageGenTier.pro:
-        return 0.10;
-      case ImageGenTier.board:
-        return 0.16;
+        return ProductModels.imagePro;
     }
   }
 
@@ -224,35 +211,11 @@ class AiTiers {
   static String videoModelId(VideoGenTier tier) {
     switch (tier) {
       case VideoGenTier.draft:
-        return 'alibaba/wan-2.7'; // fast, continuity-friendly I2V
+        return ProductModels.videoDraft;
       case VideoGenTier.pro:
-        return 'kwaivgi/kling-v3.0-std';
+        return ProductModels.videoPro;
       case VideoGenTier.cinema:
-        return 'google/veo-3.1'; // flagship when available on key
-    }
-  }
-
-  /// Fallback chain if primary is down / rate-limited.
-  static List<String> videoModelFallbacks(VideoGenTier tier) {
-    switch (tier) {
-      case VideoGenTier.draft:
-        return const [
-          'alibaba/wan-2.7',
-          'google/veo-3.1-lite',
-          'bytedance/seedance-2.0',
-        ];
-      case VideoGenTier.pro:
-        return const [
-          'kwaivgi/kling-v3.0-std',
-          'runway/gen-4.5',
-          'alibaba/wan-2.7',
-        ];
-      case VideoGenTier.cinema:
-        return const [
-          'google/veo-3.1',
-          'kwaivgi/kling-v3.0-pro',
-          'runway/gen-4.5',
-        ];
+        return ProductModels.videoCinema;
     }
   }
 
