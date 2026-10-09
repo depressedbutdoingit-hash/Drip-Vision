@@ -23,26 +23,41 @@ class _CharacterClosetScreenState extends ConsumerState<CharacterClosetScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
-      body: Stack(
-        children: [
-                        itemCount: _character.closet.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index == _character.closet.length) {
-                            return _buildAddOutfitCard();
-                          }
-                          return _buildOutfitCard(_character.closet[index]);
-                        },
-                      ),
-                ),
-              ],
-            ),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          (_character.name.isNotEmpty ? _character.name : 'CHARACTER').toUpperCase(),
+          style: const TextStyle(
+            letterSpacing: 2,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: DripTheme.warmWhite,
           ),
-        ],
+        ),
       ),
+      body: _character.closet.isEmpty
+          ? _buildEmptyState()
+          : Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.72,
+                ),
+                itemCount: _character.closet.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == _character.closet.length) {
+                    return _buildAddOutfitCard();
+                  }
+                  return _buildOutfitCard(_character.closet[index]);
+                },
+              ),
+            ),
     );
   }
 

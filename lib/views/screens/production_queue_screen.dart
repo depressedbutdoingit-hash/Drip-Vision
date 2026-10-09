@@ -243,7 +243,8 @@ class _ProductionQueueScreenState extends ConsumerState<ProductionQueueScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(productionQueueProvider(widget.plan).notifier)
+      ref
+          .read(productionQueueProvider(widget.plan).notifier)
           .startProduction('project_${DateTime.now().millisecondsSinceEpoch}');
     });
   }
@@ -254,189 +255,135 @@ class _ProductionQueueScreenState extends ConsumerState<ProductionQueueScreen> {
 
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
-      body: Stack(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          'PRODUCTION QUEUE',
+          style: TextStyle(
+            letterSpacing: 2,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: DripTheme.warmWhite,
+          ),
+        ),
+      ),
+      body: Column(
         children: [
-                    itemCount: widget.plan.scenes.length,
-                    itemBuilder: (context, index) {
-                      final scene = widget.plan.scenes[index];
-                      final isCompleted = index < state.completedScenes.length;
-                      final isCurrent = index == state.currentSceneIndex && state.isGenerating;
-                      final generated = isCompleted ? state.completedScenes[index] : null;
+          if (state.currentStatus != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                state.currentStatus!,
+                style: const TextStyle(color: DripTheme.chrome, fontSize: 12),
+              ),
+            ),
+          if (state.error != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                state.error!,
+                style: const TextStyle(color: Color(0xFFFF8A80), fontSize: 12),
+              ),
+            ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              itemCount: widget.plan.scenes.length,
+              itemBuilder: (context, index) {
+                final scene = widget.plan.scenes[index];
+                final isCompleted = index < state.completedScenes.length;
+                final isCurrent =
+                    index == state.currentSceneIndex && state.isGenerating;
+                final generated =
+                    isCompleted ? state.completedScenes[index] : null;
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isCurrent
-                            ? DripTheme.cosmicTeal.withOpacity(0.05)
-                            : Colors.white.withOpacity(0.02),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isCurrent
-                              ? DripTheme.cosmicTeal.withOpacity(0.3)
-                              : isCompleted
-                                ? DripTheme.cosmicTeal.withOpacity(0.15)
-                                : Colors.white.withOpacity(0.05),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 28,
-                                  height: 28,
-                                  decoration: BoxDecoration(
-                                    color: isCompleted
-                                      ? DripTheme.cosmicTeal.withOpacity(0.2)
-                                      : isCurrent
-                                        ? DripTheme.cosmicTeal.withOpacity(0.3)
-                                        : Colors.white.withOpacity(0.05),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Center(
-                                    child: isCompleted
-                                      ? Icon(Icons.check, size: 16, color: DripTheme.cosmicTeal)
-                                      : isCurrent
-                                        ? SizedBox(
-                                            width: 14,
-                                            height: 14,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: DripTheme.cosmicTeal,
-                                            ),
-                                          )
-                                        : Text(
-                                            '${index + 1}',
-                                            style: TextStyle(
-                                              color: Colors.white30,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    scene.heading,
-                                    style: TextStyle(
-                                      color: isCompleted || isCurrent ? Colors.white : DripColors.white40,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                if (generated?.wasAutoFixed ?? false)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: Colors.amber.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      'FIXED',
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        color: Colors.amber,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            if (generated?.videoUrl != null) ...[
-                              const SizedBox(height: 12),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: AspectRatio(
-                                  aspectRatio: 16 / 9,
-                                  child: VideoPlayerWidget(
-                                    url: generated!.videoUrl!,
-                                    autoPlay: index == state.currentSceneIndex - 1,
-                                    showControls: true,
-                                  ),
-                                ),
-                              ),
-                            ],
-                            if (generated?.issues.isNotEmpty ?? false) ...[
-                              const SizedBox(height: 8),
-                              ...generated!.issues.map((issue) => Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      issue.autoFixable ? Icons.auto_fix_high : Icons.warning_amber,
-                                      size: 14,
-                                      color: issue.autoFixable ? Colors.amber : Colors.orange,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        issue.message,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: DripColors.white40,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )),
-                            ],
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                if (state.isComplete) ...[
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          DripTheme.voidBlack.withOpacity(0.8),
-                        ],
-                      ),
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isCurrent
+                        ? DripTheme.cosmicTeal.withOpacity(0.05)
+                        : Colors.white.withOpacity(0.02),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isCurrent
+                          ? DripTheme.cosmicTeal.withOpacity(0.3)
+                          : isCompleted
+                              ? DripTheme.cosmicTeal.withOpacity(0.15)
+                              : Colors.white.withOpacity(0.05),
                     ),
-                    child: SafeArea(
-                      child: Row(
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {},
-                              icon: const Icon(Icons.play_arrow),
-                              label: const Text('WATCH FILM'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: DripTheme.cosmicTeal,
-                                foregroundColor: Colors.black,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
+                          Text(
+                            'SCENE ${scene.sceneNumber}',
+                            style: const TextStyle(
+                              letterSpacing: 1.5,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: DripTheme.warmWhite,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          IconButton(
-                            onPressed: () {},
-                            icon: const Icon(Icons.share),
-                            color: Colors.white,
-                          ),
+                          const Spacer(),
+                          if (isCompleted)
+                            const Icon(Icons.check_circle,
+                                size: 16, color: DripTheme.cosmicTeal),
+                          if (isCurrent)
+                            const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: DripTheme.cosmicTeal,
+                              ),
+                            ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      Text(
+                        scene.heading,
+                        style: const TextStyle(
+                          color: DripTheme.chrome,
+                          fontSize: 12,
+                        ),
+                      ),
+                      if (generated?.videoUrl != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          generated!.videoUrl!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: DripTheme.aquaGlow,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ],
+                );
+              },
             ),
           ),
+          if (state.isComplete)
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: DripTheme.cosmicTeal,
+                    foregroundColor: Colors.black,
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  child: const Text('DONE'),
+                ),
+              ),
+            ),
         ],
       ),
     );

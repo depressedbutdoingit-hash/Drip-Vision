@@ -98,6 +98,28 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
 
+  Future<void> _forgotPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter your email first')),
+      );
+      return;
+    }
+    final err = await ref.read(authScreenProvider.notifier).resetPassword(email);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          err == null
+              ? 'Password reset email sent to $email'
+              : err,
+        ),
+      ),
+    );
+  }
+
+
   @override
   void dispose() {
     _emailController.dispose();

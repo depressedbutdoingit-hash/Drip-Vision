@@ -45,153 +45,139 @@ class _CustomOutfitCreatorState extends ConsumerState<CustomOutfitCreator> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
-      body: Stack(
-        children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _availableTags.map((tag) {
-                      final isSelected = _selectedTags.contains(tag);
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            if (isSelected) {
-                              _selectedTags.remove(tag);
-                            } else {
-                              _selectedTags.add(tag);
-                            }
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                              ? DripTheme.cosmicTeal.withOpacity(0.2)
-                              : Colors.white.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isSelected
-                                ? DripTheme.cosmicTeal.withOpacity(0.5)
-                                : Colors.white.withOpacity(0.1),
-                            ),
-                          ),
-                          child: Text(
-                            tag,
-                            style: TextStyle(
-                              color: isSelected ? DripTheme.cosmicTeal : Colors.white60,
-                              fontSize: 13,
-                            ),
-                          ),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          'MINT OUTFIT',
+          style: TextStyle(
+            letterSpacing: 2,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: DripTheme.warmWhite,
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTextField(
+                controller: _nameController,
+                label: 'OUTFIT NAME',
+                hint: 'Midnight leather coat',
+              ),
+              const SizedBox(height: 20),
+              _buildTextField(
+                controller: _descriptionController,
+                label: 'DESCRIPTION',
+                hint: 'Materials, colors, silhouette…',
+                maxLines: 3,
+              ),
+              const SizedBox(height: 20),
+              _buildDropdown(
+                label: 'STYLE',
+                value: _selectedStyle,
+                items: _styles,
+                onChanged: (v) {
+                  if (v != null) setState(() => _selectedStyle = v);
+                },
+              ),
+              const SizedBox(height: 20),
+              const Text('TAGS', style: DripTheme.overline),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _availableTags.map((tag) {
+                  final isSelected = _selectedTags.contains(tag);
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (isSelected) {
+                          _selectedTags.remove(tag);
+                        } else {
+                          _selectedTags.add(tag);
+                        }
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? DripTheme.cosmicTeal.withOpacity(0.2)
+                            : Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected
+                              ? DripTheme.cosmicTeal.withOpacity(0.5)
+                              : Colors.white.withOpacity(0.1),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 40),
-
-                  // AI Generate preview option
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.02),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withOpacity(0.06)),
+                      ),
+                      child: Text(
+                        tag,
+                        style: TextStyle(
+                          color: isSelected
+                              ? DripTheme.cosmicTeal
+                              : Colors.white60,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 24),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.image_outlined, color: DripTheme.chrome),
+                title: Text(
+                  _referenceImagePath == null
+                      ? 'Add reference image'
+                      : 'Reference selected',
+                  style: const TextStyle(color: DripTheme.warmWhite),
+                ),
+                onTap: _pickReferenceImage,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: DripButton(
+                  onPressed: _isCreating ? null : _mintOutfit,
+                  child: _isCreating
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.black),
+                        )
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.auto_fix_high, color: DripTheme.cosmicTeal, size: 20),
-                            const SizedBox(width: 8),
+                            Icon(Icons.token, size: 20, color: Colors.black),
+                            SizedBox(width: 8),
                             Text(
-                              'AI ASSIST',
+                              'MINT OUTFIT · 50',
                               style: TextStyle(
-                                color: DripTheme.cosmicTeal,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                                letterSpacing: 2,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                                color: Colors.black,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Let AI generate a concept image from your description. +20 tokens.',
-                          style: TextStyle(color: DripColors.white40, fontSize: 12),
-                        ),
-                        const SizedBox(height: 12),
-                        OutlinedButton.icon(
-                          onPressed: () {},
-                          icon: Icon(Icons.generating_tokens, size: 16, color: DripTheme.cosmicTeal),
-                          label: Text(
-                            'GENERATE PREVIEW',
-                            style: TextStyle(color: DripTheme.cosmicTeal, fontSize: 12),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: DripTheme.cosmicTeal.withOpacity(0.3)),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: DripButton(
-                      onPressed: _isCreating ? null : _mintOutfit,
-                      child: _isCreating
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.token, size: 20, color: Colors.black),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'MINT OUTFIT',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 2,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  '50',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

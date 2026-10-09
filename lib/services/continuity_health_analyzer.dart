@@ -136,7 +136,7 @@ class ContinuityHealthAnalyzer {
       byLoc.putIfAbsent(key, () => []).add(s);
     }
     if (byLoc.isEmpty) {
-      locationMetrics.add(const HealthMetric(
+      locationMetrics.add(HealthMetric(
         label: 'Locations',
         score: ordered.isEmpty ? 0 : 55,
         tone: ordered.isEmpty ? HealthTone.idle : HealthTone.warn,

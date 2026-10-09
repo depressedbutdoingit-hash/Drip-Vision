@@ -151,6 +151,19 @@ class AiTiers {
     }
   }
 
+  static double imageCogsUsd(ImageGenTier tier) {
+    switch (tier) {
+      case ImageGenTier.draft:
+        return 0.01;
+      case ImageGenTier.standard:
+        return 0.04;
+      case ImageGenTier.pro:
+        return 0.10;
+      case ImageGenTier.board:
+        return 0.16;
+    }
+  }
+
   static AiActionCost imageCostFor(ImageGenTier tier) =>
       costOf(imageTokensFor(tier), usdCogs: imageCogsUsd(tier));
 
@@ -216,6 +229,17 @@ class AiTiers {
         return ProductModels.videoPro;
       case VideoGenTier.cinema:
         return ProductModels.videoCinema;
+    }
+  }
+
+  static List<String> videoModelFallbacks(VideoGenTier tier) {
+    switch (tier) {
+      case VideoGenTier.draft:
+        return ProductModels.videoDraftFallbacks;
+      case VideoGenTier.pro:
+        return ProductModels.videoProFallbacks;
+      case VideoGenTier.cinema:
+        return ProductModels.videoCinemaFallbacks;
     }
   }
 
