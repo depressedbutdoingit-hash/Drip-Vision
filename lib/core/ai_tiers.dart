@@ -1,16 +1,10 @@
-/// DripVision subscription → AI routing + credit costs.
+/// DripVision subscription → AI routing + generation catalog + credit costs.
 ///
-/// Text models: OpenRouter IDs.
-/// Image + video token costs are *customer* charges (app tokens), not raw API $.
-/// [AiActionCost] pairs tokens with USD (retail + optional COGS) for UI and logging.
+/// Philosophy: one production stack for *phone footage* and *AI shots*.
+/// Continuity is the product. Models are swappable infrastructure.
 class AiActionCost {
-  /// App tokens charged to the user.
   final int tokens;
-
-  /// Customer-facing retail value (tokens × [AiTiers.tokenUsdRetail]).
   final double usdRetail;
-
-  /// Approximate provider COGS in USD (what you pay upstream). Null if unknown/free.
   final double? usdCogs;
 
   const AiActionCost({
@@ -19,7 +13,6 @@ class AiActionCost {
     this.usdCogs,
   });
 
-  /// Gross margin if both retail and COGS are known.
   double? get marginUsd =>
       usdCogs == null ? null : usdRetail - usdCogs!;
 
@@ -31,16 +24,30 @@ class AiActionCost {
       };
 }
 
+/// Image generation quality ladder.
+enum ImageGenTier {
+  draft,
+  standard,
+  pro,
+  board,
+}
+
+/// Video generation quality ladder.
+enum VideoGenTier {
+  draft,
+  pro,
+  cinema,
+}
+
 class AiTiers {
   AiTiers._();
 
-  // ── Subscription ids (match UserProfile.subscriptionTier) ──────────
+  // ── Subscription ids ───────────────────────────────────────────────
   static const free = 'free';
   static const starter = 'starter';
   static const pro = 'pro';
   static const studio = 'studio';
 
-  /// Retail value of one app token (token packs / paywall math).
   static const double tokenUsdRetail = 0.02;
 
   static double tokensToUsd(int tokens) => tokens * tokenUsdRetail;
@@ -52,27 +59,17 @@ class AiTiers {
       );
 
   // ── Text / Director models ─────────────────────────────────────────
-  /// Free tier — $0, rate-limited on OpenRouter
   static const freeDirector = 'nvidia/nemotron-3-ultra-550b-a55b:free';
   static const freeFast = 'nvidia/nemotron-3.5-lightning:free';
   static const freeRouter = 'openrouter/free';
-
-  /// Starter — cheap reliable mid
   static const starterDirector = 'anthropic/claude-haiku-5.5';
-
-  /// Pro — strong creative planning
   static const proDirector = 'anthropic/claude-sonnet-5.5';
-
-  /// Studio / premium boost
   static const studioDirector = 'anthropic/claude-opus-5.5';
 
-  /// Resolve OpenRouter model for Director / Style DNA / prompt enhance.
   static String textModelFor(String? subscriptionTier,
       {bool premiumBoost = false}) {
     final t = (subscriptionTier ?? free).toLowerCase().trim();
-    if (premiumBoost && (t == pro || t == studio)) {
-      return studioDirector;
-    }
+    if (premiumBoost && (t == pro || t == studio)) return studioDirector;
     switch (t) {
       case starter:
         return starterDirector;
@@ -80,14 +77,11 @@ class AiTiers {
         return proDirector;
       case studio:
         return studioDirector;
-      case free:
       default:
         return freeDirector;
     }
   }
 
-  // ── App-token prices for AI actions ────────────────────────────────
-  /// Director story plan (one full breakdown)
   static int directorPlanTokens(String? tier) {
     switch ((tier ?? free).toLowerCase()) {
       case starter:
@@ -97,13 +91,12 @@ class AiTiers {
       case studio:
         return 3;
       default:
-        return 12; // free — higher so free users burn quota carefully
+        return 12;
     }
   }
 
   static AiActionCost directorPlanCost(String? tier) {
     final tokens = directorPlanTokens(tier);
-    // Haiku/Sonnet plan ≈ $0.001–0.03; free model = $0
     final t = (tier ?? free).toLowerCase();
     final cogs = switch (t) {
       free => 0.0,
@@ -115,137 +108,247 @@ class AiTiers {
     return costOf(tokens, usdCogs: cogs);
   }
 
-  /// Prompt enhance / style DNA extract
   static int lightTextTokens(String? tier) => 2;
 
   static AiActionCost lightTextCost(String? tier) =>
       costOf(lightTextTokens(tier), usdCogs: 0.001);
 
-  // ── Image generation (customer-facing app tokens) ──────────────────
-  // COGS reality (2026): draft ~$0.005–0.02, standard ~$0.03–0.06,
-  // pro/cinematic ~$0.07–0.15 per image.
+  // ── IMAGE GENERATION CATALOG ───────────────────────────────────────
+  // draft → FLUX schnell-class | standard → FLUX.2 Pro | pro → Max / GPT Image high
 
   static const imageDraftTokens = 3;
   static const imageStandardTokens = 8;
   static const imageProTokens = 15;
   static const imageStoryboardBoardTokens = 28;
 
-  /// Approximate provider COGS by image quality.
-  static double imageCogsUsd(String quality) {
-    switch (quality.toLowerCase().trim()) {
-      case 'pro':
-      case 'cinema':
-      case 'poster':
-        return 0.10;
-      case 'standard':
-      case 'storyboard':
-      case 'character':
-      case 'wardrobe':
-        return 0.04;
-      case 'board':
-      case 'storyboard_board':
-        return 0.16; // ~4 × standard
-      case 'draft':
-      default:
+  /// OpenRouter / fal-style model ids by image tier (swap without UI changes).
+  static String imageModelId(ImageGenTier tier) {
+    switch (tier) {
+      case ImageGenTier.draft:
+        return 'black-forest-labs/flux-schnell';
+      case ImageGenTier.standard:
+        return 'black-forest-labs/flux-2-pro';
+      case ImageGenTier.pro:
+        return 'black-forest-labs/flux-2-max';
+      case ImageGenTier.board:
+        return 'black-forest-labs/flux-2-pro';
+    }
+  }
+
+  static double imageCogsUsd(ImageGenTier tier) {
+    switch (tier) {
+      case ImageGenTier.draft:
         return 0.01;
+      case ImageGenTier.standard:
+        return 0.04;
+      case ImageGenTier.pro:
+        return 0.10;
+      case ImageGenTier.board:
+        return 0.16;
     }
   }
 
-  static int imageTokens(String quality) {
+  static int imageTokensFor(ImageGenTier tier) {
+    switch (tier) {
+      case ImageGenTier.draft:
+        return imageDraftTokens;
+      case ImageGenTier.standard:
+        return imageStandardTokens;
+      case ImageGenTier.pro:
+        return imageProTokens;
+      case ImageGenTier.board:
+        return imageStoryboardBoardTokens;
+    }
+  }
+
+  static AiActionCost imageCostFor(ImageGenTier tier) =>
+      costOf(imageTokensFor(tier), usdCogs: imageCogsUsd(tier));
+
+  /// String API kept for existing call sites.
+  static int imageTokens(String quality) =>
+      imageTokensFor(_parseImageTier(quality));
+
+  static AiActionCost imageCost(String quality) =>
+      imageCostFor(_parseImageTier(quality));
+
+  static ImageGenTier _parseImageTier(String quality) {
     switch (quality.toLowerCase().trim()) {
       case 'pro':
       case 'cinema':
       case 'poster':
-        return imageProTokens;
+        return ImageGenTier.pro;
       case 'standard':
       case 'storyboard':
       case 'character':
       case 'wardrobe':
-        return imageStandardTokens;
+        return ImageGenTier.standard;
       case 'board':
       case 'storyboard_board':
-        return imageStoryboardBoardTokens;
-      case 'draft':
+        return ImageGenTier.board;
       default:
-        return imageDraftTokens;
+        return ImageGenTier.draft;
     }
   }
 
-  static AiActionCost imageCost(String quality) {
-    final q = quality.toLowerCase().trim();
-    return costOf(imageTokens(q), usdCogs: imageCogsUsd(q));
-  }
-
-  /// Free = draft only; starter+ = standard; pro/studio = pro.
   static bool imageQualityAllowed(String? subscriptionTier, String quality) {
-    final t = (subscriptionTier ?? free).toLowerCase().trim();
-    final q = quality.toLowerCase().trim();
-    if (q == 'draft' || q.isEmpty) return true;
-    if (q == 'standard' ||
-        q == 'storyboard' ||
-        q == 'character' ||
-        q == 'wardrobe' ||
-        q == 'board' ||
-        q == 'storyboard_board') {
-      return t == starter || t == pro || t == studio;
-    }
-    return t == pro || t == studio;
+    return imageTierAllowed(subscriptionTier, _parseImageTier(quality));
   }
 
-  // ── Video generation (customer-facing app tokens) ──────────────────
-  // COGS reality (2026): ~$0.05–$0.15/s mid, ~$0.12–$0.40/s flagship.
+  static bool imageTierAllowed(String? subscriptionTier, ImageGenTier tier) {
+    final t = (subscriptionTier ?? free).toLowerCase().trim();
+    switch (tier) {
+      case ImageGenTier.draft:
+        return true;
+      case ImageGenTier.standard:
+      case ImageGenTier.board:
+        return t == starter || t == pro || t == studio;
+      case ImageGenTier.pro:
+        return t == pro || t == studio;
+    }
+  }
+
+  // ── VIDEO GENERATION CATALOG ───────────────────────────────────────
+  // draft → Wan / Veo Lite | pro → Kling / Runway | cinema → Veo Standard / flagship
 
   static const videoDraft5sTokens = 40;
   static const videoPro5sTokens = 90;
   static const videoCinema5sTokens = 160;
-
   static const videoExtraSecondDraft = 8;
   static const videoExtraSecondPro = 18;
   static const videoExtraSecondCinema = 32;
 
-  /// Approximate COGS per second by quality.
-  static double videoCogsPerSecond(String quality) {
-    switch (quality.toLowerCase().trim()) {
-      case 'cinema':
-        return 0.25;
-      case 'pro':
-        return 0.12;
-      case 'draft':
-      default:
-        return 0.07;
+  /// Primary OpenRouter video model per tier (DripEngine uses these).
+  static String videoModelId(VideoGenTier tier) {
+    switch (tier) {
+      case VideoGenTier.draft:
+        return 'alibaba/wan-2.7'; // fast, continuity-friendly I2V
+      case VideoGenTier.pro:
+        return 'kwaivgi/kling-v3.0-std';
+      case VideoGenTier.cinema:
+        return 'google/veo-3.1'; // flagship when available on key
     }
   }
 
-  static int videoTokens({
+  /// Fallback chain if primary is down / rate-limited.
+  static List<String> videoModelFallbacks(VideoGenTier tier) {
+    switch (tier) {
+      case VideoGenTier.draft:
+        return const [
+          'alibaba/wan-2.7',
+          'google/veo-3.1-lite',
+          'bytedance/seedance-2.0',
+        ];
+      case VideoGenTier.pro:
+        return const [
+          'kwaivgi/kling-v3.0-std',
+          'runway/gen-4.5',
+          'alibaba/wan-2.7',
+        ];
+      case VideoGenTier.cinema:
+        return const [
+          'google/veo-3.1',
+          'kwaivgi/kling-v3.0-pro',
+          'runway/gen-4.5',
+        ];
+    }
+  }
+
+  static double videoCogsPerSecond(VideoGenTier tier) {
+    switch (tier) {
+      case VideoGenTier.draft:
+        return 0.07;
+      case VideoGenTier.pro:
+        return 0.12;
+      case VideoGenTier.cinema:
+        return 0.25;
+    }
+  }
+
+  static int videoTokensFor({
     required int durationSeconds,
-    required String quality, // draft | pro | cinema
+    required VideoGenTier tier,
   }) {
     final secs = durationSeconds.clamp(1, 30);
-    final base5 = switch (quality) {
-      'cinema' => videoCinema5sTokens,
-      'pro' => videoPro5sTokens,
-      _ => videoDraft5sTokens,
+    final base5 = switch (tier) {
+      VideoGenTier.cinema => videoCinema5sTokens,
+      VideoGenTier.pro => videoPro5sTokens,
+      VideoGenTier.draft => videoDraft5sTokens,
     };
-    final extra = switch (quality) {
-      'cinema' => videoExtraSecondCinema,
-      'pro' => videoExtraSecondPro,
-      _ => videoExtraSecondDraft,
+    final extra = switch (tier) {
+      VideoGenTier.cinema => videoExtraSecondCinema,
+      VideoGenTier.pro => videoExtraSecondPro,
+      VideoGenTier.draft => videoExtraSecondDraft,
     };
     if (secs <= 5) return base5;
     return base5 + (secs - 5) * extra;
   }
 
+  static AiActionCost videoCostFor({
+    required int durationSeconds,
+    required VideoGenTier tier,
+  }) {
+    final secs = durationSeconds.clamp(1, 30);
+    return costOf(
+      videoTokensFor(durationSeconds: secs, tier: tier),
+      usdCogs: videoCogsPerSecond(tier) * secs,
+    );
+  }
+
+  static VideoGenTier _parseVideoTier(String quality) {
+    switch (quality.toLowerCase().trim()) {
+      case 'cinema':
+        return VideoGenTier.cinema;
+      case 'pro':
+        return VideoGenTier.pro;
+      default:
+        return VideoGenTier.draft;
+    }
+  }
+
+  static int videoTokens({
+    required int durationSeconds,
+    required String quality,
+  }) =>
+      videoTokensFor(
+        durationSeconds: durationSeconds,
+        tier: _parseVideoTier(quality),
+      );
+
   static AiActionCost videoCost({
     required int durationSeconds,
     required String quality,
-  }) {
-    final secs = durationSeconds.clamp(1, 30);
-    final tokens = videoTokens(durationSeconds: secs, quality: quality);
-    final cogs = videoCogsPerSecond(quality) * secs;
-    return costOf(tokens, usdCogs: cogs);
+  }) =>
+      videoCostFor(
+        durationSeconds: durationSeconds,
+        tier: _parseVideoTier(quality),
+      );
+
+  static bool videoTierAllowed(String? subscriptionTier, VideoGenTier tier) {
+    final t = (subscriptionTier ?? free).toLowerCase().trim();
+    switch (tier) {
+      case VideoGenTier.draft:
+        return true;
+      case VideoGenTier.pro:
+        return t == starter || t == pro || t == studio;
+      case VideoGenTier.cinema:
+        return t == pro || t == studio;
+    }
   }
 
-  /// Human labels for paywall / UI
+  static bool videoQualityAllowed(String? subscriptionTier, String quality) =>
+      videoTierAllowed(subscriptionTier, _parseVideoTier(quality));
+
+  // ── Phone media (no AI COGS — local import / capture) ─────────────
+  /// Importing phone video into Edit Bay is free (storage only).
+  static const phoneImportTokens = 0;
+
+  /// Optional: AI enhance of a phone clip (stabilize/grade assist) — standard text+light.
+  static const phoneEnhanceTokens = 5;
+
+  static AiActionCost phoneEnhanceCost() =>
+      costOf(phoneEnhanceTokens, usdCogs: 0.01);
+
+  // ── Labels & subscription prices ───────────────────────────────────
   static String tierLabel(String? tier) {
     switch ((tier ?? free).toLowerCase()) {
       case starter:
@@ -259,7 +362,30 @@ class AiTiers {
     }
   }
 
-  /// Monthly list prices (USD) — product policy
+  static String imageTierLabel(ImageGenTier t) {
+    switch (t) {
+      case ImageGenTier.draft:
+        return 'DRAFT';
+      case ImageGenTier.standard:
+        return 'STANDARD';
+      case ImageGenTier.pro:
+        return 'PRO';
+      case ImageGenTier.board:
+        return 'BOARD';
+    }
+  }
+
+  static String videoTierLabel(VideoGenTier t) {
+    switch (t) {
+      case VideoGenTier.draft:
+        return 'DRAFT';
+      case VideoGenTier.pro:
+        return 'PRO';
+      case VideoGenTier.cinema:
+        return 'CINEMA';
+    }
+  }
+
   static const priceStarterUsd = 14.99;
   static const priceProUsd = 34.99;
   static const priceStudioUsd = 89.99;

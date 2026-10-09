@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../core/env.dart';
+import '../core/ai_tiers.dart';
 import '../models/character.dart';
 import '../models/scene.dart';
 
@@ -42,8 +43,10 @@ class DripEngineService {
     required Character character,
     String? cameraMotion,
     void Function(double)? onProgress,
-    String model = defaultModel,
+    String? model,
+    VideoGenTier tier = VideoGenTier.draft,
   }) async {
+    model ??= AiTiers.videoModelId(tier);
     if (Env.openRouterKey.isEmpty) {
       throw DripEngineException(
         'OPENROUTER_KEY is missing. Add it to your .env file.',

@@ -69,6 +69,16 @@ class MediaPickerButton extends StatelessWidget {
                   if (file != null) onMediaSelected(file);
                 },
               ),
+              if (allowCamera)
+                _PickerTile(
+                  icon: Icons.fiber_manual_record,
+                  label: 'Record Video',
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final file = await MediaPickerService().pickVideoFromCamera();
+                    if (file != null) onMediaSelected(file);
+                  },
+                ),
             ],
           ),
         ),

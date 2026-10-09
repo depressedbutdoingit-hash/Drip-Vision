@@ -170,27 +170,83 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
   }
 
   Future<void> _pickFromGallery() async {
-    final file = await _picker.pickVideo(source: ImageSource.gallery);
+    if (!mounted) return;
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: DripTheme.surfaceRaised,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('ADD TO TIMELINE', style: DripTheme.overline),
+              const SizedBox(height: 6),
+              const Text(
+                'Phone footage and AI shots live on the same cut.',
+                style: DripTheme.meta,
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.video_library_outlined,
+                    color: DripTheme.chrome),
+                title: const Text('Gallery',
+                    style: TextStyle(color: DripTheme.warmWhite)),
+                subtitle: const Text('Import a video from your phone',
+                    style: DripTheme.meta),
+                onTap: () => Navigator.pop(ctx, 'gallery'),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading:
+                    const Icon(Icons.videocam_outlined, color: DripTheme.chrome),
+                title: const Text('Record',
+                    style: TextStyle(color: DripTheme.warmWhite)),
+                subtitle: const Text('Capture with the camera',
+                    style: DripTheme.meta),
+                onTap: () => Navigator.pop(ctx, 'camera'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (choice == null) return;
+    final file = await _picker.pickVideo(
+      source: choice == 'camera' ? ImageSource.camera : ImageSource.gallery,
+      maxDuration: choice == 'camera'
+          ? const Duration(minutes: 3)
+          : const Duration(minutes: 10),
+    );
     if (file == null) return;
+    await _ingestPhoneVideo(file.path, file.name);
+  }
+
+  Future<void> _ingestPhoneVideo(String path, String name) async {
     setState(() {
-      _sourcePath = null; // new import becomes the new original
+      _sourcePath = null;
       _activeFilter = null;
       _brightness = 0;
       _contrast = 0;
       _saturation = 0;
       _warmth = 0;
     });
-    await _loadSource(file.path);
+    await _loadSource(path);
     if (!mounted || _currentPath == null) return;
-    // Import must land on the timeline, not only in the monitor
-    final name = file.name.isNotEmpty ? file.name : 'Import';
-    final label = name.length > 24 ? '${name.substring(0, 24)}…' : name;
+    final labelBase = name.isNotEmpty ? name : 'Phone clip';
+    final label =
+        labelBase.length > 24 ? '${labelBase.substring(0, 24)}…' : labelBase;
     ref.read(editBayProvider.notifier).addMediaClip(
           mediaUrl: _currentPath!,
           label: label,
           duration: _duration > 0.5 ? _duration : 4,
         );
-    _toast('Added to timeline');
+    _toast('Phone clip on timeline');
   }
 
   Future<void> _runEdit(Future<String> Function() op, String label) async {
