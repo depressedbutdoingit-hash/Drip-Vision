@@ -10,7 +10,7 @@ on:
 # Cancel older runs on the same branch so they don't fill the disk together.
 concurrency:
   group: dripvision-ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -109,4 +109,4 @@ jobs:
           name: dripvision-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 3
