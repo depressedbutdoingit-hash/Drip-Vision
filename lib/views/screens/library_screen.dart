@@ -11,6 +11,7 @@ import 'timeline_screen.dart';
 import 'edit_bay_screen.dart';
 import 'paywall_screen.dart';
 import 'style_dna_screen.dart';
+import 'music_studio_screen.dart';
 
 class LibraryScreen extends ConsumerWidget {
   const LibraryScreen({super.key});
@@ -28,11 +29,30 @@ class LibraryScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('My Drips', style: DripTheme.display),
-              const SizedBox(height: 6),
-              Text(
-                'Your scenes, characters, and scores.',
-                style: DripTheme.meta,
+              Row(
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('My Drips', style: DripTheme.display),
+                        SizedBox(height: 6),
+                        Text(
+                          'Your scenes, characters, and scores.',
+                          style: DripTheme.meta,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Music studio',
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MusicStudioScreen()),
+                    ),
+                    icon: const Icon(Icons.music_note_outlined, color: DripTheme.chrome),
+                  ),
+                ],
               ),
               const SizedBox(height: 22),
               const Text('CAST', style: DripTheme.technical),

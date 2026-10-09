@@ -57,7 +57,7 @@ class _MusicStudioScreenState extends ConsumerState<MusicStudioScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'MUSIC STUDIO',
+                    'Music studio',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       letterSpacing: 8,
                       color: DripTheme.cosmicTeal,

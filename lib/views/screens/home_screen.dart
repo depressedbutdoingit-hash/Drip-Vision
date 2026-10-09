@@ -171,7 +171,7 @@ class HomeScreen extends ConsumerWidget {
                       title: 'Studio',
                       subtitle: 'Direct the shot',
                       onTap: () =>
-                          ref.read(navIndexProvider.notifier).state = 3,
+                          ref.read(navIndexProvider.notifier).state = 0,
                     ),
                     _Step(
                       index: '04',
