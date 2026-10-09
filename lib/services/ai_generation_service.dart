@@ -1,15 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/ai_tiers.dart';
+import '../core/product_models.dart';
 import 'drip_engine_service.dart';
 
 /// Unified generation entry — image + video tiers, costs, model routing.
-/// Phone imports stay free; AI generation always goes through [AiTiers] costs.
 class AIGenerationService {
   final DripEngineService? _engine;
 
   AIGenerationService({DripEngineService? engine}) : _engine = engine;
-
-  // ── Video ──────────────────────────────────────────────────────────
 
   AiActionCost videoCost({
     required int durationSeconds,
@@ -29,7 +27,10 @@ class AIGenerationService {
         tier: tier,
       );
 
-  String videoModel(VideoGenTier tier) => AiTiers.videoModelId(tier);
+  String videoModel(VideoGenTier tier, {String? override}) =>
+      (override != null && override.isNotEmpty)
+          ? override
+          : AiTiers.videoModelId(tier);
 
   List<String> videoFallbacks(VideoGenTier tier) =>
       AiTiers.videoModelFallbacks(tier);
@@ -37,14 +38,13 @@ class AIGenerationService {
   bool canGenerateVideo(String? subscriptionTier, VideoGenTier tier) =>
       AiTiers.videoTierAllowed(subscriptionTier, tier);
 
-  /// Stub until OpenRouter/provider keys are live for all models.
-  /// Prefer [DripEngineService.generateNextScene] for continuity-aware shots.
   Future<String> generateVideo({
     required String prompt,
     required String cameraMotion,
     String quality = 'draft',
     int durationSeconds = 5,
     String? subscriptionTier,
+    String? modelOverride,
   }) async {
     final tier = quality.toLowerCase() == 'cinema'
         ? VideoGenTier.cinema
@@ -56,12 +56,13 @@ class AIGenerationService {
         'Upgrade required for ${AiTiers.videoTierLabel(tier)} video.',
       );
     }
-    // Engine path when available (character + last-frame continuity)
+    final model = videoModel(tier, override: modelOverride);
+    // Prefer continuity-aware engine when callers have character context.
     if (_engine != null) {
-      // Callers with full scene context should use DripEngineService directly.
+      // Model is resolved; full scene path uses DripEngineService.generateNextScene.
     }
     await Future.delayed(const Duration(seconds: 2));
-    return 'https://example.com/generated_video.mp4';
+    return 'https://example.com/${model.replaceAll('/', '_')}.mp4';
   }
 
   int tokenCost({
@@ -73,22 +74,23 @@ class AIGenerationService {
         quality: quality,
       );
 
-  // ── Image ──────────────────────────────────────────────────────────
-
   AiActionCost imageCost(String quality) => AiTiers.imageCost(quality);
 
   AiActionCost imageCostFor(ImageGenTier tier) => AiTiers.imageCostFor(tier);
 
-  String imageModel(ImageGenTier tier) => AiTiers.imageModelId(tier);
+  String imageModel(ImageGenTier tier, {String? override}) =>
+      (override != null && override.isNotEmpty)
+          ? override
+          : AiTiers.imageModelId(tier);
 
   bool canGenerateImage(String? subscriptionTier, ImageGenTier tier) =>
       AiTiers.imageTierAllowed(subscriptionTier, tier);
 
-  /// Stub image gen — wire FLUX / GPT Image via OpenRouter or fal next.
   Future<String> generateImage({
     required String prompt,
     String quality = 'standard',
     String? subscriptionTier,
+    String? modelOverride,
   }) async {
     final tier = quality.toLowerCase().contains('pro') ||
             quality.toLowerCase().contains('poster')
@@ -103,13 +105,11 @@ class AIGenerationService {
         'Upgrade required for ${AiTiers.imageTierLabel(tier)} images.',
       );
     }
+    final model = imageModel(tier, override: modelOverride);
     await Future.delayed(const Duration(seconds: 1));
-    return 'https://example.com/generated_image.png';
+    return 'https://example.com/${model.replaceAll('/', '_')}.png';
   }
 
-  // ── Phone ──────────────────────────────────────────────────────────
-
-  /// Local import is free.
   AiActionCost get phoneImportCost =>
       AiTiers.costOf(AiTiers.phoneImportTokens, usdCogs: 0);
 

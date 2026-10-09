@@ -1,22 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shorebird_code_push/shorebird_code_push.dart';
 import '../../core/theme.dart';
 import 'admin_portal.dart';
 import 'god_mode/god_mode_screen.dart';
 import '../../services/god_mode_service.dart';
 import 'auth_screen.dart';
+import '../widgets/model_picker_sheet.dart';
+import '../../core/providers.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   final bool isAdmin;
   const SettingsScreen({super.key, this.isAdmin = false});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _shorebirdCodePush = ShorebirdCodePush();
   bool _isCheckingUpdate = false;
   bool _isAdmin = false;
@@ -160,6 +163,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   )
                 : null,
             onTap: _isCheckingUpdate ? null : _checkForOverTheAirUpdate,
+          ),
+          _tile(
+            icon: Icons.auto_awesome_outlined,
+            title: 'AI Models',
+            subtitle: 'Text · image · video · quality',
+            onTap: () {
+              final tier =
+                  ref.read(userProfileProvider).value?.subscriptionTier;
+              showModelPickerSheet(
+                context,
+                initial: ModelPickerTab.video,
+                subscriptionTier: tier,
+              );
+            },
           ),
           _tile(
             icon: Icons.privacy_tip_outlined,

@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../core/product_models.dart';
+import '../core/ai_tiers.dart';
 import '../core/env.dart';
 
 /// Auto Poster Generator — Creates a shareable movie poster from a completed film.

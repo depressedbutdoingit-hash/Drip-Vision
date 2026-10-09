@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers.dart';
 import '../../core/theme.dart';
 import '../../core/director_settings.dart';
+import '../../core/ai_tiers.dart';
+import '../../core/model_prefs.dart';
+import '../../core/product_models.dart';
+import '../widgets/model_picker_sheet.dart';
 import '../../models/character.dart';
 import '../../services/push_notification_service.dart';
 import '../../services/purchase_service.dart';
@@ -55,8 +59,23 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
       return;
     }
 
+    final tier = ref.read(userProfileProvider).value?.subscriptionTier;
+    final videoTier = ref.read(videoQualityProvider);
+    if (!AiTiers.videoTierAllowed(tier, videoTier)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${AiTiers.videoTierLabel(videoTier)} video requires a higher plan.',
+          ),
+        ),
+      );
+      _showPaywall();
+      return;
+    }
+
+    final cost = AiTiers.videoCostFor(durationSeconds: 5, tier: videoTier);
     final guard = ref.read(generationGuardProvider);
-    final hasTokens = await guard.deductAndValidateTokens(costInTokens: 10);
+    final hasTokens = await guard.deductAndValidateTokens(costInTokens: cost.tokens);
     if (!hasTokens) {
       _showPaywall();
       return;
@@ -83,6 +102,7 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
 
       final previousScene = ref.read(sceneListProvider).lastOrNull;
       final cameraMotion = _useDirectorBrief ? directorSettings.cameraMotionLabel : _selectedCameraMotion;
+      final model = resolveVideoModel(ref);
 
       final scene = (await ref.read(dripEngineProvider).generateNextScene(
             previousScene: previousScene,
@@ -91,6 +111,8 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
             character: character,
             cameraMotion: cameraMotion,
             onProgress: (p) => ref.read(generationProgressProvider.notifier).state = p,
+            model: model,
+            tier: videoTier,
           ))
           // characterOutfits/characterIds previously stayed empty forever —
           // nothing ever set them. This is real, not placeholder: it's the
@@ -202,6 +224,18 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.tune_rounded, color: DripTheme.chrome),
+            tooltip: 'Models',
+            onPressed: () {
+              final tier = ref.read(userProfileProvider).value?.subscriptionTier;
+              showModelPickerSheet(
+                context,
+                initial: ModelPickerTab.video,
+                subscriptionTier: tier,
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.checkroom, color: DripTheme.cosmicTeal),
             onPressed: () => _showCharacterCloset(context, character),
           ),
@@ -238,6 +272,76 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
                   Icon(_useDirectorBrief ? Icons.toggle_on : Icons.toggle_off, size: 22, color: _useDirectorBrief ? DripTheme.cosmicTeal : Colors.white24),
                 ],
               ),
+            ),
+          ),
+          // Video quality · tokens charged from AiTiers
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+            child: Row(
+              children: [
+                for (final q in VideoGenTier.values) ...[
+                  if (q != VideoGenTier.values.first) const SizedBox(width: 8),
+                  Expanded(
+                    child: Builder(builder: (context) {
+                      final selected = ref.watch(videoQualityProvider) == q;
+                      final cost = AiTiers.videoCostFor(durationSeconds: 5, tier: q);
+                      return GestureDetector(
+                        onTap: isGenerating
+                            ? null
+                            : () => ref.read(videoQualityProvider.notifier).state = q,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? DripTheme.cosmicTeal.withOpacity(0.12)
+                                : Colors.white.withOpacity(0.03),
+                            borderRadius: BorderRadius.circular(11),
+                            border: Border.all(
+                              color: selected
+                                  ? DripTheme.cosmicTeal.withOpacity(0.45)
+                                  : Colors.white.withOpacity(0.06),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                AiTiers.videoTierLabel(q),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  letterSpacing: 1.1,
+                                  fontWeight: FontWeight.w700,
+                                  color: selected
+                                      ? DripTheme.warmWhite
+                                      : DripTheme.muted,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${cost.tokens} tok',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: selected
+                                      ? DripTheme.aquaGlow
+                                      : DripTheme.muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
+            child: Text(
+              'Model · ${ref.watch(videoModelOverrideProvider) ?? ProductModels.videoForName(ref.watch(videoQualityProvider).name)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: DripTheme.meta.copyWith(fontSize: 10),
             ),
           ),
           Expanded(
