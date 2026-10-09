@@ -2,6 +2,9 @@
 ///
 /// Philosophy: one production stack for *phone footage* and *AI shots*.
 /// Continuity is the product. Models are swappable infrastructure.
+/// Full free/mid/high menus: see [AiModelCatalog].
+import 'ai_model_catalog.dart';
+
 class AiActionCost {
   final int tokens;
   final double usdRetail;
@@ -394,4 +397,25 @@ class AiTiers {
   static const includedTokensStarter = 400;
   static const includedTokensPro = 2000;
   static const includedTokensStudio = 8000;
+
+  /// Catalog accessors — free + good models for pickers / fallbacks.
+  static List<String> get freeTextModelIds =>
+      AiModelCatalog.textFree.map((m) => m.id).toList();
+  static List<String> get midTextModelIds =>
+      AiModelCatalog.textMid.map((m) => m.id).toList();
+  static List<String> get highTextModelIds =>
+      AiModelCatalog.textHigh.map((m) => m.id).toList();
+  static List<String> get freeImageModelIds =>
+      AiModelCatalog.imageFree.map((m) => m.id).toList();
+  static List<String> get midImageModelIds =>
+      AiModelCatalog.imageMid.map((m) => m.id).toList();
+  static List<String> get highImageModelIds =>
+      AiModelCatalog.imageHigh.map((m) => m.id).toList();
+  static List<String> get freeVideoModelIds =>
+      AiModelCatalog.videoFree.map((m) => m.id).toList();
+  static List<String> get midVideoModelIds =>
+      AiModelCatalog.videoMid.map((m) => m.id).toList();
+  static List<String> get highVideoModelIds =>
+      AiModelCatalog.videoHigh.map((m) => m.id).toList();
 }
+
