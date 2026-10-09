@@ -404,8 +404,7 @@ class _DripVisionStudioScreenState extends ConsumerState<DripVisionStudioScreen>
                         style: IconButton.styleFrom(
                           backgroundColor: DripTheme.surfaceRaised,
                         ),
-                        icon: const Icon(Icons.auto_fix_images_outlined,
-                            color: DripTheme.chrome),
+                        icon: const Icon(Icons.tune_rounded, color: DripTheme.chrome),
                       ),
                       const Spacer(),
                       Expanded(
