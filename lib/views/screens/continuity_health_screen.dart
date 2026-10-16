@@ -9,7 +9,6 @@ class ContinuityHealthScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final health = ref.watch(continuityHealthProvider);
-
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       appBar: AppBar(title: const Text('CONTINUITY HEALTH')),
@@ -21,10 +20,7 @@ class ContinuityHealthScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(health.message, style: DripTheme.meta),
             const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () => ref.read(continuityHealthProvider.notifier).fix(),
-              child: const Text('ONE-TAP FIX'),
-            ),
+            ElevatedButton(onPressed: () => ref.read(continuityHealthProvider.notifier).fix(), child: const Text('ONE-TAP FIX')),
           ],
         ),
       ),
