@@ -15,11 +15,11 @@ class Character {
 
   factory Character.fromJson(Map<String, dynamic> json) {
     return Character(
-      id: json['id'],
-      name: json['name'],
-      avatarUrl: json['avatarUrl'],
-      wardrobeDNA: List<String>.from(json['wardrobe']),
-      healthScore: json['healthScore'] ?? 100,
+      id: json['id'] as String,
+      name: json['name'] as String,
+      avatarUrl: json['avatarUrl'] as String,
+      wardrobeDNA: List<String>.from(json['wardrobe'] ?? []),
+      healthScore: json['healthScore'] as double? ?? 100,
     );
   }
 }
