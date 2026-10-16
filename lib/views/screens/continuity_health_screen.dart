@@ -20,7 +20,10 @@ class ContinuityHealthScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(health.message, style: DripTheme.meta),
             const SizedBox(height: 32),
-            ElevatedButton(onPressed: () => ref.read(continuityHealthProvider.notifier).fix(), child: const Text('ONE-TAP FIX')),
+            ElevatedButton(
+              onPressed: () => ref.read(continuityHealthProvider.notifier).fix(),
+              child: const Text('ONE-TAP FIX'),
+            ),
           ],
         ),
       ),
