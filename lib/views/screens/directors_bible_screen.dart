@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
-import '../../services/continuity_service.dart';
 import 'continuity_health_screen.dart';
 
 class DirectorsBibleScreen extends ConsumerWidget {
@@ -9,8 +8,8 @@ class DirectorsBibleScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final engine = ref.watch(continuityEngineProvider);
     final universe = ref.watch(universeProvider);
+    final engine = ref.watch(continuityEngineProvider);
 
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
@@ -22,13 +21,9 @@ class DirectorsBibleScreen extends ConsumerWidget {
           children: [
             Text('LIVE UNIVERSE HEALTH', style: DripTheme.technical),
             const SizedBox(height: 8),
-            Text(
-              universe.healthScore > 90 ? 'PERFECT' : universe.healthScore > 70 ? 'GOOD' : 'NEEDS WORK',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: universe.healthScore > 70 ? Colors.green : Colors.orange),
-            ),
+            Text(universe.healthScore > 90 ? 'PERFECT' : universe.healthScore > 70 ? 'GOOD' : 'NEEDS WORK',
+                 style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: universe.healthScore > 70 ? Colors.green : Colors.orange)),
             const SizedBox(height: 24),
-
-            // Real MAML/NaML health score + characters
             ...universe.characters.map((char) {
               final score = engine.getHealthScore(char.id);
               return ListTile(
