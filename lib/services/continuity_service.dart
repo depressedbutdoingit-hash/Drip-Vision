@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/character.dart';
+import '../models/universe.dart';
 
 part 'continuity_service.g.dart';
 
