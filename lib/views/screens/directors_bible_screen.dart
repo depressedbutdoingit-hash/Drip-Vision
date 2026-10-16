@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/providers.dart';
 import '../../core/theme.dart';
 import '../widgets/cinematic_card.dart';
+import '../screens/continuity_health_screen.dart';
 
 class DirectorsBibleScreen extends ConsumerWidget {
   const DirectorsBibleScreen({super.key});
@@ -10,6 +10,8 @@ class DirectorsBibleScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final universe = ref.watch(universeProvider);
+    final engine = ref.watch(continuityEngineProvider);
+
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       appBar: AppBar(title: const Text('DIRECTOR’S BIBLE')),
@@ -28,8 +30,8 @@ class DirectorsBibleScreen extends ConsumerWidget {
                     children: [
                       CircleAvatar(backgroundImage: NetworkImage(char.avatarUrl)),
                       const SizedBox(width: 16),
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(char.name, style: DripTheme.title), Text('${char.war drobeDNA.length} wardrobe items', style: DripTheme.meta)])),
-                      const Icon(Icons.chevron_right, color: DripTheme.muted),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(char.name, style: DripTheme.title), Text('${char.wardrobeDNA.length} wardrobe items', style: DripTheme.meta)])),
+                      IconButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ContinuityHealthScreen())), icon: const Icon(Icons.chevron_right)),
                     ],
                   ),
                 )),
