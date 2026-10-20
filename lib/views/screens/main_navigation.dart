@@ -28,7 +28,7 @@ class MainNavigation extends ConsumerWidget {
     final profile = ref.watch(userProfileProvider).value;
     final tokens = profile?.tokenBalance ?? 0;
 
-    final screens = const [
+    final screens = <Widget>[
       DripVisionStudioScreen(), // 0 STUDIO
       StoryPlannerScreen(),     // 1 STORY
       ExploreDripScreen(),      // 2 EXPLORE
