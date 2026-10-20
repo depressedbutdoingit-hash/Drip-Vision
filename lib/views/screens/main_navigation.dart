@@ -24,7 +24,7 @@ class MainNavigation extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final i = ref.watch(navIndexProvider).clamp(0, 4);
+    final i = ref.watch(navIndexProvider).clamp(0, 4).toInt();
     final profile = ref.watch(userProfileProvider).value;
     final tokens = profile?.tokenBalance ?? 0;
 
