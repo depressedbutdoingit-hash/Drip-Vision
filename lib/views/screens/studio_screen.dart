@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import 'studio_screen.dart';
 import '../../core/providers.dart';
 import '../../core/director_settings.dart';
 import '../widgets/cinematic_button.dart';
