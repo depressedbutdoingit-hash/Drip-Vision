@@ -144,3 +144,4 @@ class StudioScreen extends ConsumerWidget {
     );
   }
 }
+typedef DripVisionStudioScreen = StudioScreen;
