@@ -1,9 +1,20 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'screens/splash_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'services/crashlytics_service.dart';
+import 'views/screens/splash_screen.dart';
 
-void main() {
-  runApp(const DripVisionApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Android reads config from google-services.json. If your repo has a
+  // lib/firebase_options.dart, use:
+  //   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp();
+  await CrashlyticsService.init();
+
+  runApp(const ProviderScope(child: DripVisionApp()));
 }
 
 class DripVisionApp extends StatelessWidget {
