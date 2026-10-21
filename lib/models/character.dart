@@ -1,81 +1,132 @@
-import 'character_dna.dart'; // keeps Outfit + CharacterDNA as-is
+import 'character_dna.dart' as dna;
 
-/// The ONE app-level character model. Delete the old simple Character class.
-class Character {
+class Outfit {
   final String id;
   final String name;
-  final String avatarUrl;
-  final List<String> faceReferenceUrls;
-  final List<Outfit> closet;
-  final String? activeOutfitId;
-  final double healthScore;
+  final String description;
+  final String? outfitImageUrl;
 
-  const Character({
+  Outfit({
     required this.id,
     required this.name,
-    this.avatarUrl = '',
-    this.faceReferenceUrls = const [],
-    this.closet = const [],
-    this.activeOutfitId,
-    this.healthScore = 100,
+    required this.description,
+    this.outfitImageUrl,
   });
 
-  Outfit? get activeOutfit {
-    for (final o in closet) {
-      if (o.id == activeOutfitId) return o;
-    }
-    return closet.isEmpty ? null : closet.first;
-  }
-
-  List<String> get wardrobeDNA => closet.map((o) => o.name).toList();
-
-  factory Character.fromDna(CharacterDNA d) => Character(
-        id: d.id,
-        name: d.name,
-        avatarUrl: d.faceReferenceUrl ?? '',
-        faceReferenceUrls:
-            d.faceReferenceUrl == null ? const [] : [d.faceReferenceUrl!],
-        closet: d.closet,
-        activeOutfitId: d.defaultOutfitId,
-      );
-
-  Character copyWith({
-    String? name,
-    String? avatarUrl,
-    List<String>? faceReferenceUrls,
-    List<Outfit>? closet,
-    String? activeOutfitId,
-    double? healthScore,
-  }) =>
-      Character(
-        id: id,
-        name: name ?? this.name,
-        avatarUrl: avatarUrl ?? this.avatarUrl,
-        faceReferenceUrls: faceReferenceUrls ?? this.faceReferenceUrls,
-        closet: closet ?? this.closet,
-        activeOutfitId: activeOutfitId ?? this.activeOutfitId,
-        healthScore: healthScore ?? this.healthScore,
+  factory Outfit.fromJson(Map<String, dynamic> json) => Outfit(
+        id: json['id'] ?? '',
+        name: json['name'] ?? '',
+        description: json['description'] ?? '',
+        outfitImageUrl: json['outfitImageUrl'],
       );
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
-        'avatarUrl': avatarUrl,
-        'faceReferenceUrls': faceReferenceUrls,
-        'closet': closet.map((o) => o.toJson()).toList(),
-        'activeOutfitId': activeOutfitId,
-        'healthScore': healthScore,
+        'description': description,
+        'outfitImageUrl': outfitImageUrl,
       };
+}
+
+class Character {
+  final String id;
+  final String name;
+  final List<String> faceReferenceUrls;
+  final String activeOutfitId;
+  final List<Outfit> closet;
+  final String defaultStylePrompt;
+  final bool continuityLock;
+
+  Character({
+    required this.id,
+    required this.name,
+    required this.faceReferenceUrls,
+    required this.activeOutfitId,
+    required this.closet,
+    this.defaultStylePrompt = '',
+    this.continuityLock = true,
+  });
+
+  /// The single, shared bridge from the richer CharacterDNA model (used by
+  /// Character Creation and Story Planner) into the live Character this
+  /// app actually generates, saves continuity for, and renders wardrobe
+  /// from.
+  factory Character.fromDNA(dna.CharacterDNA source) {
+    final stylePrompt = [
+      source.physical.gender,
+      source.physical.ageRange,
+      source.physical.bodyType,
+      '${source.visualStyle.artDirection} style',
+      if (source.physical.distinguishingFeatures.isNotEmpty)
+        source.physical.distinguishingFeatures,
+    ].where((s) => s.isNotEmpty).join(', ');
+
+    return Character(
+      id: source.id,
+      name: source.name,
+      faceReferenceUrls: source.faceReferenceUrl != null
+          ? [source.faceReferenceUrl!]
+          : const [],
+      activeOutfitId: source.defaultOutfitId,
+      closet: source.closet
+          .map((o) => Outfit(
+                id: o.id,
+                name: o.name,
+                description: o.description,
+                outfitImageUrl: o.referenceImageUrl,
+              ))
+          .toList(),
+      defaultStylePrompt: stylePrompt,
+      continuityLock: source.continuityLock,
+    );
+  }
+
+  /// Falls back to a plain default when there's no wardrobe yet.
+  Outfit get activeOutfit => closet.isEmpty
+      ? Outfit(id: '', name: 'Default', description: 'their everyday clothing')
+      : closet.firstWhere(
+          (o) => o.id == activeOutfitId,
+          orElse: () => closet.first,
+        );
+
+  Character copyWith({
+    String? id,
+    String? name,
+    List<String>? faceReferenceUrls,
+    String? activeOutfitId,
+    List<Outfit>? closet,
+    String? defaultStylePrompt,
+    bool? continuityLock,
+  }) =>
+      Character(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        faceReferenceUrls: faceReferenceUrls ?? this.faceReferenceUrls,
+        activeOutfitId: activeOutfitId ?? this.activeOutfitId,
+        closet: closet ?? this.closet,
+        defaultStylePrompt: defaultStylePrompt ?? this.defaultStylePrompt,
+        continuityLock: continuityLock ?? this.continuityLock,
+      );
 
   factory Character.fromJson(Map<String, dynamic> json) => Character(
-        id: json['id'] as String? ?? '',
-        name: json['name'] as String? ?? '',
-        avatarUrl: json['avatarUrl'] as String? ?? '',
+        id: json['id'] ?? '',
+        name: json['name'] ?? '',
         faceReferenceUrls: List<String>.from(json['faceReferenceUrls'] ?? []),
+        activeOutfitId: json['activeOutfitId'] ?? '',
+        defaultStylePrompt: json['defaultStylePrompt'] ?? '',
         closet: (json['closet'] as List? ?? [])
             .map((o) => Outfit.fromJson(Map<String, dynamic>.from(o)))
             .toList(),
-        activeOutfitId: json['activeOutfitId'] as String?,
-        healthScore: (json['healthScore'] as num?)?.toDouble() ?? 100,
+        continuityLock: json['continuityLock'] ?? true,
       );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'faceReferenceUrls': faceReferenceUrls,
+        'activeOutfitId': activeOutfitId,
+        'defaultStylePrompt': defaultStylePrompt,
+        'closet': closet.map((o) => o.toJson()).toList(),
+        'continuityLock': continuityLock,
+      };
 }
