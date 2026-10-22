@@ -1,5 +1,6 @@
 export '../services/continuity_service.dart';
 export 'continuity_providers.dart';
+export '../views/screens/studio_screen.dart' show StudioScreen, DripVisionStudioScreen;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
