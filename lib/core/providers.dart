@@ -37,7 +37,6 @@ import '../services/drip_chain_service.dart';
 import '../services/style_dna_service.dart';
 import '../models/style_dna.dart';
 import 'env.dart';
-export '../services/continuity_service.dart';
 
 // Services
 final navIndexProvider = StateProvider<int>((ref) => 0);
