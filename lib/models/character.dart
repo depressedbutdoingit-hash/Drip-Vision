@@ -89,6 +89,13 @@ class Character {
           orElse: () => closet.first,
         );
 
+  /// First face reference, used as the avatar in lists. Empty if none.
+  String get avatarUrl =>
+      faceReferenceUrls.isEmpty ? '' : faceReferenceUrls.first;
+
+  /// Names of the wardrobe items in this character's closet.
+  List<String> get wardrobeDNA => closet.map((o) => o.name).toList();
+
   Character copyWith({
     String? id,
     String? name,
