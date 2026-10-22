@@ -1,139 +1,45 @@
-import 'character_dna.dart' as dna;
-
-class Outfit {
-  final String id;
-  final String name;
-  final String description;
-  final String? outfitImageUrl;
-
-  Outfit({
-    required this.id,
-    required this.name,
-    required this.description,
-    this.outfitImageUrl,
-  });
-
-  factory Outfit.fromJson(Map<String, dynamic> json) => Outfit(
-        id: json['id'] ?? '',
-        name: json['name'] ?? '',
-        description: json['description'] ?? '',
-        outfitImageUrl: json['outfitImageUrl'],
-      );
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'description': description,
-        'outfitImageUrl': outfitImageUrl,
-      };
-}
-
 class Character {
   final String id;
   final String name;
-  final List<String> faceReferenceUrls;
-  final String activeOutfitId;
-  final List<Outfit> closet;
-  final String defaultStylePrompt;
-  final bool continuityLock;
+  final Vector dna;
+  final List<String> wardrobeDNA;
+  final double healthScore;
 
-  Character({
-    required this.id,
-    required this.name,
-    required this.faceReferenceUrls,
-    required this.activeOutfitId,
-    required this.closet,
-    this.defaultStylePrompt = '',
-    this.continuityLock = true,
-  });
+  Character({required this.id, required this.name, required this.dna, required this.wardrobeDNA, this.healthScore = 100});
 
-  /// The single, shared bridge from the richer CharacterDNA model (used by
-  /// Character Creation and Story Planner) into the live Character this
-  /// app actually generates, saves continuity for, and renders wardrobe
-  /// from.
-  factory Character.fromDNA(dna.CharacterDNA source) {
-    final stylePrompt = [
-      source.physical.gender,
-      source.physical.ageRange,
-      source.physical.bodyType,
-      '${source.visualStyle.artDirection} style',
-      if (source.physical.distinguishingFeatures.isNotEmpty)
-        source.physical.distinguishingFeatures,
-    ].where((s) => s.isNotEmpty).join(', ');
-
+  factory Character.fromJson(Map<String, dynamic> json) {
     return Character(
-      id: source.id,
-      name: source.name,
-      faceReferenceUrls: source.faceReferenceUrl != null
-          ? [source.faceReferenceUrl!]
-          : const [],
-      activeOutfitId: source.defaultOutfitId,
-      closet: source.closet
-          .map((o) => Outfit(
-                id: o.id,
-                name: o.name,
-                description: o.description,
-                outfitImageUrl: o.referenceImageUrl,
-              ))
-          .toList(),
-      defaultStylePrompt: stylePrompt,
-      continuityLock: source.continuityLock,
+      id: json['id'],
+      name: json['name'],
+      dna: Vector.fromJson(json['dna']),
+      wardrobeDNA: List<String>.from(json['wardrobe']),
     );
   }
+}
 
-  /// Falls back to a plain default when there's no wardrobe yet.
-  Outfit get activeOutfit => closet.isEmpty
-      ? Outfit(id: '', name: 'Default', description: 'their everyday clothing')
-      : closet.firstWhere(
-          (o) => o.id == activeOutfitId,
-          orElse: () => closet.first,
-        );
+class Vector {
+  final double face;
+  final double wardrobe;
+  final double location;
+  final double voice;
 
-  /// First face reference, used as the avatar in lists. Empty if none.
-  String get avatarUrl =>
-      faceReferenceUrls.isEmpty ? '' : faceReferenceUrls.first;
+  Vector({required this.face, required this.wardrobe, required this.location, required this.voice});
 
-  /// Names of the wardrobe items in this character's closet.
-  List<String> get wardrobeDNA => closet.map((o) => o.name).toList();
-
-  Character copyWith({
-    String? id,
-    String? name,
-    List<String>? faceReferenceUrls,
-    String? activeOutfitId,
-    List<Outfit>? closet,
-    String? defaultStylePrompt,
-    bool? continuityLock,
-  }) =>
-      Character(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        faceReferenceUrls: faceReferenceUrls ?? this.faceReferenceUrls,
-        activeOutfitId: activeOutfitId ?? this.activeOutfitId,
-        closet: closet ?? this.closet,
-        defaultStylePrompt: defaultStylePrompt ?? this.defaultStylePrompt,
-        continuityLock: continuityLock ?? this.continuityLock,
+  Vector operator -(Vector other) => Vector(
+        face: face - other.face,
+        wardrobe: wardrobe - other.wardrobe,
+        location: location - other.location,
+        voice: voice - other.voice,
       );
 
-  factory Character.fromJson(Map<String, dynamic> json) => Character(
-        id: json['id'] ?? '',
-        name: json['name'] ?? '',
-        faceReferenceUrls: List<String>.from(json['faceReferenceUrls'] ?? []),
-        activeOutfitId: json['activeOutfitId'] ?? '',
-        defaultStylePrompt: json['defaultStylePrompt'] ?? '',
-        closet: (json['closet'] as List? ?? [])
-            .map((o) => Outfit.fromJson(Map<String, dynamic>.from(o)))
-            .toList(),
-        continuityLock: json['continuityLock'] ?? true,
-      );
+  double get magnitude => (face.abs() + wardrobe.abs() + location.abs() + voice.abs()) / 4;
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'faceReferenceUrls': faceReferenceUrls,
-        'activeOutfitId': activeOutfitId,
-        'defaultStylePrompt': defaultStylePrompt,
-        'closet': closet.map((o) => o.toJson()).toList(),
-        'continuityLock': continuityLock,
-      };
+  factory Vector.fromJson(Map<String, dynamic> json) {
+    return Vector(
+      face: json['face'] as double,
+      wardrobe: json['wardrobe'] as double,
+      location: json['location'] as double,
+      voice: json['voice'] as double,
+    );
+  }
 }
