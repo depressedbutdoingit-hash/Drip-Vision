@@ -51,6 +51,8 @@ final generationGuardProvider = Provider((ref) => GenerationGuard());
 final promptEnhancerProvider = Provider((ref) => PromptEnhancerService());
 final videoStitchProvider = Provider((ref) => VideoStitchingService());
 final aiQueueProvider = Provider((ref) => AIQueueService());
+final continuityEngineProvider = Provider<ContinuityEngine>((ref) => ContinuityEngine());
+final universeProvider = StateProvider((ref) => UniverseData(healthScore: 100, characters: []));
 
 // New feature services
 final authServiceProvider = Provider((ref) => AuthService(FirebaseAuth.instance));
