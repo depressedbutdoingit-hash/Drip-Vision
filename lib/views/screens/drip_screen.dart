@@ -38,11 +38,16 @@ class DripsScreen extends StatelessWidget {
                         BoxShadow(color: const Color(0xFF00FFAA).withOpacity(0.3), blurRadius: 15),
                       ],
                     ),
-                    child: const Align(
-                      alignment: Alignment.bottomLeft,
-                      child: Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text('Drip #${index + 1}', style: TextStyle(color: Colors.white, fontSize: 14)),
+                    child: Align(
+  alignment: Alignment.bottomLeft,
+  child: Padding(
+    padding: const EdgeInsets.all(8),
+    child: Text(
+      'Drip #${index + 1}',
+      style: const TextStyle(color: Colors.white, fontSize: 14),
+    ),
+  ),
+),
                       ),
                     ),
                   );
