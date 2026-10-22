@@ -36,6 +36,8 @@ dependencies:
   shorebird_code_push: ^1.0.0
   audioplayers: ^6.0.0
   http: ^1.2.0
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
