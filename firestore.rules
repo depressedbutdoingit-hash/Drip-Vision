@@ -1,33 +1,67 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isSignedIn() {
       return request.auth != null;
     }
+
+    // Only a trusted Firebase custom claim grants admin access.
     function isAdmin() {
-      return isSignedIn() && (
-        request.auth.token.admin == true ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-      );
+      return isSignedIn() &&
+        request.auth.token.admin == true;
+    }
+
+    function safeInitialProfile() {
+      return
+        (!request.resource.data.keys().hasAny(['role']) ||
+          request.resource.data.role == 'user') &&
+        (!request.resource.data.keys().hasAny(['tokenBalance']) ||
+          request.resource.data.tokenBalance == 0) &&
+        (!request.resource.data.keys().hasAny(['subscriptionTier']) ||
+          request.resource.data.subscriptionTier == 'free') &&
+        !request.resource.data.keys().hasAny([
+          'isAdmin', 'godMode', 'owner'
+        ]);
     }
 
     match /users/{uid} {
-      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
-      allow create: if isSignedIn() && request.auth.uid == uid;
-      allow update: if isSignedIn() && (
-        request.auth.uid == uid || isAdmin()
-      );
+      allow read: if isSignedIn() &&
+        (request.auth.uid == uid || isAdmin());
+
+      allow create: if isSignedIn() &&
+        request.auth.uid == uid &&
+        safeInitialProfile();
+
+      allow update: if isAdmin() ||
+        (isSignedIn() &&
+          request.auth.uid == uid &&
+          request.resource.data.diff(resource.data)
+            .affectedKeys().hasNone([
+              'role',
+              'tokenBalance',
+              'subscriptionTier',
+              'isAdmin',
+              'godMode',
+              'owner'
+            ]));
+
       allow delete: if isAdmin();
 
       match /editProjects/{projectId} {
-        allow read, write: if isSignedIn() && request.auth.uid == uid;
+        allow read, write: if isSignedIn() &&
+          request.auth.uid == uid;
       }
+
       match /projects/{projectId} {
-        allow read, write: if isSignedIn() && request.auth.uid == uid;
+        allow read, write: if isSignedIn() &&
+          request.auth.uid == uid;
       }
+
       match /transactions/{txId} {
-        allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
-        allow write: if isSignedIn() && request.auth.uid == uid;
+        allow read: if isSignedIn() &&
+          (request.auth.uid == uid || isAdmin());
+        allow write: if isAdmin();
       }
     }
 
@@ -38,17 +72,31 @@ service cloud.firestore {
 
     match /ai_usage/{id} {
       allow read: if isAdmin();
-      allow create: if isSignedIn();
+      allow create: if isSignedIn() &&
+        request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
 
     match /admin_audit/{id} {
-      allow read: if isAdmin();
-      allow create: if isAdmin();
+      allow read, write: if isAdmin();
     }
 
     match /generations/{id} {
-      allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
-      allow write: if isSignedIn();
+      allow read: if isAdmin() ||
+        (isSignedIn() &&
+          resource.data.uid == request.auth.uid);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.uid == request.auth.uid;
+
+      allow update: if isAdmin() ||
+        (isSignedIn() &&
+          resource.data.uid == request.auth.uid &&
+          request.resource.data.uid == request.auth.uid);
+
+      allow delete: if isAdmin() ||
+        (isSignedIn() &&
+          resource.data.uid == request.auth.uid);
     }
 
     match /{document=**} {
