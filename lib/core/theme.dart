@@ -1,203 +1,101 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-/// DripVision — luxury cinema OS tokens.
-/// Gunmetal environment. Teal is a signal, never decoration.
 class DripTheme {
-  // Gunmetal environment (not pure black — reads richer on OLED)
-  static const Color voidBlack = Color(0xFF121416); // was harsh pure black
-  static const Color deepBlack = Color(0xFF16191C);
-  static const Color surface = Color(0xFF1A1E22);
-  static const Color surfaceRaised = Color(0xFF22272C);
-  static const Color surfaceLight = Color(0xFF2A3036);
-  static const Color hairline = Color(0x14FFFFFF);
-  static const Color hairlineStrong = Color(0x22FFFFFF);
+  // Premium cinematic palette: gunmetal, deep teal, pearl
+  static const Color voidBlack = Color(0xFF0B0F14);
+  static const Color gunmetal = Color(0xFF1A1F26);
+  static const Color gunmetalLight = Color(0xFF242A33);
+  static const Color teal = Color(0xFF00D4AA);
+  static const Color tealDim = Color(0xFF00A88A);
+  static const Color pearl = Color(0xFFF5F7FA);
+  static const Color silver = Color(0xFFC0C6D4);
+  static const Color softWhite = Color(0xFFE8EDF5);
 
-  // Accent — rare, liquid teal
-  static const Color cosmicTeal = Color(0xFF00D4AA);
-  static const Color nebulaCyan = Color(0xFF5EC4BC);
-  static const Color aquaGlow = Color(0xFF9AE8DC);
+  static ThemeData get theme => ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: voidBlack,
+        primaryColor: teal,
+        colorScheme: const ColorScheme.dark(
+          primary: teal,
+          secondary: tealDim,
+          surface: gunmetal,
+          background: voidBlack,
+          onPrimary: Colors.black,
+          onSurface: pearl,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: gunmetal,
+          foregroundColor: pearl,
+          elevation: 0,
+          centerTitle: false,
+          titleTextStyle: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+            color: pearl,
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: teal,
+            foregroundColor: Colors.black,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            textStyle: const TextStyle(fontWeight: FontWeight.w600, letterSpacing: 0.5),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: gunmetal,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: teal, width: 1.5),
+          ),
+          hintStyle: const TextStyle(color: silver),
+        ),
+        cardTheme: CardTheme(
+          color: gunmetal,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          margin: EdgeInsets.zero,
+        ),
+        textTheme: const TextTheme(
+          displayLarge: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: pearl, letterSpacing: -0.5),
+          headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: pearl),
+          titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: pearl),
+          bodyLarge: TextStyle(fontSize: 16, color: softWhite, height: 1.5),
+          bodyMedium: TextStyle(fontSize: 14, color: silver),
+          labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+        ),
+        dividerTheme: const DividerThemeData(color: Color(0xFF2A3038), thickness: 1),
+      );
 
-  // Type
-  static const Color warmWhite = Color(0xFFF4F2EC);
-  static const Color chrome = Color(0xFFB8BEC0);
-  static const Color muted = Color(0xFF7A8288);
-  static const Color faint = Color(0xFF555C62);
-
-  // Radii — product, not toy
-  static const double radiusSm = 6;
-  static const double radiusMd = 10;
-  static const double radiusLg = 14;
-
-  static const TextStyle brandMark = TextStyle(
-    fontSize: 11,
-    letterSpacing: 5.2,
+  static const TextStyle technical = TextStyle(
+    fontSize: 12,
     fontWeight: FontWeight.w500,
-    color: warmWhite,
-    height: 1.2,
-  );
-
-  static const TextStyle overline = TextStyle(
-    fontSize: 10,
-    letterSpacing: 2.8,
-    fontWeight: FontWeight.w500,
-    color: cosmicTeal,
-    height: 1.2,
-  );
-
-  static const TextStyle display = TextStyle(
-    fontSize: 28,
-    height: 1.12,
-    fontWeight: FontWeight.w400,
-    letterSpacing: -0.5,
-    color: warmWhite,
+    letterSpacing: 1.2,
+    color: teal,
   );
 
   static const TextStyle title = TextStyle(
-    fontSize: 17,
-    fontWeight: FontWeight.w500,
-    letterSpacing: -0.25,
-    color: warmWhite,
-    height: 1.25,
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: pearl,
   );
 
   static const TextStyle body = TextStyle(
-    fontSize: 14,
-    height: 1.5,
-    fontWeight: FontWeight.w400,
-    letterSpacing: 0.1,
-    color: chrome,
+    fontSize: 15,
+    color: softWhite,
+    height: 1.4,
   );
 
   static const TextStyle meta = TextStyle(
-    fontSize: 12,
-    letterSpacing: 0.15,
-    height: 1.4,
-    color: muted,
+    fontSize: 13,
+    color: silver,
   );
-
-  static const TextStyle technical = TextStyle(
-    fontSize: 9,
-    letterSpacing: 1.8,
-    fontWeight: FontWeight.w500,
-    color: muted,
-  );
-
-  static const TextStyle label = TextStyle(
-    fontSize: 11,
-    letterSpacing: 1.5,
-    fontWeight: FontWeight.w600,
-    color: warmWhite,
-  );
-
-  static ThemeData get theme {
-    final base = ThemeData.dark(useMaterial3: true);
-    return base.copyWith(
-      scaffoldBackgroundColor: voidBlack,
-      primaryColor: cosmicTeal,
-      splashFactory: NoSplash.splashFactory,
-      highlightColor: Colors.transparent,
-      colorScheme: const ColorScheme.dark(
-        primary: cosmicTeal,
-        secondary: nebulaCyan,
-        surface: surface,
-        onSurface: warmWhite,
-        onPrimary: voidBlack,
-        outline: hairline,
-      ),
-      textTheme: base.textTheme.apply(
-        bodyColor: warmWhite,
-        displayColor: warmWhite,
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: false,
-        foregroundColor: warmWhite,
-        titleTextStyle: brandMark,
-        systemOverlayStyle: SystemUiOverlayStyle.light,
-      ),
-      dividerColor: hairline,
-      dividerTheme: const DividerThemeData(
-        color: hairline,
-        thickness: 1,
-        space: 1,
-      ),
-      cardTheme: CardThemeData(
-        color: surface,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusMd),
-          side: const BorderSide(color: hairline),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0x0AFFFFFF),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        hintStyle: const TextStyle(color: muted, fontSize: 14),
-        labelStyle: technical,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: hairline),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: hairline),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: cosmicTeal, width: 1),
-        ),
-      ),
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: surfaceRaised,
-        contentTextStyle: const TextStyle(color: warmWhite, fontSize: 13),
-        behavior: SnackBarBehavior.floating,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusMd),
-          side: const BorderSide(color: hairline),
-        ),
-      ),
-      sliderTheme: SliderThemeData(
-        activeTrackColor: cosmicTeal,
-        inactiveTrackColor: hairlineStrong,
-        thumbColor: warmWhite,
-        overlayColor: cosmicTeal.withOpacity(0.12),
-        trackHeight: 2,
-      ),
-      chipTheme: ChipThemeData(
-        backgroundColor: surfaceLight,
-        selectedColor: cosmicTeal.withOpacity(0.18),
-        labelStyle: const TextStyle(fontSize: 11, color: chrome),
-        side: const BorderSide(color: hairline),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radiusSm),
-        ),
-      ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: deepBlack,
-        selectedItemColor: cosmicTeal,
-        unselectedItemColor: muted,
-        type: BottomNavigationBarType.fixed,
-        elevation: 0,
-      ),
-    );
-  }
-}
-
-
-/// Legacy color aliases used across older screens.
-class DripColors {
-  static const white10 = Color(0x1AFFFFFF);
-  static const white20 = Color(0x33FFFFFF);
-  static const white30 = Color(0x4DFFFFFF);
-  static const white40 = Color(0x66FFFFFF);
-  static const white50 = Color(0x80FFFFFF);
-  static const white70 = Color(0xB3FFFFFF);
-  static const white = Color(0xFFFFFFFF);
-  static const black = Color(0xFF000000);
 }
