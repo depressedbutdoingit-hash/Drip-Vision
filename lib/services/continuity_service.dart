@@ -1,80 +1,167 @@
+import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../models/character.dart';
-import '../models/universe.dart';
 
-part 'continuity_service.g.dart';
-
+/// Vector Learning Fusion Continuity Engine
+/// Practical MAML-inspired few-shot adaptation, prototype networks,
+/// adaptive meta-rate, and live health scoring for character DNA.
 class ContinuityEngine {
-  final Map<String, Vector> _dnaCache = {};
-  double _metaLearningRate = 0.001;
-  final List<double> _history = [];
+  final Map<String, CharacterDNA> _dnaCache = {};
+  final Map<String, List<double>> _driftHistory = {};
+  double _metaLearningRate = 0.015;
 
-  Future<Character> loadDNA(String id) async {
-    if (_dnaCache.containsKey(id)) return _dnaCache[id]!;
-    final response = await http.get(Uri.parse('https://api.dripvision.com/dna/$id'));
-    final char = Character.fromJson(json.decode(response.body));
-    _dnaCache[id] = char;
-    return char;
-  }
+  CharacterDNA? getDNA(String characterId) => _dnaCache[characterId];
 
-  Future<Vector> adapt(Vector current, Vector target, {int shots = 1}) async {
-    final adapted = Vector(
-      face: current.face + (target.face - current.face) * 0.15 * shots,
-      wardrobe: current.wardrobe + (target.wardrobe - current.wardrobe) * 0.12 * shots,
-      location: current.location + (target.location - current.location) * 0.08 * shots,
-      voice: current.voice + (target.voice - current.voice) * 0.10 * shots,
+  CharacterDNA adapt(CharacterDNA current, CharacterDNA target, {int shots = 1, double strength = 1.0}) {
+    final rate = _metaLearningRate * strength * (1 + shots * 0.05);
+    final adapted = CharacterDNA(
+      face: _lerp(current.face, target.face, rate * 0.18),
+      body: _lerp(current.body, target.body, rate * 0.12),
+      wardrobe: _lerp(current.wardrobe, target.wardrobe, rate * 0.22),
+      voice: _lerp(current.voice, target.voice, rate * 0.15),
+      style: _lerp(current.style, target.style, rate * 0.10),
+      locked: current.locked,
     );
 
-    final error = (current - adapted).magnitude;
-    _metaLearningRate = 0.001 * (1 + error * 0.1);
-
-    _history.add(error);
-    if (_history.length > 100) _history.removeAt(0);
+    final drift = current.distanceTo(adapted);
+    _recordDrift(current.id, drift);
+    _updateMetaRate();
 
     return adapted;
   }
 
-  Future<Vector> createPrototype(List<Vector> shots) async {
-    final avgFace = shots.map((s) => s.face).reduce((a, b) => a + b) / shots.length;
-    final avgWardrobe = shots.map((s) => s.wardrobe).reduce((a, b) => a + b) / shots.length;
-    return Vector(face: avgFace, wardrobe: avgWardrobe, location: shots[0].location, voice: shots[0].voice);
-  }
-
-  double getHealthScore(String id) {
-    if (!_dnaCache.containsKey(id)) return 0;
-    final char = _dnaCache[id]!;
-    final historyAvg = _history.isEmpty ? 0 : _history.reduce((a, b) => a + b) / _history.length;
-    return 100 - (historyAvg * 80).clamp(0.0, 80.0);
-  }
-}
-
-class Vector {
-  final double face;
-  final double wardrobe;
-  final double location;
-  final double voice;
-
-  Vector({required this.face, required this.wardrobe, required this.location, required this.voice});
-
-  Vector operator -(Vector other) => Vector(
-        face: face - other.face,
-        wardrobe: wardrobe - other.wardrobe,
-        location: location - other.location,
-        voice: voice - other.voice,
-      );
-
-  double get magnitude => (face.abs() + wardrobe.abs() + location.abs() + voice.abs()) / 4;
-
-  factory Vector.fromJson(Map<String, dynamic> json) {
-    return Vector(
-      face: json['face'] as double,
-      wardrobe: json['wardrobe'] as double,
-      location: json['location'] as double,
-      voice: json['voice'] as double,
+  CharacterDNA createPrototype(List<CharacterDNA> references) {
+    if (references.isEmpty) return CharacterDNA.empty();
+    final n = references.length.toDouble();
+    return CharacterDNA(
+      id: references.first.id,
+      face: references.map((r) => r.face).reduce((a, b) => a + b) / n,
+      body: references.map((r) => r.body).reduce((a, b) => a + b) / n,
+      wardrobe: references.map((r) => r.wardrobe).reduce((a, b) => a + b) / n,
+      voice: references.map((r) => r.voice).reduce((a, b) => a + b) / n,
+      style: references.map((r) => r.style).reduce((a, b) => a + b) / n,
+      locked: references.any((r) => r.locked),
     );
   }
+
+  double getHealthScore(String characterId) {
+    final history = _driftHistory[characterId];
+    if (history == null || history.isEmpty) return 92.0;
+    final avg = history.reduce((a, b) => a + b) / history.length;
+    final score = 100 - (avg * 120).clamp(0.0, 85.0);
+    return score.clamp(15.0, 100.0);
+  }
+
+  String getHealthMessage(double score) {
+    if (score >= 95) return 'Perfect continuity. Identity locked.';
+    if (score >= 85) return 'Strong consistency. Minor wardrobe drift possible.';
+    if (score >= 70) return 'Good. Some attributes need attention.';
+    return 'Continuity drift detected. One-tap fix recommended.';
+  }
+
+  Color getHealthColor(double score) {
+    if (score >= 90) return const Color(0xFF00D4AA);
+    if (score >= 75) return const Color(0xFFFFB020);
+    return const Color(0xFFFF6B6B);
+  }
+
+  void lockCharacter(String id) {
+    final dna = _dnaCache[id];
+    if (dna != null) {
+      _dnaCache[id] = dna.copyWith(locked: true);
+    }
+  }
+
+  void _recordDrift(String id, double drift) {
+    final list = _driftHistory.putIfAbsent(id, () => []);
+    list.add(drift);
+    if (list.length > 50) list.removeAt(0);
+  }
+
+  void _updateMetaRate() {
+    final all = _driftHistory.values.expand((e) => e).toList();
+    if (all.isEmpty) return;
+    final avg = all.reduce((a, b) => a + b) / all.length;
+    _metaLearningRate = (0.01 + avg * 0.05).clamp(0.005, 0.04);
+  }
+
+  double _lerp(double a, double b, double t) => a + (b - a) * t.clamp(0.0, 1.0);
+}
+
+class CharacterDNA {
+  final String id;
+  final double face;
+  final double body;
+  final double wardrobe;
+  final double voice;
+  final double style;
+  final bool locked;
+
+  const CharacterDNA({
+    this.id = '',
+    required this.face,
+    required this.body,
+    required this.wardrobe,
+    required this.voice,
+    required this.style,
+    this.locked = false,
+  });
+
+  factory CharacterDNA.empty() => const CharacterDNA(
+        face: 0.5,
+        body: 0.5,
+        wardrobe: 0.5,
+        voice: 0.5,
+        style: 0.5,
+      );
+
+  double distanceTo(CharacterDNA other) {
+    final df = face - other.face;
+    final db = body - other.body;
+    final dw = wardrobe - other.wardrobe;
+    final dv = voice - other.voice;
+    final ds = style - other.style;
+    return math.sqrt(df * df + db * db + dw * dw + dv * dv + ds * ds) / math.sqrt(5);
+  }
+
+  CharacterDNA copyWith({
+    double? face,
+    double? body,
+    double? wardrobe,
+    double? voice,
+    double? style,
+    bool? locked,
+  }) {
+    return CharacterDNA(
+      id: id,
+      face: face ?? this.face,
+      body: body ?? this.body,
+      wardrobe: wardrobe ?? this.wardrobe,
+      voice: voice ?? this.voice,
+      style: style ?? this.style,
+      locked: locked ?? this.locked,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'face': face,
+        'body': body,
+        'wardrobe': wardrobe,
+        'voice': voice,
+        'style': style,
+        'locked': locked,
+      };
+
+  factory CharacterDNA.fromJson(Map<String, dynamic> json) => CharacterDNA(
+        id: json['id'] as String? ?? '',
+        face: (json['face'] as num?)?.toDouble() ?? 0.5,
+        body: (json['body'] as num?)?.toDouble() ?? 0.5,
+        wardrobe: (json['wardrobe'] as num?)?.toDouble() ?? 0.5,
+        voice: (json['voice'] as num?)?.toDouble() ?? 0.5,
+        style: (json['style'] as num?)?.toDouble() ?? 0.5,
+        locked: json['locked'] as bool? ?? false,
+      );
 }
 
 final continuityEngineProvider = Provider<ContinuityEngine>((ref) => ContinuityEngine());
