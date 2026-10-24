@@ -1,88 +1,94 @@
+import '../services/continuity_service.dart';
+
 class Character {
   final String id;
   final String name;
   final String avatarUrl;
+  final String role;
+  final int age;
+  final String height;
+  final String build;
+  final String eyeColor;
+  final String hairColor;
+  final String voiceDescription;
   final List<String> wardrobeDNA;
+  final CharacterDNA dna;
   final double healthScore;
-  final Vector dna; // NEW — for MAML + NaML
+  final bool locked;
 
   Character({
     required this.id,
     required this.name,
     required this.avatarUrl,
+    this.role = 'Supporting',
+    this.age = 28,
+    this.height = '5\'8"',
+    this.build = 'Athletic',
+    this.eyeColor = 'Hazel',
+    this.hairColor = 'Dark Brown',
+    this.voiceDescription = 'Deep, sultry, confident',
     required this.wardrobeDNA,
-    this.healthScore = 100,
     required this.dna,
+    this.healthScore = 92,
+    this.locked = true,
   });
 
-  factory Character.fromJson(Map<String, dynamic> json) {
-    return Character(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      avatarUrl: json['avatarUrl'] as String,
-      wardrobeDNA: List<String>.from(json['wardrobe'] ?? []),
-      healthScore: json['healthScore'] as double? ?? 100,
-      dna: Vector.fromJson(json['dna'] ?? {}),
-    );
-  }
+  factory Character.fromJson(Map<String, dynamic> json) => Character(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        avatarUrl: json['avatarUrl'] as String? ?? '',
+        role: json['role'] as String? ?? 'Supporting',
+        age: json['age'] as int? ?? 28,
+        height: json['height'] as String? ?? '5\'8"',
+        build: json['build'] as String? ?? 'Athletic',
+        eyeColor: json['eyeColor'] as String? ?? 'Hazel',
+        hairColor: json['hairColor'] as String? ?? 'Dark Brown',
+        voiceDescription: json['voiceDescription'] as String? ?? 'Confident',
+        wardrobeDNA: List<String>.from(json['wardrobe'] ?? []),
+        dna: CharacterDNA.fromJson(json['dna'] ?? {}),
+        healthScore: (json['healthScore'] as num?)?.toDouble() ?? 92,
+        locked: json['locked'] as bool? ?? true,
+      );
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
         'avatarUrl': avatarUrl,
+        'role': role,
+        'age': age,
+        'height': height,
+        'build': build,
+        'eyeColor': eyeColor,
+        'hairColor': hairColor,
+        'voiceDescription': voiceDescription,
         'wardrobe': wardrobeDNA,
-        'healthScore': healthScore,
         'dna': dna.toJson(),
+        'healthScore': healthScore,
+        'locked': locked,
       };
 
   Character copyWith({
     String? name,
     String? avatarUrl,
     List<String>? wardrobeDNA,
+    CharacterDNA? dna,
     double? healthScore,
-    Vector? dna,
-  }) {
-    return Character(
-      id: id,
-      name: name ?? this.name,
-      avatarUrl: avatarUrl ?? this.avatarUrl,
-      wardrobeDNA: wardrobeDNA ?? this.wardrobeDNA,
-      healthScore: healthScore ?? this.healthScore,
-      dna: dna ?? this.dna,
-    );
-  }
-}
-
-class Vector {
-  final double face;
-  final double wardrobe;
-  final double location;
-  final double voice;
-
-  Vector({required this.face, required this.wardrobe, required this.location, required this.voice});
-
-  Vector operator -(Vector other) => Vector(
-        face: face - other.face,
-        wardrobe: wardrobe - other.wardrobe,
-        location: location - other.location,
-        voice: voice - other.voice,
+    bool? locked,
+  }) =>
+      Character(
+        id: id,
+        name: name ?? this.name,
+        avatarUrl: avatarUrl ?? this.avatarUrl,
+        role: role,
+        age: age,
+        height: height,
+        build: build,
+        eyeColor: eyeColor,
+        hairColor: hairColor,
+        voiceDescription: voiceDescription,
+        wardrobeDNA: wardrobeDNA ?? this.wardrobeDNA,
+        dna: dna ?? this.dna,
+        healthScore: healthScore ?? this.healthScore,
+        locked: locked ?? this.locked,
       );
-
-  double get magnitude => (face.abs() + wardrobe.abs() + location.abs() + voice.abs()) / 4;
-
-  Map<String, dynamic> toJson() => {
-        'face': face,
-        'wardrobe': wardrobe,
-        'location': location,
-        'voice': voice,
-      };
-
-  factory Vector.fromJson(Map<String, dynamic> json) {
-    return Vector(
-      face: json['face'] as double,
-      wardrobe: json['wardrobe'] as double,
-      location: json['location'] as double,
-      voice: json['voice'] as double,
-    );
-  }
 }
