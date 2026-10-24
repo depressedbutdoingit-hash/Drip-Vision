@@ -2,270 +2,162 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
-import '../../core/director_settings.dart';
-import '../widgets/cinematic_button.dart';
-import '../widgets/cinematic_card.dart';
-import '../widgets/director_chip.dart';
 import 'generator_screen.dart';
-import 'edit_bay_screen.dart';
 
-/// DIRECTOR MODE
-/// The user shapes a shot visually: shot size, camera angle, lens,
-/// movement, lighting, mood. Character identity and continuity stay locked.
-class StudioScreen extends ConsumerWidget {
-  const StudioScreen({super.key});
+class StudioHomeScreen extends ConsumerWidget {
+  const StudioHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scenes = ref.watch(sceneListProvider);
-    final settings = ref.watch(directorSettingsProvider);
-    final notifier = ref.read(directorSettingsProvider.notifier);
+    final universe = ref.watch(universeProvider);
 
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'STUDIO',
-                style: TextStyle(
-                  fontSize: 11,
-                  letterSpacing: 3,
-                  color: DripTheme.cosmicTeal,
-                  fontWeight: FontWeight.w700,
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              floating: true,
+              backgroundColor: DripTheme.voidBlack,
+              title: const Text('DRIPVISION', style: TextStyle(letterSpacing: 2, fontWeight: FontWeight.w700)),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: CircleAvatar(
+                    radius: 16,
+                    backgroundColor: DripTheme.teal,
+                    child: const Icon(Icons.person, size: 18, color: Colors.black),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 7),
-              const Text(
-                'DIRECTOR MODE',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 7),
-              const Text(
-                'Shape the shot. DripVision translates the intent.',
-                style: TextStyle(color: DripTheme.muted),
-              ),
-              const SizedBox(height: 24),
-
-              CinematicCard(
+              ],
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    DirectorControlRow(
-                      label: 'SHOT',
-                      value: settings.shot,
-                      options: DirectorSettings.shots,
-                      onSelect: (v) =>
-                          notifier.state = settings.copyWith(shot: v),
-                    ),
-                    DirectorControlRow(
-                      label: 'CAMERA',
-                      value: settings.camera,
-                      options: DirectorSettings.cameras,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(camera: v),
-                    ),
-                    DirectorControlRow(
-                      label: 'LENS',
-                      value: settings.lens,
-                      options: DirectorSettings.lenses,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(lens: v),
-                    ),
-                    DirectorControlRow(
-                      label: 'MOVEMENT',
-                      value: settings.movement,
-                      options: DirectorSettings.movements,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(movement: v),
-                    ),
-                    DirectorControlRow(
-                      label: 'LIGHTING',
-                      value: settings.lighting,
-                      options: DirectorSettings.lightings,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(lighting: v),
-                    ),
-                    DirectorControlRow(
-                      label: 'TIME',
-                      value: settings.time,
-                      options: DirectorSettings.times,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(time: v),
-                    ),
-                    DirectorControlRow(
-                      label: 'WEATHER',
-                      value: settings.weather,
-                      options: DirectorSettings.weathers,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(weather: v),
-                    ),
-                    DirectorControlRow(
-                      label: 'MOOD',
-                      value: settings.mood,
-                      options: DirectorSettings.moods,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(mood: v),
-                    ),
-                    DirectorControlRow(
-                      label: 'PERFORMANCE',
-                      value: settings.performance,
-                      options: DirectorSettings.performances,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(performance: v),
-                    ),
-                    DirectorControlRow(
-                      label: 'COLOR',
-                      value: settings.color,
-                      options: DirectorSettings.colors,
-                      onSelect: (v) => notifier.state = ref
-                          .read(directorSettingsProvider)
-                          .copyWith(color: v),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              CinematicCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "DIRECTOR'S BRIEF",
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 2.3,
-                        color: DripTheme.cosmicTeal,
+                    Container(
+                      height: 180,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF0B0F14), Color(0xFF1A2A30)],
+                        ),
+                        image: const DecorationImage(
+                          image: NetworkImage('https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800'),
+                          fit: BoxFit.cover,
+                          opacity: 0.6,
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            left: 20,
+                            bottom: 20,
+                            right: 20,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Your Universe.\nYour Rules.',
+                                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, height: 1.1, color: Colors.white),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'AI filmmaking that remembers your characters, your worlds, and your story.',
+                                  style: DripTheme.meta.copyWith(color: Colors.white70),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (_) => const GeneratorScreen()),
+                                      ),
+                                      child: const Text('New Drip'),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    OutlinedButton(
+                                      onPressed: () {},
+                                      style: OutlinedButton.styleFrom(
+                                        side: const BorderSide(color: DripTheme.teal),
+                                        foregroundColor: DripTheme.teal,
+                                      ),
+                                      child: const Text('Watch Demo'),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      settings.toSummary(),
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Character identity, location and continuity remain untouched — Director Mode only shapes the camera and the light.',
-                      style: TextStyle(
-                        color: DripTheme.muted,
-                        height: 1.45,
+                    const SizedBox(height: 28),
+                    const Text('Recent Projects', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 140,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 4,
+                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        itemBuilder: (context, i) => _ProjectCard(
+                          title: ['The Last Heist', 'Scarlet & Stone', 'Ocean Hearts', 'Broken Crown'][i],
+                          status: ['Rendering...', 'Edited 2h ago', 'Completed', 'In Progress'][i],
+                          image: 'https://picsum.photos/id/${i + 10}/200/300',
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: CinematicButton(
-                      label: 'GENERATE SHOT',
-                      icon: Icons.play_arrow_rounded,
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const DripVisionStudioScreen(),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: CinematicButton(
-                      label: 'RESET',
-                      icon: Icons.refresh_rounded,
-                      primary: false,
-                      onPressed: () =>
-                          notifier.state = const DirectorSettings(),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
-              CinematicButton(
-                label: 'OPEN EDIT BAY',
-                icon: Icons.movie_filter_outlined,
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const EditBayScreen(),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 28),
-              const Text(
-                'CUTTING ROOM',
-                style: TextStyle(
-                  fontSize: 10,
-                  letterSpacing: 2.5,
-                  color: DripTheme.cosmicTeal,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '${scenes.length.toString().padLeft(2, '0')} SHOTS IN CURRENT CUT',
-                style: const TextStyle(color: DripTheme.muted),
-              ),
-              const SizedBox(height: 10),
-              ...scenes.asMap().entries.map(
-                    (e) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: CinematicCard(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 13,
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              'SHOT ${(e.key + 1).toString().padLeft(2, '0')}',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                letterSpacing: 1.5,
-                                color: DripTheme.nebulaCyan,
-                              ),
-                            ),
-                            const SizedBox(width: 15),
-                            Expanded(
-                              child: Text(
-                                e.value.prompt,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            ),
-                            const Icon(
-                              Icons.chevron_right,
-                              color: Colors.white24,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-typedef DripVisionStudioScreen = StudioScreen;
+class _ProjectCard extends StatelessWidget {
+  final String title;
+  final String status;
+  final String image;
+
+  const _ProjectCard({required this.title, required this.status, required this.image});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 120,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: DripTheme.gunmetal,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Image.network(image, height: 80, width: 120, fit: BoxFit.cover),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(status, style: DripTheme.meta.copyWith(fontSize: 11)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
