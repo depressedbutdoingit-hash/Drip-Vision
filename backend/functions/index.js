@@ -2,57 +2,54 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
 
-exports.revenuecatWebhook = functions.https.onRequest(async (req, res) => {
-  const event = req.body.event;
-  const userId = event.app_user_id;
-  const type = event.type;
+const stripe = require("stripe")(functions.config().stripe.secret);
+const endpointSecret = functions.config().stripe.webhook_secret;
 
-  const userRef = admin.firestore().collection("users").doc(userId);
+// Stripe webhook — verifies signature and updates user entitlements
+exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+  let event;
 
-  if (type === "INITIAL_PURCHASE" || type === "RENEWAL") {
+  try {
+    event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
+  } catch (err) {
+    console.error("Webhook signature verification failed:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const uid = session.client_reference_id;
+    if (!uid) {
+      console.error("No client_reference_id on session");
+      return res.status(400).send("Missing uid");
+    }
+
+    const priceId = session.metadata?.priceId || session.line_items?.data?.[0]?.price?.id || "";
     let tokensToAdd = 0;
-    if (event.product_id.includes("starter")) tokensToAdd = 300;
-    if (event.product_id.includes("pro")) tokensToAdd = 1000;
+    let tier = "free";
 
+    // Map your actual Stripe Price IDs here
+    if (priceId.includes("starter") || priceId === "price_starter_id") {
+      tokensToAdd = 300;
+      tier = "starter";
+    } else if (priceId.includes("pro") || priceId === "price_pro_id") {
+      tokensToAdd = 1000;
+      tier = "pro";
+    } else if (priceId.includes("unlimited")) {
+      tokensToAdd = 9999;
+      tier = "unlimited";
+    }
+
+    const userRef = admin.firestore().collection("users").doc(uid);
     await userRef.set(
       {
         tokenBalance: admin.firestore.FieldValue.increment(tokensToAdd),
-        subscriptionTier: event.product_id.includes("pro") ? "pro" : "starter",
+        subscriptionTier: tier,
+        stripeCustomerId: session.customer,
+        lastPayment: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
-  }
 
-  if (type === "CANCELLATION" || type === "EXPIRATION") {
-    await userRef.set(
-      {
-        subscriptionTier: "free",
-      },
-      { merge: true }
-    );
-  }
-
-  res.status(200).send({ success: true });
-});
-
-exports.monthlyTokenRefill = functions.pubsub.schedule("0 0 1 * *")
-  .timeZone("America/New_York")
-  .onRun(async (context) => {
-    const usersSnapshot = await admin.firestore()
-      .collection("users")
-      .where("subscriptionTier", "in", ["starter", "pro"])
-      .get();
-
-    const batch = admin.firestore().batch();
-    usersSnapshot.forEach((doc) => {
-      const tier = doc.data().subscriptionTier;
-      const refill = tier === "pro" ? 1000 : 300;
-      batch.update(doc.ref, {
-        tokenBalance: admin.firestore.FieldValue.increment(refill),
-        lastFreeClaimDate: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    });
-
-    await batch.commit();
-    console.log(`Refilled tokens for ${usersSnapshot.size} subscribers`);
-  });
+    console.log(`Updated user
