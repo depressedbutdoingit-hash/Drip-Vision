@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
-import '../widgets/cinematic_card.dart';
-import '../screens/continuity_health_screen.dart';
+import 'continuity_health_screen.dart';
 
 class DirectorsBibleScreen extends ConsumerWidget {
   const DirectorsBibleScreen({super.key});
@@ -25,16 +24,18 @@ class DirectorsBibleScreen extends ConsumerWidget {
             Text(universe.healthScore > 90 ? 'PERFECT' : universe.healthScore > 70 ? 'GOOD' : 'NEEDS WORK',
                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: universe.healthScore > 70 ? Colors.green : Colors.orange)),
             const SizedBox(height: 24),
-            ...universe.characters.map((char) => CinematicCard(
-                  child: Row(
-                    children: [
-                      CircleAvatar(backgroundImage: NetworkImage(char.avatarUrl)),
-                      const SizedBox(width: 16),
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(char.name, style: DripTheme.title), Text('${char.wardrobeDNA.length} wardrobe items', style: DripTheme.meta)])),
-                      IconButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ContinuityHealthScreen())), icon: const Icon(Icons.chevron_right)),
-                    ],
-                  ),
-                )),
+            ...universe.characters.map((char) {
+              final score = engine.getHealthScore(char.id);
+              return ListTile(
+                leading: CircleAvatar(backgroundImage: NetworkImage(char.avatarUrl)),
+                title: Text(char.name, style: DripTheme.title),
+                subtitle: Text('${char.wardrobeDNA.length} wardrobe items • Health: ${score.toInt()}%'),
+                trailing: IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ContinuityHealthScreen())),
+                ),
+              );
+            }),
           ],
         ),
       ),
