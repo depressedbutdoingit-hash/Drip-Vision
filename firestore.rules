@@ -4,51 +4,30 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
-    function isAdmin() {
-      return isSignedIn() && (
-        request.auth.token.admin == true ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-      );
+    function isOwner() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+    function isSelf(uid) {
+      return isSignedIn() && request.auth.uid == uid;
     }
 
     match /users/{uid} {
-      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
-      allow create: if isSignedIn() && request.auth.uid == uid;
-      allow update: if isSignedIn() && (
-        request.auth.uid == uid || isAdmin()
-      );
-      allow delete: if isAdmin();
+      allow read: if isSelf(uid) || isOwner();
+      allow create: if isSelf(uid);
+      // Block self-edits of privileged fields
+      allow update: if isSelf(uid) &&
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['role', 'tokenBalance', 'subscriptionTier', 'admin']);
+      allow delete: if isOwner();
 
-      match /editProjects/{projectId} {
-        allow read, write: if isSignedIn() && request.auth.uid == uid;
-      }
-      match /projects/{projectId} {
-        allow read, write: if isSignedIn() && request.auth.uid == uid;
-      }
-      match /transactions/{txId} {
-        allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
-        allow write: if isSignedIn() && request.auth.uid == uid;
+      match /{sub=**} {
+        allow read, write: if isSelf(uid);
       }
     }
 
     match /admin_config/{doc} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-
-    match /ai_usage/{id} {
-      allow read: if isAdmin();
-      allow create: if isSignedIn();
-    }
-
-    match /admin_audit/{id} {
-      allow read: if isAdmin();
-      allow create: if isAdmin();
-    }
-
-    match /generations/{id} {
-      allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
-      allow write: if isSignedIn();
+      allow write: if isOwner();
     }
 
     match /{document=**} {
