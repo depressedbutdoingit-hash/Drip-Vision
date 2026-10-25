@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import 'generator_screen.dart';
+import 'music_video_screen.dart';
 
 class StudioHomeScreen extends ConsumerWidget {
   const StudioHomeScreen({super.key});
@@ -82,12 +83,17 @@ class StudioHomeScreen extends ConsumerWidget {
                                     ),
                                     const SizedBox(width: 12),
                                     OutlinedButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (_) => const MusicVideoScreen()),
+                                        );
+                                      },
                                       style: OutlinedButton.styleFrom(
                                         side: const BorderSide(color: DripTheme.teal),
                                         foregroundColor: DripTheme.teal,
                                       ),
-                                      child: const Text('Watch Demo'),
+                                      child: const Text('Music Video'),
                                     ),
                                   ],
                                 ),
