@@ -1,3 +1,4 @@
+import '../../models/character_dna.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../models/character.dart';

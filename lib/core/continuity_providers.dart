@@ -2,7 +2,7 @@ import 'package:flutter/material.dart' show Color, Colors;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/character.dart';
 import '../models/universe.dart';
-import 'providers.dart';
+import 'providers.dart' hide universeProvider, continuityHealthProvider, ContinuityHealth;
 
 /// Health of one character, 0-100.
 /// 100 = continuity lock on AND at least one face reference saved.

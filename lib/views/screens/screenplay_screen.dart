@@ -5,6 +5,7 @@ import '../widgets/cinematic_button.dart';
 import 'story_planner_screen.dart';
 import 'storyboard_screen.dart';
 import 'generator_screen.dart';
+import 'studio_screen.dart';
 import '../../core/providers.dart';
 
 /// SCREENPLAY

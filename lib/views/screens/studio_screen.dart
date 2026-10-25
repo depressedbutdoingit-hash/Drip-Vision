@@ -167,3 +167,4 @@ class _ProjectCard extends StatelessWidget {
     );
   }
 }
+typedef DripVisionStudioScreen = StudioHomeScreen;

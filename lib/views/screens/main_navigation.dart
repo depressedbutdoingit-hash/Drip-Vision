@@ -6,6 +6,7 @@ import 'generator_screen.dart';
 import 'story_planner_screen.dart';
 import 'explore_drip_screen.dart';
 import 'music_studio_screen.dart';
+import 'studio_screen.dart';
 import 'library_screen.dart';
 import 'edit_bay_screen.dart';
 import 'settings_screen.dart';

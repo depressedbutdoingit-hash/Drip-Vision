@@ -9,6 +9,7 @@ import 'export_screen.dart';
 import 'generator_screen.dart';
 import 'sound_department_screen.dart';
 import 'edit_bay_screen.dart';
+import 'studio_screen.dart';
 
 /// TIMELINE — DIRECTOR'S CUT
 /// A real, reorderable cut: drag to resequence, tap a scene to open its
