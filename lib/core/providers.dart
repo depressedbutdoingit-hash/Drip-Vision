@@ -65,3 +65,7 @@ class StyleListNotifier extends StateNotifier<List<StyleDna>> {
 final styleListProvider = StateNotifierProvider<StyleListNotifier, List<StyleDna>>((ref) => StyleListNotifier());
 
 final mediaActionProvider = Provider<MediaActionService>((ref) => MediaActionService());
+
+final videoStitchProvider = Provider((ref) => null);
+final aiGenerationServiceProvider = Provider((ref) => null);
+final continuityServiceProvider = Provider((ref) => null);
