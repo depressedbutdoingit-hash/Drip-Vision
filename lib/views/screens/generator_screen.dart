@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
-import '../../services/continuity_service.dart';
+import '../../services/continuity_service.dart' hide continuityEngineProvider;
 import '../../services/token_service.dart';
 import '../../services/generation_service.dart';
 import 'video_player_screen.dart';

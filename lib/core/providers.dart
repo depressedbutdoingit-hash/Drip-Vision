@@ -45,8 +45,17 @@ class SceneListNotifier extends StateNotifier<List<SceneNode>> {
   SceneListNotifier() : super([]);
   void updateScene(SceneNode updated) => state = [for (final s in state) if (s.id == updated.id) updated else s];
   void removeScene(String id) => state = state.where((s) => s.id != id).toList();
-  void duplicateScene(String id) { final o = state.cast<SceneNode?>().firstWhere((s) => s?.id == id, orElse: () => null); if (o != null) state = [...state, o.copyWith()]; }
-  void reorder(int oldIndex, int newIndex) { if (newIndex > oldIndex) newIndex -= 1; final list = [...state]; final item = list.removeAt(oldIndex); list.insert(newIndex, item); state = list; }
+  void duplicateScene(String id) {
+    final o = state.cast<SceneNode?>().firstWhere((s) => s?.id == id, orElse: () => null);
+    if (o != null) state = [...state, o.copyWith()];
+  }
+  void reorder(int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) newIndex -= 1;
+    final list = [...state];
+    final item = list.removeAt(oldIndex);
+    list.insert(newIndex, item);
+    state = list;
+  }
   void addScene(SceneNode s) => state = [...state, s];
 }
 final sceneListProvider = StateNotifierProvider<SceneListNotifier, List<SceneNode>>((ref) => SceneListNotifier());
@@ -59,7 +68,19 @@ class StyleListNotifier extends StateNotifier<List<StyleDna>> {
   void duplicateStyle(String id) {
     final o = state.cast<StyleDna?>().firstWhere((s) => s?.id == id, orElse: () => null);
     if (o == null) return;
-    state = [...state, StyleDna(id: '\( {o.id}_copy', name: ' \){o.name} (copy)', tags: o.tags, lens: o.lens, colorPalette: o.colorPalette, lighting: o.lighting, grain: o.grain, contrast: o.contrast, sourceImageUrl: o.sourceImageUrl, createdAt: DateTime.now())];
+    final copy = StyleDna(
+      id: '\( {o.id}_copy_ \){DateTime.now().millisecondsSinceEpoch}',
+      name: '${o.name} (copy)',
+      tags: o.tags,
+      lens: o.lens,
+      colorPalette: o.colorPalette,
+      lighting: o.lighting,
+      grain: o.grain,
+      contrast: o.contrast,
+      sourceImageUrl: o.sourceImageUrl,
+      createdAt: DateTime.now(),
+    );
+    state = [...state, copy];
   }
 }
 final styleListProvider = StateNotifierProvider<StyleListNotifier, List<StyleDna>>((ref) => StyleListNotifier());
