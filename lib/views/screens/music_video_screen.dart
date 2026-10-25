@@ -1,8 +1,8 @@
-import 'video_player_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import 'video_player_screen.dart';
 
 class MusicVideoScreen extends ConsumerStatefulWidget {
   const MusicVideoScreen({super.key});
@@ -17,7 +17,7 @@ class _MusicVideoScreenState extends ConsumerState<MusicVideoScreen> {
   String _selectedCharacter = 'Isabella';
   String _style = 'Cinematic Neon';
   bool _generating = false;
-  int _tab = 1; // 0=Preview, 1=Timeline, 2=Assets, 3=Export
+  int _tab = 1;
 
   final _styles = const [
     'Cinematic Neon',
@@ -25,22 +25,6 @@ class _MusicVideoScreenState extends ConsumerState<MusicVideoScreen> {
     'High Fashion',
     'Dreamlike',
     'Moody Drama',
-  ];
-
-ElevatedButton(
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const VideoPlayerScreen(
-          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-          title: 'Test Video',
-        ),
-      ),
-    );
-  },
-  child: const Text('Play Test Video'),
-)
   ];
 
   final List<_Section> _sections = [
@@ -61,6 +45,18 @@ ElevatedButton(
     }
   }
 
+  void _playTestVideo() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const VideoPlayerScreen(
+          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          title: 'Test Video',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final universe = ref.watch(universeProvider);
@@ -77,7 +73,6 @@ ElevatedButton(
       ),
       body: Column(
         children: [
-          // Preview
           Container(
             height: 220,
             margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -90,19 +85,17 @@ ElevatedButton(
                 opacity: 0.75,
               ),
             ),
-            child: Stack(
+            child: const Stack(
               children: [
-                const Center(child: Icon(Icons.play_circle_filled, size: 64, color: Colors.white70)),
+                Center(child: Icon(Icons.play_circle_filled, size: 64, color: Colors.white70)),
                 Positioned(
                   left: 12,
                   bottom: 12,
-                  child: Text('00:12 / 03:48', style: DripTheme.meta.copyWith(color: Colors.white70)),
+                  child: Text('00:12 / 03:48', style: TextStyle(color: Colors.white70, fontSize: 13)),
                 ),
               ],
             ),
           ),
-
-          // Content
           Expanded(
             child: IndexedStack(
               index: _tab,
@@ -146,6 +139,12 @@ ElevatedButton(
               ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
               : const Text('GENERATE MUSIC VIDEO'),
         ),
+        const SizedBox(height: 12),
+        OutlinedButton(
+          onPressed: _playTestVideo,
+          style: OutlinedButton.styleFrom(side: const BorderSide(color: DripTheme.teal)),
+          child: const Text('Play Test Video', style: TextStyle(color: DripTheme.teal)),
+        ),
       ],
     );
   }
@@ -164,8 +163,6 @@ ElevatedButton(
         const SizedBox(height: 8),
         ..._sections.map((s) => _SectionCard(section: s)),
         const SizedBox(height: 20),
-
-        // Character
         const Text('CHARACTER', style: TextStyle(letterSpacing: 1.2, fontSize: 12, color: DripTheme.teal)),
         const SizedBox(height: 8),
         if (character != null)
@@ -206,7 +203,6 @@ ElevatedButton(
               ],
             ),
           ),
-
         const SizedBox(height: 20),
         const Text('STYLE', style: TextStyle(letterSpacing: 1.2, fontSize: 12, color: DripTheme.teal)),
         const SizedBox(height: 8),
@@ -217,68 +213,4 @@ ElevatedButton(
             final selected = s == _style;
             return ChoiceChip(
               label: Text(s),
-              selected: selected,
-              selectedColor: DripTheme.teal,
-              backgroundColor: DripTheme.gunmetal,
-              labelStyle: TextStyle(color: selected ? Colors.black : DripTheme.pearl),
-              onSelected: (_) => setState(() => _style = s),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAssetsTab() => const Center(child: Text('Assets coming soon', style: TextStyle(color: DripTheme.silver)));
-  Widget _buildExportTab() => Center(
-    child: ElevatedButton(
-      onPressed: () {},
-      child: const Text('Export Music Video'),
-    ),
-  );
-
-  @override
-  void dispose() {
-    _songController.dispose();
-    _directionController.dispose();
-    super.dispose();
-  }
-}
-
-class _Section {
-  final String name;
-  final String start;
-  final String end;
-  String prompt;
-  _Section({required this.name, required this.start, required this.end, required this.prompt});
-}
-
-class _SectionCard extends StatelessWidget {
-  final _Section section;
-  const _SectionCard({required this.section});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: DripTheme.gunmetal,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: DripTheme.teal.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(color: DripTheme.teal, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 12),
-          Expanded(child: Text(section.name, style: const TextStyle(fontWeight: FontWeight.w600))),
-          Text('${section.start} – ${section.end}', style: DripTheme.meta),
-        ],
-      ),
-    );
-  }
-}
+              selected: selected
