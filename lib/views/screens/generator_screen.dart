@@ -4,6 +4,8 @@ import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../services/continuity_service.dart';
 import '../../services/token_service.dart';
+import '../../services/generation_service.dart';
+import 'video_player_screen.dart';
 
 class GeneratorScreen extends ConsumerStatefulWidget {
   const GeneratorScreen({super.key});
@@ -34,25 +36,46 @@ class _GeneratorScreenState extends ConsumerState<GeneratorScreen> {
 
     setState(() {
       _isGenerating = true;
-      _status = 'Fusing character DNA with Vector Learning...';
+      _status = 'Generating with continuity...';
     });
 
     final engine = ref.read(continuityEngineProvider);
     final universe = ref.read(universeProvider);
+
+    Map<String, dynamic>? dna;
     if (universe.characters.isNotEmpty) {
       final char = universe.characters.first;
-      engine.adapt(char.dna, char.dna, shots: 3);
-      await Future.delayed(const Duration(seconds: 2));
+      final adapted = engine.adapt(char.dna, char.dna, shots: 3);
+      dna = adapted.toJson();
     }
+
+    final url = await GenerationService.generate(
+      prompt: _promptController.text,
+      type: 'video',
+      characterDna: dna,
+      style: 'cinematic',
+    );
 
     setState(() {
       _isGenerating = false;
-      _status = 'Generation complete. Continuity locked across the sequence.';
+      _status = url != null
+          ? 'Generation complete'
+          : 'Generation failed — try again';
     });
 
-    if (mounted) {
+    if (mounted && url != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Scene generated with locked character identity')),
+        const SnackBar(content: Text('✅ Scene generated')),
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => VideoPlayerScreen(
+            videoUrl: url,
+            title: 'Generated Scene',
+          ),
+        ),
       );
     }
   }
