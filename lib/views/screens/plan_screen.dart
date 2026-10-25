@@ -21,8 +21,6 @@ class PlansScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const link = 'https://buy.stripe.com/5kQ28s6vweIi9XLgiV5AQ00';
-
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       appBar: AppBar(title: const Text('Plans')),
@@ -39,7 +37,7 @@ class PlansScreen extends StatelessWidget {
             price: '\$19.99 / month',
             tokens: '300 tokens',
             features: const ['\~10–15 short clips', 'Basic continuity', 'Standard models'],
-            onPressed: () => _openCheckout(link),
+            onPressed: () => _openCheckout('https://buy.stripe.com/3cI3cw4nodEefi5feR5AQ01'),
           ),
           const SizedBox(height: 16),
 
@@ -49,7 +47,7 @@ class PlansScreen extends StatelessWidget {
             tokens: '1,000 tokens',
             features: const ['\~30–50 clips', 'Full continuity engine', 'Better models'],
             highlighted: true,
-            onPressed: () => _openCheckout(link),
+            onPressed: () => _openCheckout('https://buy.stripe.com/4gMfZi8DEfMmb1P4Ad5AQ02'),
           ),
           const SizedBox(height: 16),
 
@@ -58,7 +56,7 @@ class PlansScreen extends StatelessWidget {
             price: '\$99.99 / month',
             tokens: '5,000+ tokens',
             features: const ['Heavy usage', 'Priority generation', 'All tools unlocked'],
-            onPressed: () => _openCheckout(link),
+            onPressed: () => _openCheckout('https://buy.stripe.com/4gMfZi6vw57Id9XeaN5AQ03'),
           ),
         ],
       ),
