@@ -1,3 +1,4 @@
+import 'video_player_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
@@ -24,6 +25,22 @@ class _MusicVideoScreenState extends ConsumerState<MusicVideoScreen> {
     'High Fashion',
     'Dreamlike',
     'Moody Drama',
+  ];
+
+ElevatedButton(
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const VideoPlayerScreen(
+          videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+          title: 'Test Video',
+        ),
+      ),
+    );
+  },
+  child: const Text('Play Test Video'),
+)
   ];
 
   final List<_Section> _sections = [
