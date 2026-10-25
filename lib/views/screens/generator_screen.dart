@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../services/continuity_service.dart';
+import '../../services/token_service.dart';
 
 class GeneratorScreen extends ConsumerStatefulWidget {
   const GeneratorScreen({super.key});
@@ -12,11 +13,25 @@ class GeneratorScreen extends ConsumerStatefulWidget {
 }
 
 class _GeneratorScreenState extends ConsumerState<GeneratorScreen> {
-  final _promptController = TextEditingController(text: 'Isabella walks into the neon-lit alley, leather jacket catching the rain.');
+  final _promptController = TextEditingController(
+    text: 'Isabella walks into the neon-lit alley, leather jacket catching the rain.',
+  );
   bool _isGenerating = false;
   String _status = 'Ready — Character DNA will be fused and locked';
 
   Future<void> _generate() async {
+    const cost = 10;
+
+    final success = await TokenService.deduct(cost);
+    if (!success) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Not enough tokens')),
+        );
+      }
+      return;
+    }
+
     setState(() {
       _isGenerating = true;
       _status = 'Fusing character DNA with Vector Learning...';
@@ -26,7 +41,7 @@ class _GeneratorScreenState extends ConsumerState<GeneratorScreen> {
     final universe = ref.read(universeProvider);
     if (universe.characters.isNotEmpty) {
       final char = universe.characters.first;
-      final adapted = engine.adapt(char.dna, char.dna, shots: 3);
+      engine.adapt(char.dna, char.dna, shots: 3);
       await Future.delayed(const Duration(seconds: 2));
     }
 
@@ -80,7 +95,11 @@ class _GeneratorScreenState extends ConsumerState<GeneratorScreen> {
             ElevatedButton(
               onPressed: _isGenerating ? null : _generate,
               child: _isGenerating
-                  ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                  ? const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                    )
                   : const Text('GENERATE WITH CONTINUITY'),
             ),
             const SizedBox(height: 24),
