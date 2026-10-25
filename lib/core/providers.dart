@@ -90,3 +90,44 @@ final mediaActionProvider = Provider<MediaActionService>((ref) => MediaActionSer
 final videoStitchProvider = Provider((ref) => null);
 final aiGenerationServiceProvider = Provider((ref) => null);
 final continuityServiceProvider = Provider((ref) => null);
+// ---------------------------------------------------------------------------
+// Real service providers
+// ---------------------------------------------------------------------------
+import '../models/film_bible.dart';
+import '../services/style_dna_service.dart';
+import '../services/suno_service.dart';
+import '../services/ai_director_service.dart';
+import '../services/token_service.dart';
+import '../services/openrouter_service.dart';
+import '../services/video_stitching_service.dart';
+import '../services/ai_generation_service.dart';
+import '../core/env.dart';
+
+final filmBibleProvider = StateProvider<FilmBible>((ref) => const FilmBible());
+
+final styleDnaServiceProvider = Provider<StyleDnaService>((ref) {
+  return StyleDnaService(Env.openRouterKey);
+});
+
+final sunoServiceProvider = Provider<SunoService>((ref) => SunoService());
+
+final aiDirectorServiceProvider = Provider<AiDirectorService>((ref) => AiDirectorService());
+
+final tokenServiceProvider = Provider<TokenService>((ref) => TokenService());
+
+final openRouterProvider = Provider<OpenRouterService>((ref) => OpenRouterService());
+
+final videoStitchProvider = Provider<VideoStitchingService>((ref) => VideoStitchingService());
+
+final aiGenerationServiceProvider = Provider<AiGenerationService>((ref) => AiGenerationService());
+
+final continuityServiceProvider = Provider<ContinuityEngine>((ref) => ContinuityEngine());
+
+// Simple state holders used by screens
+final activeStyleProvider = StateProvider<StyleDna?>((ref) => null);
+
+final lockedScenesProvider = StateNotifierProvider<SceneListNotifier, List<SceneNode>>((ref) => SceneListNotifier());
+
+final pendingScenePromptProvider = StateProvider<String>((ref) => '');
+
+final musicPlayerProvider = StateProvider<String?>((ref) => null);
