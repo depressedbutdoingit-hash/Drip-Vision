@@ -11,32 +11,27 @@ class MusicVideoScreen extends ConsumerStatefulWidget {
 }
 
 class _MusicVideoScreenState extends ConsumerState<MusicVideoScreen> {
-  final _songPrompt = TextEditingController();
-  final _videoPrompt = TextEditingController();
+  final _songController = TextEditingController();
+  final _directionController = TextEditingController();
   String _selectedCharacter = 'Isabella';
   String _style = 'Cinematic Neon';
   bool _generating = false;
-  int _clipCount = 4;
-  final List<_Clip> _clips = [];
+  int _tab = 1; // 0=Preview, 1=Timeline, 2=Assets, 3=Export
 
   final _styles = const [
     'Cinematic Neon',
     'Film Grain Noir',
     'High Fashion',
     'Dreamlike',
-    'Horror Atmosphere',
+    'Moody Drama',
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _clips.addAll([
-      _Clip(title: 'Intro', duration: '0:08'),
-      _Clip(title: 'Verse', duration: '0:12'),
-      _Clip(title: 'Chorus', duration: '0:15'),
-      _Clip(title: 'Bridge', duration: '0:10'),
-    ]);
-  }
+  final List<_Section> _sections = [
+    _Section(name: 'Intro', start: '0:00', end: '0:12', prompt: ''),
+    _Section(name: 'Verse', start: '0:12', end: '0:28', prompt: ''),
+    _Section(name: 'Chorus', start: '0:28', end: '0:48', prompt: ''),
+    _Section(name: 'Bridge', start: '0:48', end: '1:02', prompt: ''),
+  ];
 
   Future<void> _generate() async {
     setState(() => _generating = true);
@@ -44,7 +39,7 @@ class _MusicVideoScreenState extends ConsumerState<MusicVideoScreen> {
     setState(() => _generating = false);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Music video sequence generated')),
+        const SnackBar(content: Text('Music video sequence locked and generated')),
       );
     }
   }
@@ -52,161 +47,198 @@ class _MusicVideoScreenState extends ConsumerState<MusicVideoScreen> {
   @override
   Widget build(BuildContext context) {
     final universe = ref.watch(universeProvider);
+    final character = universe.characters.isNotEmpty ? universe.characters.first : null;
 
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       appBar: AppBar(
-        title: const Text('Music Video'),
+        title: const Text('Music Video Studio'),
         actions: [
-          TextButton(
-            onPressed: _generating ? null : _generate,
-            child: const Text('Generate', style: TextStyle(color: DripTheme.teal)),
-          ),
+          IconButton(icon: const Icon(Icons.bookmark_border), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
+      body: Column(
         children: [
           // Preview
           Container(
-            height: 200,
+            height: 220,
+            margin: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               color: DripTheme.gunmetal,
               image: const DecorationImage(
                 image: NetworkImage('https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800'),
                 fit: BoxFit.cover,
-                opacity: 0.65,
+                opacity: 0.75,
               ),
             ),
-            child: const Center(
-              child: Icon(Icons.play_circle_filled, size: 64, color: Colors.white70),
+            child: Stack(
+              children: [
+                const Center(child: Icon(Icons.play_circle_filled, size: 64, color: Colors.white70)),
+                Positioned(
+                  left: 12,
+                  bottom: 12,
+                  child: Text('00:12 / 03:48', style: DripTheme.meta.copyWith(color: Colors.white70)),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 20),
 
-          // Song
-          const Text('Song', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _songPrompt,
-            maxLines: 2,
-            decoration: const InputDecoration(
-              hintText: 'Describe the track or paste lyrics…',
+          // Content
+          Expanded(
+            child: IndexedStack(
+              index: _tab,
+              children: [
+                _buildPreviewTab(),
+                _buildTimelineTab(character),
+                _buildAssetsTab(),
+                _buildExportTab(),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Character lock
-          const Text('Character', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            value: _selectedCharacter,
-            dropdownColor: DripTheme.gunmetal,
-            decoration: const InputDecoration(),
-            items: universe.characters
-                .map((c) => DropdownMenuItem(value: c.name, child: Text(c.name)))
-                .toList(),
-            onChanged: (v) => setState(() => _selectedCharacter = v ?? _selectedCharacter),
-          ),
-          const SizedBox(height: 16),
-
-          // Visual style
-          const Text('Visual Style', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _styles.map((s) {
-              final selected = s == _style;
-              return ChoiceChip(
-                label: Text(s),
-                selected: selected,
-                selectedColor: DripTheme.teal,
-                backgroundColor: DripTheme.gunmetal,
-                labelStyle: TextStyle(color: selected ? Colors.black : DripTheme.pearl),
-                onSelected: (_) => setState(() => _style = s),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 20),
-
-          // Video prompt
-          TextField(
-            controller: _videoPrompt,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              hintText: 'Overall visual direction for the music video…',
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Timeline
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Timeline', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-              Text('$_clipCount clips', style: DripTheme.meta),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ..._clips.asMap().entries.map((e) => _TimelineClip(
-                index: e.key + 1,
-                clip: e.value,
-                onRemove: () => setState(() => _clips.removeAt(e.key)),
-              )),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: () => setState(() => _clips.add(_Clip(title: 'New Clip', duration: '0:08'))),
-            icon: const Icon(Icons.add, color: DripTheme.teal),
-            label: const Text('Add Clip', style: TextStyle(color: DripTheme.teal)),
-            style: OutlinedButton.styleFrom(side: const BorderSide(color: DripTheme.teal)),
-          ),
-
-          const SizedBox(height: 28),
-
-          // Generate button
-          ElevatedButton(
-            onPressed: _generating ? null : _generate,
-            child: _generating
-                ? const SizedBox(
-                    height: 22,
-                    width: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                  )
-                : const Text('GENERATE MUSIC VIDEO'),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(side: const BorderSide(color: DripTheme.silver)),
-            child: const Text('Export', style: TextStyle(color: DripTheme.pearl)),
-          ),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        backgroundColor: DripTheme.gunmetal,
+        selectedIndex: _tab,
+        onDestinationSelected: (i) => setState(() => _tab = i),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.play_circle_outline), label: 'Preview'),
+          NavigationDestination(icon: Icon(Icons.timeline), label: 'Timeline'),
+          NavigationDestination(icon: Icon(Icons.folder_outlined), label: 'Assets'),
+          NavigationDestination(icon: Icon(Icons.upload), label: 'Export'),
         ],
       ),
     );
   }
 
+  Widget _buildPreviewTab() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        TextField(
+          controller: _directionController,
+          maxLines: 3,
+          decoration: const InputDecoration(hintText: 'Overall visual direction…'),
+        ),
+        const SizedBox(height: 20),
+        ElevatedButton(
+          onPressed: _generating ? null : _generate,
+          child: _generating
+              ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+              : const Text('GENERATE MUSIC VIDEO'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimelineTab(dynamic character) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('SONG TIMELINE', style: TextStyle(letterSpacing: 1.2, fontSize: 12, color: DripTheme.teal)),
+            TextButton(onPressed: () {}, child: const Text('EDIT TIMELINE', style: TextStyle(color: DripTheme.teal))),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ..._sections.map((s) => _SectionCard(section: s)),
+        const SizedBox(height: 20),
+
+        // Character
+        const Text('CHARACTER', style: TextStyle(letterSpacing: 1.2, fontSize: 12, color: DripTheme.teal)),
+        const SizedBox(height: 8),
+        if (character != null)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: DripTheme.gunmetal,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(character.avatarUrl, width: 72, height: 96, fit: BoxFit.cover),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(character.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                      Text(character.role, style: DripTheme.meta),
+                      const SizedBox(height: 8),
+                      const Text('DNA', style: TextStyle(fontSize: 11, color: DripTheme.silver)),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: List.generate(5, (i) => Container(
+                          margin: const EdgeInsets.only(right: 4),
+                          width: 18,
+                          height: 6 + (i * 3).toDouble(),
+                          color: DripTheme.teal,
+                        )),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: DripTheme.silver),
+              ],
+            ),
+          ),
+
+        const SizedBox(height: 20),
+        const Text('STYLE', style: TextStyle(letterSpacing: 1.2, fontSize: 12, color: DripTheme.teal)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _styles.map((s) {
+            final selected = s == _style;
+            return ChoiceChip(
+              label: Text(s),
+              selected: selected,
+              selectedColor: DripTheme.teal,
+              backgroundColor: DripTheme.gunmetal,
+              labelStyle: TextStyle(color: selected ? Colors.black : DripTheme.pearl),
+              onSelected: (_) => setState(() => _style = s),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAssetsTab() => const Center(child: Text('Assets coming soon', style: TextStyle(color: DripTheme.silver)));
+  Widget _buildExportTab() => Center(
+    child: ElevatedButton(
+      onPressed: () {},
+      child: const Text('Export Music Video'),
+    ),
+  );
+
   @override
   void dispose() {
-    _songPrompt.dispose();
-    _videoPrompt.dispose();
+    _songController.dispose();
+    _directionController.dispose();
     super.dispose();
   }
 }
 
-class _Clip {
-  final String title;
-  final String duration;
-  _Clip({required this.title, required this.duration});
+class _Section {
+  final String name;
+  final String start;
+  final String end;
+  String prompt;
+  _Section({required this.name, required this.start, required this.end, required this.prompt});
 }
 
-class _TimelineClip extends StatelessWidget {
-  final int index;
-  final _Clip clip;
-  final VoidCallback onRemove;
-
-  const _TimelineClip({required this.index, required this.clip, required this.onRemove});
+class _SectionCard extends StatelessWidget {
+  final _Section section;
+  const _SectionCard({required this.section});
 
   @override
   Widget build(BuildContext context) {
@@ -216,17 +248,18 @@ class _TimelineClip extends StatelessWidget {
       decoration: BoxDecoration(
         color: DripTheme.gunmetal,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: DripTheme.teal.withOpacity(0.3)),
       ),
       child: Row(
         children: [
-          Text('$index', style: const TextStyle(color: DripTheme.teal, fontWeight: FontWeight.w600)),
-          const SizedBox(width: 12),
-          Expanded(child: Text(clip.title)),
-          Text(clip.duration, style: DripTheme.meta),
-          IconButton(
-            icon: const Icon(Icons.close, size: 18, color: DripTheme.silver),
-            onPressed: onRemove,
+          Container(
+            width: 8,
+            height: 8,
+            decoration: const BoxDecoration(color: DripTheme.teal, shape: BoxShape.circle),
           ),
+          const SizedBox(width: 12),
+          Expanded(child: Text(section.name, style: const TextStyle(fontWeight: FontWeight.w600))),
+          Text('${section.start} – ${section.end}', style: DripTheme.meta),
         ],
       ),
     );
