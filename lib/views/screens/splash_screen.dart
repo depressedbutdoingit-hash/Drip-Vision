@@ -9,22 +9,45 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+  late AnimationController _progressController;
+  late AnimationController _fadeController;
+  late AnimationController _scaleController;
+
   late Animation<double> _progress;
+  late Animation<double> _fade;
+  late Animation<double> _scale;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+
+    _progressController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     );
-    _progress = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
     );
 
-    _controller.forward().then((_) {
+    _progress = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _progressController, curve: Curves.easeInOut),
+    );
+    _fade = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
+    );
+    _scale = Tween<double>(begin: 0.85, end: 1).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeOutBack),
+    );
+
+    _fadeController.forward();
+    _scaleController.forward();
+    _progressController.forward().then((_) {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const StudioHomeScreen()),
@@ -35,7 +58,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   void dispose() {
-    _controller.dispose();
+    _progressController.dispose();
+    _fadeController.dispose();
+    _scaleController.dispose();
     super.dispose();
   }
 
@@ -44,61 +69,64 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Logo
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: DripTheme.teal, width: 2),
-              ),
-              child: const Center(
-                child: Text(
-                  'DV',
-                  style: TextStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.w700,
-                    color: DripTheme.teal,
-                    letterSpacing: 2,
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_fade, _scale, _progress]),
+          builder: (context, child) {
+            return Opacity(
+              opacity: _fade.value,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Transform.scale(
+                    scale: _scale.value,
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: DripTheme.teal, width: 2),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'DV',
+                          style: TextStyle(
+                            fontSize: 42,
+                            fontWeight: FontWeight.w700,
+                            color: DripTheme.teal,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'DRIPVISION',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 4,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'An AI filmmaking studio',
+                    style: DripTheme.meta,
+                  ),
+                  const SizedBox(height: 48),
+                  SizedBox(
+                    width: 180,
+                    child: LinearProgressIndicator(
+                      value: _progress.value,
+                      backgroundColor: DripTheme.gunmetal,
+                      color: DripTheme.teal,
+                      minHeight: 3,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'DRIPVISION',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 4,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'An AI filmmaking studio',
-              style: DripTheme.meta,
-            ),
-            const SizedBox(height: 48),
-
-            // Loading bar
-            SizedBox(
-              width: 180,
-              child: AnimatedBuilder(
-                animation: _progress,
-                builder: (context, child) {
-                  return LinearProgressIndicator(
-                    value: _progress.value,
-                    backgroundColor: DripTheme.gunmetal,
-                    color: DripTheme.teal,
-                    minHeight: 3,
-                  );
-                },
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
