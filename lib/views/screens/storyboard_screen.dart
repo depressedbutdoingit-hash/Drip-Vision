@@ -5,14 +5,8 @@ import '../../core/providers.dart';
 import '../../services/token_service.dart';
 import '../widgets/cinematic_button.dart';
 import 'story_planner_screen.dart';
-import 'generator_screen.dart';
 import 'studio_screen.dart';
 
-/// STORYBOARD
-/// A tappable grid of the same real PlannedScenes from storyPlanProvider.
-/// Regenerate calls OpenRouter for real (through openRouterProvider's
-/// cinematic-rewrite endpoint, same cost tracking as every other AI call)
-/// rather than faking a rewrite locally.
 class StoryboardScreen extends ConsumerStatefulWidget {
   const StoryboardScreen({super.key});
 
@@ -26,7 +20,6 @@ class _StoryboardScreenState extends ConsumerState<StoryboardScreen> {
   @override
   Widget build(BuildContext context) {
     final plan = ref.watch(storyPlanProvider);
-    final locked = ref.watch(lockedScenesProvider);
 
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
@@ -36,16 +29,24 @@ class _StoryboardScreenState extends ConsumerState<StoryboardScreen> {
             ? const Center(
                 child: Padding(
                   padding: EdgeInsets.all(32),
-                  child: Text('Plan a story in Story Planner first — the storyboard builds itself from there.', textAlign: TextAlign.center, style: TextStyle(color: DripTheme.muted, height: 1.5)),
+                  child: Text(
+                    'Plan a story in Story Planner first — the storyboard builds itself from there.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: DripTheme.muted, height: 1.5),
+                  ),
                 ),
               )
             : GridView.builder(
                 padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: .82, crossAxisSpacing: 12, mainAxisSpacing: 12),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: .82,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
                 itemCount: plan.scenes.length,
                 itemBuilder: (c, i) {
                   final scene = plan.scenes[i];
-                  final isLocked = locked.contains(scene.sceneNumber);
                   final isRegenerating = _regeneratingScene == scene.sceneNumber;
                   return GestureDetector(
                     onTap: () => _openActions(context, scene),
@@ -53,18 +54,15 @@ class _StoryboardScreenState extends ConsumerState<StoryboardScreen> {
                       decoration: BoxDecoration(
                         color: DripTheme.surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: isLocked ? DripTheme.cosmicTeal.withOpacity(.5) : Colors.white.withOpacity(.07)),
+                        border: Border.all(color: Colors.white.withOpacity(.07)),
                       ),
                       padding: const EdgeInsets.all(12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Text('SHOT ${scene.sceneNumber.toString().padLeft(2, '0')}', style: const TextStyle(fontSize: 9.5, letterSpacing: 1.4, color: DripTheme.cosmicTeal, fontWeight: FontWeight.w700)),
-                              const Spacer(),
-                              if (isLocked) const Icon(Icons.lock_outline, size: 13, color: DripTheme.aquaGlow),
-                            ],
+                          Text(
+                            'SHOT ${scene.sceneNumber.toString().padLeft(2, '0')}',
+                            style: const TextStyle(fontSize: 9.5, letterSpacing: 1.4, color: DripTheme.cosmicTeal, fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 8),
                           Expanded(
@@ -109,41 +107,13 @@ class _StoryboardScreenState extends ConsumerState<StoryboardScreen> {
               },
             ),
             const SizedBox(height: 10),
-            Row(children: [
-              Expanded(
-                child: CinematicButton(
-                  label: 'CHANGE CAMERA',
-                  icon: Icons.videocam_outlined,
-                  primary: false,
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const StudioScreen()));
-                  },
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: CinematicButton(
-                  label: 'REGENERATE',
-                  icon: Icons.refresh_rounded,
-                  primary: false,
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _regenerate(scene);
-                  },
-                ),
-              ),
-            ]),
-            const SizedBox(height: 10),
             CinematicButton(
-              label: ref.read(lockedScenesProvider).contains(scene.sceneNumber) ? 'UNLOCK COMPOSITION' : 'LOCK COMPOSITION',
-              icon: ref.read(lockedScenesProvider).contains(scene.sceneNumber) ? Icons.lock_open_outlined : Icons.lock_outline,
+              label: 'REGENERATE',
+              icon: Icons.refresh_rounded,
               primary: false,
               onPressed: () {
-                final locked = {...ref.read(lockedScenesProvider)};
-                locked.contains(scene.sceneNumber) ? locked.remove(scene.sceneNumber) : locked.add(scene.sceneNumber);
-                ref.read(lockedScenesProvider.notifier).state = locked;
                 Navigator.pop(ctx);
+                _regenerate(scene);
               },
             ),
           ],
@@ -153,15 +123,10 @@ class _StoryboardScreenState extends ConsumerState<StoryboardScreen> {
   }
 
   Future<void> _regenerate(PlannedScene scene) async {
-    if (ref.read(lockedScenesProvider).contains(scene.sceneNumber)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('This shot is locked — unlock composition first.')));
-      return;
-    }
     setState(() => _regeneratingScene = scene.sceneNumber);
     try {
       final result = await ref.read(openRouterProvider).enhancePrompt(prompt: scene.description, modelSlug: 'anthropic/claude-3.5-sonnet');
-      final tokenService = ref.read(tokenServiceProvider);
-      final hasFunds = await tokenService.deduct(result.cost.tokenCost);
+      final hasFunds = await TokenService.deduct(result.cost.tokenCost);
       if (!hasFunds) {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Not enough Drips to regenerate this shot.')));
         return;
