@@ -10,6 +10,7 @@ class DripTheme {
   static const Color cosmicTeal = teal;
   static const Color tealDim = Color(0xFF00A88A);
   static const Color pearl = Color(0xFFF5F7FA);
+static const Color white50 = Color(0x80FFFFFF);
   static const Color warmWhite = pearl;
   static const Color silver = Color(0xFFC0C6D4);
   static const Color muted = silver;
