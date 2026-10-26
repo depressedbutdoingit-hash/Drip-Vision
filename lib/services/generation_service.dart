@@ -1,36 +1,29 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'drip_engine_service.dart';
+import '../models/scene.dart';
 
+/// Thin wrapper that routes generation through the real DripEngineService
+/// (OpenRouter). Prefer AIGenerationService / DripEngineService directly
+/// in new code.
 class GenerationService {
-  // Point this at your Cloud Function or backend
-  static const _endpoint = 'https://your-backend.com/generate';
+  static final _engine = DripEngineService();
 
-  /// Returns the generated media URL, or null on failure.
+  /// Returns the generated video URL, or null on failure.
   static Future<String?> generate({
     required String prompt,
-    String type = 'video', // or 'image'
+    String type = 'video',
     Map<String, dynamic>? characterDna,
     String style = 'cinematic',
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse(_endpoint),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'prompt': prompt,
-          'type': type,
-          'style': style,
-          'character_dna': characterDna,
-        }),
+      final scene = await _engine.generateNextScene(
+        previousScene: null,
+        prompt: prompt,
+        cameraMotion: 'slow push-in',
+        style: style,
       );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['url'] as String?;
-      }
-    } catch (e) {
-      // log error if needed
+      return scene.videoUrl;
+    } catch (_) {
+      return null;
     }
-    return null;
   }
 }
