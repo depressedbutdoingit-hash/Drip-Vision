@@ -44,6 +44,10 @@ class DripColors {
   static const Color primary = DripTheme.teal;
   static const Color surface = DripTheme.surface;
   static const Color text = DripTheme.pearl;
-  static const Color white50 = Color(0x80FFFFFF);
+  static const Color white10 = Color(0x1AFFFFFF);
+  static const Color white20 = Color(0x33FFFFFF);
+  static const Color white30 = Color(0x4DFFFFFF);
   static const Color white40 = Color(0x66FFFFFF);
+  static const Color white50 = Color(0x80FFFFFF);
+  static const Color white70 = Color(0xB3FFFFFF);
 }
