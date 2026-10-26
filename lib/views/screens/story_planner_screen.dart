@@ -616,8 +616,8 @@ class _StoryPlannerScreenState extends ConsumerState<StoryPlannerScreen> {
       );
 
       // Deduct the actual cost with 5% markup
-      final tokenService = ref.read(tokenServiceProvider);
-      final hasFunds = await tokenService.deduct(result.cost.tokenCost);
+      final tokenService = ref.read(TokenServiceProvider);
+      final hasFunds = await TokenService.deduct(result.cost.tokenCost);
 
       if (!hasFunds) {
         ref.read(isPlanningProvider.notifier).state = false;
