@@ -325,7 +325,7 @@ class Outfit {
   final String name;
   final String description;
   final String? referenceImageUrl;
-  final String? outfitImageUrl;   // <-- add this
+  final String? outfitImageUrl;
   final List<String> tags;
   final bool isDefault;
 
@@ -334,18 +334,17 @@ class Outfit {
     required this.name,
     required this.description,
     this.referenceImageUrl,
-    this.outfitImageUrl,           // <-- add this
+    this.outfitImageUrl,
     this.tags = const [],
     this.isDefault = false,
   });
-  // ... rest of the class stays the same
-}
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
         'description': description,
         'referenceImageUrl': referenceImageUrl,
+        'outfitImageUrl': outfitImageUrl,
         'tags': tags,
         'isDefault': isDefault,
       };
@@ -355,6 +354,7 @@ class Outfit {
         name: json['name'] ?? '',
         description: json['description'] ?? '',
         referenceImageUrl: json['referenceImageUrl'],
+        outfitImageUrl: json['outfitImageUrl'],
         tags: List<String>.from(json['tags'] ?? []),
         isDefault: json['isDefault'] ?? false,
       );
