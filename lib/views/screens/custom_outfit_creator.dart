@@ -286,7 +286,7 @@ class _CustomOutfitCreatorState extends ConsumerState<CustomOutfitCreator> {
     setState(() => _isCreating = true);
 
     final tokenService = ref.read(tokenServiceProvider);
-    final success = await tokenService.deduct(50);
+    final success = await TokenService.deduct(50);
 
     if (success) {
       final outfit = Outfit(
