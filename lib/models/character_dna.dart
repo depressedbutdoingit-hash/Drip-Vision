@@ -325,6 +325,7 @@ class Outfit {
   final String name;
   final String description;
   final String? referenceImageUrl;
+  final String? outfitImageUrl;   // <-- add this
   final List<String> tags;
   final bool isDefault;
 
@@ -333,9 +334,12 @@ class Outfit {
     required this.name,
     required this.description,
     this.referenceImageUrl,
+    this.outfitImageUrl,           // <-- add this
     this.tags = const [],
     this.isDefault = false,
   });
+  // ... rest of the class stays the same
+}
 
   Map<String, dynamic> toJson() => {
         'id': id,
