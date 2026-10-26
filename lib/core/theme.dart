@@ -38,3 +38,9 @@ class DripTheme {
   static const TextStyle brandMark = TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 2.0, color: pearl);
   static const TextStyle display = TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: pearl);
 }
+
+class DripColors {
+  static const Color primary = DripTheme.teal;
+  static const Color surface = DripTheme.surface;
+  static const Color text = DripTheme.pearl;
+}
