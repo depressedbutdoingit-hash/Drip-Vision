@@ -50,7 +50,7 @@ class CharacterRevealCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final img = character.faceReferenceUrls.isNotEmpty
         ? character.faceReferenceUrls.first
-        : character.activeOutfit.outfitImageUrl;
+        : character.activeOutfit?.outfitImageUrl;
     final style = character.defaultStylePrompt;
 
     return Material(
