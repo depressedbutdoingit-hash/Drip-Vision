@@ -12,7 +12,7 @@ class AudioGenerationService {
     String modelId = 'eleven_multilingual_v2',
   }) async {
     final tempDir = await getTemporaryDirectory();
-    final outputPath = '${tempDir.path}/voiceover_${DateTime.now().millisecondsSinceEpoch}.mp3';
+    final outputPath = '\( {tempDir.path}/voiceover_ \){DateTime.now().millisecondsSinceEpoch}.mp3';
 
     final response = await _dio.post(
       'https://api.elevenlabs.io/v1/text-to-speech/$voiceId',
@@ -32,6 +32,12 @@ class AudioGenerationService {
   }
 
   Future<String?> generateSoundtrack(String prompt) async {
-    throw UnimplementedError('Suno API integration pending partnership access');
+    if (Env.sunoApiKey.isEmpty) {
+      // Suno partnership not yet active — return null so callers can fall back gracefully
+      return null;
+    }
+    // When partnership access is granted, implement real Suno API call here.
+    // For now, production code does not throw; it signals unavailability.
+    return null;
   }
 }
