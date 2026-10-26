@@ -69,8 +69,6 @@ Respond as JSON: {"prompt": "...", "tagline": "...", "colors": ["#000000", "#FFF
         .trim();
     final posterData = jsonDecode(content);
 
-    // Step 2: Generate the actual image (stub — use FAL/Stable Diffusion in production)
-    // TODO: Replace with actual image generation API call
     final imageUrl = await _generateImage(posterData['prompt']);
 
     return MoviePoster(
@@ -82,7 +80,7 @@ Respond as JSON: {"prompt": "...", "tagline": "...", "colors": ["#000000", "#FFF
     );
   }
 
-  /// Stub: Replace with FAL AI or Stable Diffusion API
+  /// Generate image via live OpenRouter / ImageGenerationService
   Future<String> _generateImage(String prompt) async {
     final images = ImageGenerationService();
     return images.generate(
