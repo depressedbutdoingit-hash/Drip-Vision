@@ -4,7 +4,6 @@ import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../services/continuity_service.dart' hide continuityEngineProvider;
 import '../../services/token_service.dart';
-import '../../services/generation_service.dart';
 import 'video_player_screen.dart';
 
 class GeneratorScreen extends ConsumerStatefulWidget {
@@ -39,44 +38,45 @@ class _GeneratorScreenState extends ConsumerState<GeneratorScreen> {
       _status = 'Generating with continuity...';
     });
 
-    final engine = ref.read(continuityEngineProvider);
-    final universe = ref.read(universeProvider);
-
-    Map<String, dynamic>? dna;
-    if (universe.characters.isNotEmpty) {
-      final char = universe.characters.first;
-      final adapted = engine.adapt(char.dna, char.dna, shots: 3);
-      dna = adapted.toJson();
-    }
-
-    final url = await GenerationService.generate(
-      prompt: _promptController.text,
-      type: 'video',
-      characterDna: dna,
-      style: 'cinematic',
-    );
-
-    setState(() {
-      _isGenerating = false;
-      _status = url != null
-          ? 'Generation complete'
-          : 'Generation failed — try again';
-    });
-
-    if (mounted && url != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Scene generated')),
+    try {
+      final generation = ref.read(aiGenerationServiceProvider);
+      final url = await generation.generateVideo(
+        prompt: _promptController.text,
+        cameraMotion: 'slow push-in',
+        quality: 'draft',
+        durationSeconds: 5,
       );
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => VideoPlayerScreen(
-            videoUrl: url,
-            title: 'Generated Scene',
+      setState(() {
+        _isGenerating = false;
+        _status = 'Generation complete';
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Scene generated')),
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => VideoPlayerScreen(
+              videoUrl: url,
+              title: 'Generated Scene',
+            ),
           ),
-        ),
-      );
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isGenerating = false;
+        _status = 'Generation failed — try again';
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
