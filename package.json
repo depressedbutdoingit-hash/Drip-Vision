@@ -1,0 +1,14 @@
+{
+  "name": "drip-vision",
+  "version": "1.1.0",
+  "private": true,
+  "scripts": {
+    "build": "flutter build web --release",
+    "deploy": "npx wrangler deploy",
+    "preview": "npx wrangler dev",
+    "pages:deploy": "npx wrangler pages deploy build/web"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
