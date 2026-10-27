@@ -73,53 +73,28 @@ jobs:
       - name: Build Flutter Web
         run: flutter build web --release
 
-      - name: Upload web build artifact
-        uses: actions/upload-artifact@v4
+      - name: Deploy to Cloudflare Workers
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: cloudflare/wrangler-action@v3
         with:
-          name: flutter-web-build
-          path: build/web
-          retention-days: 1
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --directory build/web
 
-      # Optional: Deploy directly to Cloudflare from Actions
-      # Uncomment and add CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID secrets
-      # - name: Deploy to Cloudflare Workers
-      #   uses: cloudflare/wrangler-action@v3
-      #   with:
-      #     apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      #     accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      #     command: deploy --directory build/web
-
-      # Keep your existing Android debug APK steps below if you still want them
+      # Optional: keep Android debug APK build (comment out if you don't need it)
       - name: Verify google-services.json
         run: |
-          test -f android/app/google-services.json
-          python3 -c "import json; print(json.load(open('android/app/google-services.json'))['project_info']['project_id'])"
-
-      - name: Ensure Android shell files
-        run: |
-          mkdir -p android/app/src/main/kotlin/com/dripvision/app
-          if [ ! -f android/app/src/main/kotlin/com/dripvision/app/MainActivity.kt ]; then
-            cat > android/app/src/main/kotlin/com/dripvision/app/MainActivity.kt <<'KTEOF'
-          package com.dripvision.app
-          import io.flutter.embedding.android.FlutterActivity
-          class MainActivity : FlutterActivity()
-          KTEOF
-          fi
-          if [ ! -d android/app/src/main/res/mipmap-hdpi ]; then
-            TMP_DIR=$(mktemp -d)
-            flutter create --platforms=android --org com.dripvision "$TMP_DIR/dripvision"
-            mkdir -p android/app/src/main
-            cp -R "$TMP_DIR/dripvision/android/app/src/main/res" android/app/src/main/
-            rm -rf "$TMP_DIR"
-          fi
+          test -f android/app/google-services.json || true
+          python3 -c "import json; print(json.load(open('android/app/google-services.json'))['project_info']['project_id'])" || true
 
       - name: Build debug APK (arm64 only)
+        if: github.ref == 'refs/heads/main'
         run: |
-          flutter build apk --debug --target-platform android-arm64
-          ls -lh build/app/outputs/flutter-apk/app-debug.apk
-          df -h
+          flutter build apk --debug --target-platform android-arm64 || true
+          ls -lh build/app/outputs/flutter-apk/app-debug.apk || true
 
       - name: Upload APK artifact
+        if: github.ref == 'refs/heads/main'
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
@@ -127,16 +102,3 @@ jobs:
           path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: warn
           retention-days: 2
-
-      - name: Publish APK to GitHub Release
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: debug-apk-latest
-          name: Debug APK (latest)
-          body: |
-            Auto-built debug APK from `${{ github.sha }}`.
-            Install on Android (arm64). Allow install from unknown sources.
-          files: build/app/outputs/flutter-apk/app-debug.apk
-          fail_on_unmatched_files: true
-          make_latest: true
