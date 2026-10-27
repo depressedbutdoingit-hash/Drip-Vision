@@ -1,6 +1,15 @@
-// ---------------------------------------------------------------------------
-// Service providers
-// ---------------------------------------------------------------------------
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../services/media_action_service.dart';
+import '../services/style_dna_service.dart';
+import '../services/suno_service.dart';
+import '../services/ai_director_service.dart';
+import '../services/token_service.dart';
+import '../services/openrouter_service.dart';
+import '../services/video_stitching_service.dart';
+import '../services/ai_generation_service.dart';
+import '../services/continuity_service.dart';
+import 'env.dart';
 
 final mediaActionProvider = Provider<MediaActionService>(
   (ref) => MediaActionService(),
