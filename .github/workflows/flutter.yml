@@ -75,7 +75,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           fetch-depth: 0
 
-      - name: Replace splash with simple version
+      - name: Write fancy splash screen
         run: |
           cat > lib/views/screens/splash_screen.dart << 'EOF'
           import 'package:flutter/material.dart';
@@ -93,11 +93,80 @@ jobs:
             late AnimationController _progressController;
             late AnimationController _fadeController;
             late AnimationController _scaleController;
+            late AnimationController _glowController;
 
             late Animation<double> _progress;
             late Animation<double> _fade;
             late Animation<double> _scale;
+            late Animation<double> _glow;
 
             @override
             void initState() {
               super.initState();
+
+              _progressController = AnimationController(vsync: this, duration: const Duration(seconds: 3));
+              _fadeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
+              _scaleController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+              _glowController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat(reverse: true);
+
+              _progress = Tween<double>(begin: 0, end: 1).animate(
+                CurvedAnimation(parent: _progressController, curve: Curves.easeInOutCubic),
+              );
+              _fade = Tween<double>(begin: 0, end: 1).animate(
+                CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
+              );
+              _scale = Tween<double>(begin: 0.7, end: 1).animate(
+                CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
+              );
+              _glow = Tween<double>(begin: 0.3, end: 1).animate(
+                CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+              );
+
+              _fadeController.forward();
+              _scaleController.forward();
+              _progressController.forward().then((_) {
+                if (mounted) {
+                  Navigator.of(context).pushReplacement(
+                    PageRouteBuilder(
+                      pageBuilder: (_, __, ___) => const AuthScreen(),
+                      transitionsBuilder: (_, animation, __, child) {
+                        return FadeTransition(opacity: animation, child: child);
+                      },
+                      transitionDuration: const Duration(milliseconds: 600),
+                    ),
+                  );
+                }
+              });
+            }
+
+            @override
+            void dispose() {
+              _progressController.dispose();
+              _fadeController.dispose();
+              _scaleController.dispose();
+              _glowController.dispose();
+              super.dispose();
+            }
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                backgroundColor: DripTheme.voidBlack,
+                body: Center(
+                  child: AnimatedBuilder(
+                    animation: Listenable.merge([_fade, _scale, _progress, _glow]),
+                    builder: (context, child) {
+                      return Opacity(
+                        opacity: _fade.value,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Transform.scale(
+                              scale: _scale.value,
+                              child: Container(
+                                width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: DripTheme.teal.withOpacity(_glow.value),
