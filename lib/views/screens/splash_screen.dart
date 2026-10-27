@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
-import 'studio_home_screen.dart';
+import 'auth_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,44 +13,39 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   late AnimationController _progressController;
   late AnimationController _fadeController;
   late AnimationController _scaleController;
+  late AnimationController _glowController;
 
   late Animation<double> _progress;
   late Animation<double> _fade;
   late Animation<double> _scale;
+  late Animation<double> _glow;
 
   @override
   void initState() {
     super.initState();
 
-    _progressController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    );
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    );
-    _scaleController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
+    _progressController = AnimationController(vsync: this, duration: const Duration(seconds: 3));
+    _fadeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
+    _scaleController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+    _glowController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))..repeat(reverse: true);
 
-    _progress = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _progressController, curve: Curves.easeInOut),
-    );
-    _fade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
-    );
-    _scale = Tween<double>(begin: 0.85, end: 1).animate(
-      CurvedAnimation(parent: _scaleController, curve: Curves.easeOutBack),
-    );
+    _progress = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _progressController, curve: Curves.easeInOutCubic));
+    _fade = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
+    _scale = Tween<double>(begin: 0.7, end: 1).animate(CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut));
+    _glow = Tween<double>(begin: 0.3, end: 1).animate(CurvedAnimation(parent: _glowController, curve: Curves.easeInOut));
 
     _fadeController.forward();
     _scaleController.forward();
     _progressController.forward().then((_) {
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const StudioHomeScreen()),
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => const AuthScreen(),
+            transitionsBuilder: (_, animation, __, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 600),
+          ),
         );
       }
     });
@@ -61,6 +56,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     _progressController.dispose();
     _fadeController.dispose();
     _scaleController.dispose();
+    _glowController.dispose();
     super.dispose();
   }
 
@@ -70,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       backgroundColor: DripTheme.voidBlack,
       body: Center(
         child: AnimatedBuilder(
-          animation: Listenable.merge([_fade, _scale, _progress]),
+          animation: Listenable.merge([_fade, _scale, _progress, _glow]),
           builder: (context, child) {
             return Opacity(
               opacity: _fade.value,
@@ -80,48 +76,62 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   Transform.scale(
                     scale: _scale.value,
                     child: Container(
-                      width: 120,
-                      height: 120,
+                      width: 140,
+                      height: 140,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: DripTheme.teal, width: 2),
+                        border: Border.all(
+                          color: DripTheme.teal.withOpacity(_glow.value),
+                          width: 3,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: DripTheme.teal.withOpacity(0.4 * _glow.value),
+                            blurRadius: 30,
+                            spreadRadius: 4,
+                          ),
+                        ],
                       ),
                       child: const Center(
                         child: Text(
                           'DV',
                           style: TextStyle(
-                            fontSize: 42,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 48,
+                            fontWeight: FontWeight.w800,
                             color: DripTheme.teal,
-                            letterSpacing: 2,
+                            letterSpacing: 4,
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
                   const Text(
                     'DRIPVISION',
                     style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 4,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 6,
+                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'An AI filmmaking studio',
-                    style: DripTheme.meta,
-                  ),
+                  Text('AI Filmmaking Studio', style: DripTheme.meta.copyWith(fontSize: 16)),
                   const SizedBox(height: 48),
                   SizedBox(
-                    width: 180,
+                    width: 200,
                     child: LinearProgressIndicator(
                       value: _progress.value,
                       backgroundColor: DripTheme.gunmetal,
                       color: DripTheme.teal,
-                      minHeight: 3,
+                      minHeight: 4,
+                      borderRadius: BorderRadius.circular(4),
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '${(_progress.value * 100).toInt()}%',
+                    style: TextStyle(color: DripTheme.teal.withOpacity(0.8), fontSize: 12),
                   ),
                 ],
               ),
