@@ -75,28 +75,77 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           fetch-depth: 0
 
-      - name: Add real authServiceProvider
+      - name: Fix core providers and auth
         run: |
           python3 << 'PY'
-          content = '''import 'package:flutter_riverpod/flutter_riverpod.dart';
-          import 'package:firebase_auth/firebase_auth.dart';
+          providers = '''import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+          import '../services/media_action_service.dart';
+          import '../services/style_dna_service.dart';
+          import '../services/suno_service.dart';
+          import '../services/ai_director_service.dart';
+          import '../services/token_service.dart';
+          import '../services/openrouter_service.dart';
+          import '../services/video_stitching_service.dart';
+          import '../services/ai_generation_service.dart';
+          import '../services/continuity_service.dart';
+          import 'env.dart';
+
+          final mediaActionProvider = Provider<MediaActionService>((ref) => MediaActionService());
+
+          final styleDnaServiceProvider = Provider<StyleDnaService>((ref) => StyleDnaService(Env.openRouterKey));
+
+          final sunoServiceProvider = Provider<SunoService>((ref) => SunoService(Env.openRouterKey));
+
+          final aiDirectorServiceProvider = Provider<AIDirectorService>((ref) => AIDirectorService());
+
+          final tokenServiceProvider = Provider<TokenService>((ref) => TokenService());
+
+          final openRouterProvider = Provider<OpenRouterService>((ref) => OpenRouterService());
+
+          final videoStitchProvider = Provider<VideoStitchingService>((ref) => VideoStitchingService());
+
+          final aiGenerationServiceProvider = Provider<AIGenerationService>((ref) => AIGenerationService());
+
+          final continuityServiceProvider = Provider<ContinuityEngine>((ref) => ContinuityEngine());
+          '''
+          open('lib/core/providers.dart', 'w').write(providers)
+
+          auth = '''import 'package:flutter_riverpod/flutter_riverpod.dart';
+          import 'package:firebase_auth/firebase_auth.dart';
           import '../services/auth_service.dart';
 
           final authServiceProvider = Provider<AuthService>((ref) {
             return AuthService(FirebaseAuth.instance);
           });
           '''
-          open('lib/core/auth_providers.dart', 'w').write(content)
-          print('Wrote auth_providers.dart')
+          open('lib/core/auth_providers.dart', 'w').write(auth)
+
+          app = '''import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+          final sceneListProvider = StateProvider<List<dynamic>>((ref) => []);
+          final characterListProvider = StateProvider<List<dynamic>>((ref) => []);
+          final userProfileProvider = StateProvider<dynamic>((ref) => null);
+          final navIndexProvider = StateProvider<int>((ref) => 0);
+          final activeCharacterProvider = StateProvider<dynamic>((ref) => null);
+          final universeProvider = StateProvider<dynamic>((ref) => null);
+          final filmBibleProvider = StateProvider<dynamic>((ref) => null);
+          final pendingScenePromptProvider = StateProvider<String>((ref) => '');
+          final styleListProvider = StateProvider<List<dynamic>>((ref) => []);
+          final activeStyleProvider = StateProvider<dynamic>((ref) => null);
+          final musicPlayerProvider = StateProvider<dynamic>((ref) => null);
+          '''
+          open('lib/core/app_providers.dart', 'w').write(app)
+
+          print('Wrote provider files')
           PY
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/core/auth_providers.dart
+          git add lib/core/providers.dart lib/core/auth_providers.dart lib/core/app_providers.dart
           git status
-          git commit -m "feat: add real authServiceProvider using AuthService" || echo "Nothing to commit"
+          git commit -m "fix: real providers for auth, services, and common screen state" || echo "Nothing to commit"
           git push origin HEAD:main
           echo "Push complete"
