@@ -1,0 +1,12 @@
+name = "drip-vision"
+main = "src/index.js"
+compatibility_date = "2026-10-27"
+
+[assets]
+directory = "./build/web"
+binding = "ASSETS"
+
+# Optional: uncomment and configure if you want a custom domain later
+# [[routes]]
+# pattern = "dripvision.example.com/*"
+# zone_name = "example.com"
