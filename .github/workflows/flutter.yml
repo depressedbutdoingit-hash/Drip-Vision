@@ -75,68 +75,28 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           fetch-depth: 0
 
-      - name: Fix providers.dart
+      - name: Add real authServiceProvider
         run: |
           python3 << 'PY'
           content = '''import 'package:flutter_riverpod/flutter_riverpod.dart';
+          import 'package:firebase_auth/firebase_auth.dart';
 
-          import '../services/media_action_service.dart';
-          import '../services/style_dna_service.dart';
-          import '../services/suno_service.dart';
-          import '../services/ai_director_service.dart';
-          import '../services/token_service.dart';
-          import '../services/openrouter_service.dart';
-          import '../services/video_stitching_service.dart';
-          import '../services/ai_generation_service.dart';
-          import '../services/continuity_service.dart';
-          import 'env.dart';
+          import '../services/auth_service.dart';
 
-          final mediaActionProvider = Provider<MediaActionService>(
-            (ref) => MediaActionService(),
-          );
-
-          final styleDnaServiceProvider = Provider<StyleDnaService>(
-            (ref) => StyleDnaService(Env.openRouterKey),
-          );
-
-          final sunoServiceProvider = Provider<SunoService>(
-            (ref) => SunoService(Env.openRouterKey),
-          );
-
-          final aiDirectorServiceProvider = Provider<AIDirectorService>(
-            (ref) => AIDirectorService(),
-          );
-
-          final tokenServiceProvider = Provider<TokenService>(
-            (ref) => TokenService(),
-          );
-
-          final openRouterProvider = Provider<OpenRouterService>(
-            (ref) => OpenRouterService(),
-          );
-
-          final videoStitchProvider = Provider<VideoStitchingService>(
-            (ref) => VideoStitchingService(),
-          );
-
-          final aiGenerationServiceProvider = Provider<AIGenerationService>(
-            (ref) => AIGenerationService(),
-          );
-
-          final continuityServiceProvider = Provider<ContinuityEngine>(
-            (ref) => ContinuityEngine(),
-          );
+          final authServiceProvider = Provider<AuthService>((ref) {
+            return AuthService(FirebaseAuth.instance);
+          });
           '''
-          open('lib/core/providers.dart', 'w').write(content)
-          print('Wrote providers.dart')
+          open('lib/core/auth_providers.dart', 'w').write(content)
+          print('Wrote auth_providers.dart')
           PY
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/core/providers.dart
+          git add lib/core/auth_providers.dart
           git status
-          git commit -m "fix: add missing imports to providers.dart" || echo "Nothing to commit"
+          git commit -m "feat: add real authServiceProvider using AuthService" || echo "Nothing to commit"
           git push origin HEAD:main
           echo "Push complete"
