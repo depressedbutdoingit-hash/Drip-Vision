@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../../core/app_providers.dart';
 
 class CosmicStatsOverlay extends ConsumerWidget {
   const CosmicStatsOverlay({super.key});

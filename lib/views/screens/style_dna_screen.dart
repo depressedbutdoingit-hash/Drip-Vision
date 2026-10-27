@@ -8,6 +8,7 @@ import '../../core/providers.dart';
 import '../../models/style_dna.dart';
 import '../widgets/cinematic_button.dart';
 import '../widgets/cinematic_card.dart';
+import '../../core/app_providers.dart';
 
 /// STYLE DNA™
 /// A library of reusable visual languages. Build one by hand, or lift it

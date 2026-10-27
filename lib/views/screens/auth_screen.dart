@@ -5,6 +5,8 @@ import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../services/auth_service.dart';
 import '../widgets/drip_button.dart';
+import '../../core/auth_providers.dart';
+import '../../core/app_providers.dart';
 
 final authScreenProvider = StateNotifierProvider<AuthScreenNotifier, AuthScreenState>((ref) {
   return AuthScreenNotifier(ref.read(authServiceProvider));

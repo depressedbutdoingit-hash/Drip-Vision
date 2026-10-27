@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import 'video_player_screen.dart';
+import '../../core/app_providers.dart';
 
 class MusicVideoScreen extends ConsumerStatefulWidget {
   const MusicVideoScreen({super.key});

@@ -10,6 +10,7 @@ import '../../services/god_mode_service.dart';
 import 'auth_screen.dart';
 import '../widgets/model_picker_sheet.dart';
 import '../../core/providers.dart';
+import '../../core/app_providers.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   final bool isAdmin;

@@ -12,6 +12,7 @@ import '../../services/cost_tracking_service.dart';
 import '../../views/widgets/drip_celebration.dart';
 import 'screenplay_screen.dart';
 import 'storyboard_screen.dart';
+import '../../core/app_providers.dart';
 
 final storyPlanProvider = StateProvider<StoryPlan?>((ref) => null);
 final storyPlanCostProvider = StateProvider<ApiCallResult?>((ref) => null);

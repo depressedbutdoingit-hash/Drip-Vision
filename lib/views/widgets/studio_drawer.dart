@@ -14,6 +14,7 @@ import '../screens/directors_bible_screen.dart';
 import '../screens/timeline_screen.dart';
 import '../screens/character_lab_screen.dart';
 import '../screens/export_screen.dart';
+import '../../core/app_providers.dart';
 
 /// Left studio menu — quiet, expensive, production-oriented.
 class StudioDrawer extends ConsumerWidget {

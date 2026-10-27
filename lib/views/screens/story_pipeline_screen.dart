@@ -13,6 +13,7 @@ import 'studio_screen.dart';
 import 'edit_bay_screen.dart';
 import 'export_screen.dart';
 import 'screenplay_screen.dart';
+import '../../core/app_providers.dart';
 
 class _Step {
   final String id;

@@ -8,6 +8,7 @@ import '../../services/suno_service.dart';
 import '../widgets/cinematic_button.dart';
 import '../widgets/cinematic_card.dart';
 import 'music_studio_screen.dart';
+import '../../core/app_providers.dart';
 
 /// SOUND DEPARTMENT
 /// MUSIC and AMBIENCE both call the real Suno integration — ambience is

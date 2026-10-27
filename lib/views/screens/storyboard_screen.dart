@@ -6,6 +6,7 @@ import '../../services/token_service.dart';
 import '../widgets/cinematic_button.dart';
 import 'story_planner_screen.dart';
 import 'studio_screen.dart';
+import '../../core/app_providers.dart';
 
 class StoryboardScreen extends ConsumerStatefulWidget {
   const StoryboardScreen({super.key});
