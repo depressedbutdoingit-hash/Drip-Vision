@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../../core/app_providers.dart';
 import '../../services/drip_chain_service.dart';
 import '../../services/drip_score_service.dart';
 import '../widgets/cinematic_button.dart';

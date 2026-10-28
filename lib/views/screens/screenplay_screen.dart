@@ -7,6 +7,7 @@ import 'storyboard_screen.dart';
 import 'generator_screen.dart';
 import 'studio_screen.dart';
 import '../../core/providers.dart';
+import '../../core/app_providers.dart';
 
 /// SCREENPLAY
 /// Renders the real StoryPlan the AI Director already produced —

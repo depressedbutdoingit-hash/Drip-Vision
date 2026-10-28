@@ -1,3 +1,5 @@
+import 'character.dart';
+
 class Universe {
   final double healthScore;
   final List<Character> characters;

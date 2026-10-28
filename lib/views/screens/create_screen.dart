@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../../core/app_providers.dart';
+import '../../models/character_dna.dart' show Outfit;
 import '../../models/character.dart' as live;
 import '../../models/character_dna.dart' as dna;
 import '../widgets/cinematic_card.dart';
@@ -185,7 +187,7 @@ class CreateScreen extends ConsumerWidget {
     );
     if (result == null) return;
 
-    final outfit = live.Outfit(
+    final outfit = Outfit(
       id: result.id,
       name: result.name,
       description: result.description,

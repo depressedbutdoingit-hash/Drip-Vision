@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../../core/app_providers.dart';
 import '../../models/scene.dart';
 import '../../services/watermark_export_service.dart';
 import '../widgets/cinematic_button.dart';

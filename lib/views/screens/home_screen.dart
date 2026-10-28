@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers.dart';
+import '../../core/app_providers.dart';
 import '../../core/theme.dart';
 import '../widgets/cinematic_button.dart';
 import '../widgets/cinematic_card.dart';

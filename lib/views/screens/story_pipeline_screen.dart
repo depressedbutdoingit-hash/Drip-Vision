@@ -115,7 +115,7 @@ class StoryPipelineScreen extends ConsumerWidget {
               .any((s) => s.outputVideoUrl != null),
           open: (c, r) => Navigator.push(
             c,
-            MaterialPageRoute(builder: (_) => const StudioScreen()),
+            MaterialPageRoute(builder: (_) => const StudioHomeScreen()),
           ),
         ),
         _Step(

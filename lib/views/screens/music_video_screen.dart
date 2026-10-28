@@ -4,6 +4,7 @@ import '../../core/theme.dart';
 import '../../core/providers.dart';
 import 'video_player_screen.dart';
 import '../../core/app_providers.dart';
+import '../../core/continuity_providers.dart';
 
 class MusicVideoScreen extends ConsumerStatefulWidget {
   const MusicVideoScreen({super.key});

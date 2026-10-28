@@ -60,8 +60,10 @@ class DripEngineService {
     ];
 
     final activeOutfit = character.activeOutfit;
+    final outfitDescription = activeOutfit?.description ??
+        (character.wardrobeDNA.isNotEmpty ? character.wardrobeDNA.join(', ') : 'their established look');
     final fullPrompt =
-        '${character.name}, wearing ${activeOutfit.description}, $enhancedPrompt'
+        '${character.name}, wearing $outfitDescription, $enhancedPrompt'
         '${cameraMotion != null ? '. Camera motion: $cameraMotion' : ''}';
 
     // Build frame_images for continuity (previous last frame becomes first frame)
