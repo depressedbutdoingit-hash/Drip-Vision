@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../../core/app_providers.dart';
 import '../widgets/cinematic_card.dart';
 import 'character_lab_screen.dart';
 import 'character_creation_screen.dart';
