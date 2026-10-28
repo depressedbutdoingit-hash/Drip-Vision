@@ -150,13 +150,13 @@ class SceneNode {
         enhancedPrompt: m['enhancedPrompt'] as String? ?? '',
         character: m['character'] is Map
             ? Character.fromJson(Map<String, dynamic>.from(m['character'] as Map))
-            : Character(
-                id: 'unknown',
-                name: 'Unknown',
-                faceReferenceUrls: const [],
-                activeOutfitId: '',
-                closet: const [],
-              ),
+            : Character.fromJson(const {
+                'id': 'unknown',
+                'name': 'Unknown',
+                'avatarUrl': '',
+                'wardrobe': <String>[],
+                'dna': <String, dynamic>{},
+              }),
         inputLastFrameUrl: m['inputLastFrameUrl'] as String?,
         outputVideoUrl: m['outputVideoUrl'] as String?,
         generatedLastFrameUrl: m['generatedLastFrameUrl'] as String?,
