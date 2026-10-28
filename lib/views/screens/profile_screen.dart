@@ -4,7 +4,7 @@ import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../widgets/token_status_bar.dart';
 import 'character_profile_screen.dart';
-import 'plans_screen.dart';
+import 'plan_screen.dart';
 import '../../core/app_providers.dart';
 import '../../core/continuity_providers.dart';
 
