@@ -57,6 +57,17 @@ jobs:
       - name: Build Flutter Web
         run: flutter build web --release
 
+      - name: Build Android debug APK
+        run: flutter build apk --debug
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: dripvision-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Deploy to Cloudflare Workers
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: cloudflare/wrangler-action@v3
