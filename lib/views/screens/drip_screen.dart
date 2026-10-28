@@ -1,4 +1,3 @@
-// Add this file as lib/screens/drips_screen.dart
 import 'package:flutter/material.dart';
 
 class DripsScreen extends StatelessWidget {
@@ -16,7 +15,10 @@ class DripsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Your Drips', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const Text(
+              'Your Drips',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             Expanded(
               child: GridView.builder(
@@ -25,29 +27,35 @@ class DripsScreen extends StatelessWidget {
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),
-                itemCount: 12, // replace with your real list
+                itemCount: 12,
                 itemBuilder: (context, index) {
                   return Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       image: const DecorationImage(
-                        image: NetworkImage('https://picsum.photos/id/1015/200/200'), // replace with your real thumbnail
+                        image: NetworkImage(
+                          'https://picsum.photos/id/1015/200/200',
+                        ),
                         fit: BoxFit.cover,
                       ),
                       boxShadow: [
-                        BoxShadow(color: const Color(0xFF00FFAA).withOpacity(0.3), blurRadius: 15),
+                        BoxShadow(
+                          color: const Color(0xFF00FFAA).withOpacity(0.3),
+                          blurRadius: 15,
+                        ),
                       ],
                     ),
                     child: Align(
-  alignment: Alignment.bottomLeft,
-  child: Padding(
-    padding: const EdgeInsets.all(8),
-    child: Text(
-      'Drip #${index + 1}',
-      style: const TextStyle(color: Colors.white, fontSize: 14),
-    ),
-  ),
-),
+                      alignment: Alignment.bottomLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Text(
+                          'Drip #${index + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
                     ),
                   );
