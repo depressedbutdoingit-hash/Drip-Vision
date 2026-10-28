@@ -77,7 +77,7 @@ class ContinuityHealthNotifier extends StateNotifier<ContinuityHealth> {
     final notifier = _ref.read(characterListProvider.notifier);
     for (final c in _ref.read(characterListProvider)) {
       if (!c.continuityLock) {
-        notifier.updateCharacter(c.copyWith(continuityLock: true));
+        notifier.state = notifier.state.map((current) => current.id == c.id ? current.copyWith(continuityLock: true) : current).toList();
       }
     }
   }
