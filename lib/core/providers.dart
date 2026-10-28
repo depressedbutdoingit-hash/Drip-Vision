@@ -20,3 +20,6 @@ final openRouterProvider = Provider<OpenRouterService>((ref) => OpenRouterServic
 final videoStitchProvider = Provider<VideoStitchingService>((ref) => VideoStitchingService());
 final aiGenerationServiceProvider = Provider<AIGenerationService>((ref) => AIGenerationService());
 final continuityServiceProvider = Provider<ContinuityEngine>((ref) => ContinuityEngine());
+
+export '../services/continuity_service.dart' show ContinuityEngine, continuityEngineProvider;
+export 'continuity_providers.dart' show universeProvider, continuityHealthProvider, ContinuityHealth;
