@@ -8,11 +8,13 @@ import 'views/screens/splash_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Android reads config from google-services.json. If your repo has a
-  // lib/firebase_options.dart, use:
-  //   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await Firebase.initializeApp();
-  await CrashlyticsService.init();
+  try {
+    await Firebase.initializeApp();
+    await CrashlyticsService.init();
+  } catch (e, st) {
+    // Log but do not crash — allow the app to open so we can see the UI
+    debugPrint('Firebase/Crashlytics init failed: $e\n$st');
+  }
 
   runApp(const ProviderScope(child: DripVisionApp()));
 }
