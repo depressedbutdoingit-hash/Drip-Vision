@@ -6,8 +6,8 @@ import '../../models/character.dart' as live;
 import '../../models/character_dna.dart';
 import '../../models/scene.dart';
 import '../../services/ai_generation_service.dart';
-import '../../services/continuity_service.dart';
-import '../../services/token_service.dart';
+import '../../services/continuity_service.dart' as continuity;
+import '../../services/continuity_health_analyzer.dart';
 import 'story_planner_screen.dart';
 import '../widgets/video_player_widget.dart';
 
@@ -15,8 +15,6 @@ final productionQueueProvider = StateNotifierProvider.family<ProductionQueueNoti
   (ref, plan) => ProductionQueueNotifier(
     plan: plan,
     generationService: ref.read(aiGenerationServiceProvider),
-    continuityService: ref.read(continuityServiceProvider),
-    tokenService: ref.read(tokenServiceProvider),
   ),
 );
 
@@ -76,25 +74,45 @@ class GeneratedScene {
 live.Character _placeholderCharacter() => live.Character(
       id: 'unassigned',
       name: 'Unassigned',
+      avatarUrl: '',
+      wardrobeDNA: const [],
+      dna: continuity.CharacterDNA.empty(),
       faceReferenceUrls: const [],
       activeOutfitId: '',
       closet: const [],
     );
 
+live.Character _toLiveCharacter(CharacterDNA dna) => live.Character(
+      id: dna.id,
+      name: dna.name,
+      avatarUrl: dna.faceReferenceUrl ?? '',
+      wardrobeDNA: dna.closet.map((outfit) => outfit.name).toList(),
+      dna: continuity.CharacterDNA(
+        id: dna.id,
+        face: dna.faceReferenceUrl == null ? 0.5 : 1.0,
+        body: 0.5,
+        wardrobe: dna.closet.isEmpty ? 0.5 : 1.0,
+        voice: 0.5,
+        style: 0.5,
+        locked: dna.continuityLock,
+      ),
+      faceReferenceUrls: [
+        if (dna.faceReferenceUrl != null && dna.faceReferenceUrl!.isNotEmpty)
+          dna.faceReferenceUrl!,
+      ],
+      activeOutfitId: dna.defaultOutfitId,
+      closet: dna.closet,
+      continuityLock: dna.continuityLock,
+    );
+
 class ProductionQueueNotifier extends StateNotifier<ProductionQueueState> {
   final StoryPlan plan;
   final AIGenerationService _generation;
-  final ContinuityService _continuity;
-  final TokenService _tokens;
 
   ProductionQueueNotifier({
     required this.plan,
     required AIGenerationService generationService,
-    required ContinuityService continuityService,
-    required TokenService tokenService,
   })  : _generation = generationService,
-        _continuity = continuityService,
-        _tokens = tokenService,
         super(ProductionQueueState());
 
   Future<void> startProduction(String projectId) async {
@@ -116,25 +134,13 @@ class ProductionQueueNotifier extends StateNotifier<ProductionQueueState> {
               (c) => scenePlan.characterIds.contains(c.id),
               orElse: () => plan.characters.first,
             );
-      final sceneCharacter = primaryDNA != null ? live.Character.fromDNA(primaryDNA) : _placeholderCharacter();
+      final sceneCharacter = primaryDNA != null
+          ? _toLiveCharacter(primaryDNA)
+          : _placeholderCharacter();
 
-      final issues = await _continuity.checkContinuity(
-        projectId: projectId,
-        proposedScene: SceneNode(
-          id: 'scene_$i',
-          prompt: scenePlan.description,
-          character: sceneCharacter,
-          locationId: scenePlan.locationId,
-          lighting: scenePlan.lighting,
-          characterIds: scenePlan.characterIds,
-          characterOutfits: const {},
-        ),
-        characters: plan.characters,
-        previousSceneId: i > 0 ? 'scene_${i-1}' : null,
-      );
-
-      var fixedScene = SceneNode(
+      final fixedScene = SceneNode(
         id: 'scene_$i',
+        sequenceIndex: i,
         prompt: scenePlan.description,
         character: sceneCharacter,
         locationId: scenePlan.locationId,
@@ -142,17 +148,13 @@ class ProductionQueueNotifier extends StateNotifier<ProductionQueueState> {
         characterIds: scenePlan.characterIds,
         characterOutfits: const {},
       );
+      final report = ContinuityHealthAnalyzer().analyze(
+        characters: plan.characters.map(_toLiveCharacter).toList(),
+        scenes: [fixedScene],
+      );
+      final issues = report.issues;
 
-      if (issues.any((i) => i.autoFixable)) {
-        state = state.copyWith(currentStatus: 'Fixing continuity...');
-        fixedScene = await _continuity.autoFix(
-          scene: fixedScene,
-          issues: issues,
-          projectId: projectId,
-        );
-      }
-
-      final hasTokens = await _tokens.deduct(15);
+      final hasTokens = await TokenService.deduct(15);
       if (!hasTokens) {
         state = state.copyWith(
           isGenerating: false,
@@ -181,11 +183,6 @@ class ProductionQueueNotifier extends StateNotifier<ProductionQueueState> {
           ],
         );
 
-        await _continuity.commitScene(
-          projectId: projectId,
-          scene: fixedScene,
-          characters: plan.characters,
-        );
       } catch (e) {
         state = state.copyWith(
           isGenerating: false,
