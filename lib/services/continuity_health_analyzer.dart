@@ -1,8 +1,15 @@
 import '../models/character.dart';
 import '../models/scene.dart';
-import 'continuity_service.dart';
 
 enum HealthTone { good, warn, bad, idle }
+
+class ContinuityIssue {
+  final String type;
+  final String message;
+  final String? sceneId;
+  final bool autoFixable;
+  const ContinuityIssue({required this.type, required this.message, this.sceneId, required this.autoFixable});
+}
 
 class HealthMetric {
   final String label;
@@ -86,8 +93,9 @@ class ContinuityHealthAnalyzer {
         final oid = s.characterOutfits[c.id];
         if (oid != null && oid.isNotEmpty) outfits.add(oid);
         // fallback: primary character on scene
-        if (s.character.id == c.id && s.character.activeOutfitId.isNotEmpty) {
-          outfits.add(s.character.activeOutfitId);
+        final activeOutfitId = s.character.activeOutfitId;
+        if (s.character.id == c.id && activeOutfitId != null && activeOutfitId.isNotEmpty) {
+          outfits.add(activeOutfitId);
         }
       }
       var flips = 0;
@@ -105,7 +113,7 @@ class ContinuityHealthAnalyzer {
         ));
       }
 
-      score = score.clamp(0, 100);
+      score = score.clamp(0, 100).toInt();
       characterMetrics.add(HealthMetric(
         label: c.name,
         score: score,
@@ -211,7 +219,7 @@ class ContinuityHealthAnalyzer {
           ((withVideo / ordered.length) * 100).round().clamp(0, 100);
       storyMetrics.add(HealthMetric(
         label: 'Timeline',
-        score: timelineScore.clamp(0, 100),
+        score: timelineScore.clamp(0, 100).toInt(),
         tone: _tone(timelineScore),
         detail: '${ordered.length} scene(s) sequenced',
       ));
