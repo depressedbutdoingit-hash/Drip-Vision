@@ -187,7 +187,7 @@ class CreateScreen extends ConsumerWidget {
     );
     if (result == null) return;
 
-    final outfit = live.Outfit(
+    final outfit = Outfit(
       id: result.id,
       name: result.name,
       description: result.description,
