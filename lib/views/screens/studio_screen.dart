@@ -5,6 +5,7 @@ import '../../core/providers.dart';
 import 'generator_screen.dart';
 import 'music_video_screen.dart';
 import '../../core/app_providers.dart';
+import '../../core/continuity_providers.dart';
 
 class StudioHomeScreen extends ConsumerWidget {
   const StudioHomeScreen({super.key});
