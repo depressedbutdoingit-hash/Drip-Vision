@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+export '../services/continuity_service.dart' show ContinuityEngine, continuityEngineProvider;
+export 'continuity_providers.dart' show continuityHealthProvider, ContinuityHealth;
+
 import '../services/media_action_service.dart';
 import '../services/style_dna_service.dart';
 import '../services/suno_service.dart';
@@ -21,5 +24,3 @@ final videoStitchProvider = Provider<VideoStitchingService>((ref) => VideoStitch
 final aiGenerationServiceProvider = Provider<AIGenerationService>((ref) => AIGenerationService());
 final continuityServiceProvider = Provider<ContinuityEngine>((ref) => ContinuityEngine());
 
-export '../services/continuity_service.dart' show ContinuityEngine, continuityEngineProvider;
-export 'continuity_providers.dart' show universeProvider, continuityHealthProvider, ContinuityHealth;
