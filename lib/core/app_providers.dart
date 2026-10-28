@@ -7,7 +7,6 @@ final characterListProvider = StateProvider<List<Character>>((ref) => []);
 final userProfileProvider = StateProvider<dynamic>((ref) => null);
 final navIndexProvider = StateProvider<int>((ref) => 0);
 final activeCharacterProvider = StateProvider<dynamic>((ref) => null);
-final universeProvider = StateProvider<dynamic>((ref) => null);
 final filmBibleProvider = StateProvider<dynamic>((ref) => null);
 final pendingScenePromptProvider = StateProvider<String>((ref) => '');
 final styleListProvider = StateProvider<List<dynamic>>((ref) => []);
