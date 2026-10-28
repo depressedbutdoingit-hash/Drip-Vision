@@ -8,6 +8,7 @@ import '../../models/scene.dart';
 import '../../services/ai_generation_service.dart';
 import '../../services/continuity_service.dart' as continuity;
 import '../../services/continuity_health_analyzer.dart';
+import '../../services/token_service.dart';
 import 'story_planner_screen.dart';
 import '../widgets/video_player_widget.dart';
 
@@ -123,11 +124,7 @@ class ProductionQueueNotifier extends StateNotifier<ProductionQueueState> {
 
       final scenePlan = plan.scenes[i];
 
-      // ContinuityService itself never reads SceneNode.character — only
-      // characterIds/characterOutfits — but the model requires a non-null
-      // Character. Building a real one from this scene's actual planned
-      // character (via the shared CharacterDNA -> Character bridge)
-      // instead of a fake/empty placeholder.
+      // Convert the selected story-plan character into the live scene model.
       final primaryDNA = plan.characters.isEmpty
           ? null
           : plan.characters.firstWhere(
@@ -178,7 +175,7 @@ class ProductionQueueNotifier extends StateNotifier<ProductionQueueState> {
               plan: scenePlan,
               videoUrl: videoUrl,
               issues: issues,
-              wasAutoFixed: issues.any((i) => i.autoFixable),
+              wasAutoFixed: false,
             ),
           ],
         );
