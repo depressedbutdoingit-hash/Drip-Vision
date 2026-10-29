@@ -2,25 +2,40 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'services/crashlytics_service.dart';
-import 'views/screens/splash_screen.dart';
+import 'views/screens/auth_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  var firebaseReady = false;
+
   try {
     await Firebase.initializeApp();
-    await CrashlyticsService.init();
-  } catch (e, st) {
-    // Log but do not crash — allow the app to open so we can see the UI
-    debugPrint('Firebase/Crashlytics init failed: $e\n$st');
+    firebaseReady = true;
+  } catch (error, stackTrace) {
+    debugPrint('DripVision Firebase initialization failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
   }
 
-  runApp(const ProviderScope(child: DripVisionApp()));
+  if (firebaseReady) {
+    try {
+      await CrashlyticsService.init();
+    } catch (error, stackTrace) {
+      // Crash reporting must never prevent the app from starting.
+      debugPrint('DripVision Crashlytics initialization failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
+  runApp(ProviderScope(child: DripVisionApp(firebaseReady: firebaseReady)));
 }
 
 class DripVisionApp extends StatelessWidget {
-  const DripVisionApp({super.key});
+  const DripVisionApp({super.key, required this.firebaseReady});
+
+  final bool firebaseReady;
 
   @override
   Widget build(BuildContext context) {
@@ -28,8 +43,12 @@ class DripVisionApp extends StatelessWidget {
       title: 'DripVision',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF121416),
-        primaryColor: const Color(0xFF00FFAA),
+        scaffoldBackgroundColor: const Color(0xFF0B0F14),
+        primaryColor: const Color(0xFF00D4AA),
+        colorScheme: ThemeData.dark().colorScheme.copyWith(
+          primary: const Color(0xFF00D4AA),
+          secondary: const Color(0xFF00D4AA),
+        ),
         textTheme: const TextTheme(
           bodyLarge: TextStyle(color: Colors.white),
           bodyMedium: TextStyle(color: Colors.white70),
@@ -42,7 +61,149 @@ class DripVisionApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const SplashScreen(),
+      home: firebaseReady
+          ? const AuthGate()
+          : const FirebaseStartupErrorScreen(),
+    );
+  }
+}
+
+class FirebaseStartupErrorScreen extends StatelessWidget {
+  const FirebaseStartupErrorScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0B0F14),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.cloud_off_outlined,
+                  color: Color(0xFF00D4AA),
+                  size: 56,
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'DripVision couldn’t connect',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Firebase did not initialize, so sign-in and saved projects are unavailable. Check your connection and Firebase app configuration, then try again.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70, height: 1.5),
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const FirebaseRetryScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry connection'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class FirebaseRetryScreen extends StatefulWidget {
+  const FirebaseRetryScreen({super.key});
+
+  @override
+  State<FirebaseRetryScreen> createState() => _FirebaseRetryScreenState();
+}
+
+class _FirebaseRetryScreenState extends State<FirebaseRetryScreen> {
+  bool _retrying = false;
+  String? _error;
+
+  Future<void> _retry() async {
+    setState(() {
+      _retrying = true;
+      _error = null;
+    });
+
+    try {
+      await Firebase.initializeApp();
+      try {
+        await CrashlyticsService.init();
+      } catch (error) {
+        debugPrint('DripVision Crashlytics retry failed: $error');
+      }
+
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => const DripVisionApp(firebaseReady: true),
+        ),
+        (route) => false,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = error.toString();
+        _retrying = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _retry());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0B0F14),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_retrying) const CircularProgressIndicator(),
+              if (_error != null) ...[
+                const Text(
+                  'Firebase connection still failed.',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _error!,
+                  style: const TextStyle(color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: _retry,
+                  child: const Text('Try again'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
