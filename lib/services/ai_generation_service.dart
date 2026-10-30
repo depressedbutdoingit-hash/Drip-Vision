@@ -1,4 +1,6 @@
 import '../core/ai_tiers.dart';
+import '../models/character.dart';
+import '../models/character_dna.dart';
 import 'drip_engine_service.dart';
 import 'image_generation_service.dart';
 
@@ -52,6 +54,7 @@ class AIGenerationService {
     int durationSeconds = 5,
     String? subscriptionTier,
     String? modelOverride,
+    Character? character,
   }) async {
     final tier = quality.toLowerCase() == 'cinema'
         ? VideoGenTier.cinema
@@ -63,11 +66,27 @@ class AIGenerationService {
         'Upgrade required for ${AiTiers.videoTierLabel(tier)} video.',
       );
     }
-    // Full continuity path is DripEngineService.generateNextScene from Studio.
-    throw Exception(
-      'Use Studio generate with a character for continuity-aware video '
-      '(model: ${videoModel(tier, override: modelOverride)}).',
+
+    final activeCharacter = character ??
+        Character(
+          id: 'temp',
+          name: 'Subject',
+          avatarUrl: '',
+          wardrobeDNA: const [],
+          dna: CharacterDNA.empty(),
+        );
+
+    final scene = await _engine.generateNextScene(
+      previousScene: null,
+      rawPrompt: prompt,
+      enhancedPrompt: prompt,
+      character: activeCharacter,
+      cameraMotion: cameraMotion,
+      model: modelOverride,
+      tier: tier,
     );
+
+    return scene.outputVideoUrl ?? '';
   }
 
   int tokenCost({
