@@ -37,8 +37,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     try {
-      final doc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final role = (doc.data()?['role'] ?? '').toString().trim().toLowerCase();
       if (mounted) setState(() => _isAdmin = role == 'admin' || role == 'owner');
     } catch (_) {}
@@ -47,15 +46,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _checkForOverTheAirUpdate() async {
     setState(() => _isCheckingUpdate = true);
     try {
-      final isUpdateAvailable =
-          await _shorebirdCodePush.isNewPatchAvailableForDownload();
+      final isUpdateAvailable = await _shorebirdCodePush.isNewPatchAvailableForDownload();
       if (isUpdateAvailable) {
         await _shorebirdCodePush.downloadUpdateIfAvailable();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Update downloaded. Restart the app to apply.'),
-            ),
+            const SnackBar(content: Text('Update downloaded. Restart the app to apply.')),
           );
         }
       } else if (mounted) {
@@ -90,8 +86,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('SIGN OUT',
-                style: TextStyle(color: Color(0xFFFF8A80))),
+            child: const Text('SIGN OUT', style: TextStyle(color: Color(0xFFFF8A80))),
           ),
         ],
       ),
@@ -123,7 +118,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       appBar: AppBar(
-        title: const Text('SETTINGS', style: DripTheme.brandMark),
+        title: const Text('SETTINGS', style: DripTheme.overline),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 40),
@@ -133,17 +128,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('ACCOUNT', style: DripTheme.technical),
+                const Text('ACCOUNT', style: DripTheme.overline),
                 const SizedBox(height: 10),
-                Text(email, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                Text(email, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: -0.2)),
                 if (_isAdmin) ...[
                   const SizedBox(height: 6),
-                  const Text('ADMIN',
-                      style: TextStyle(
-                          fontSize: 10,
-                          letterSpacing: 1.4,
-                          color: DripTheme.cosmicTeal,
-                          fontWeight: FontWeight.w600)),
+                  const Text('ADMIN', style: TextStyle(fontSize: 10, letterSpacing: 1.6, color: DripTheme.teal, fontWeight: FontWeight.w700)),
                 ],
               ],
             ),
@@ -154,14 +144,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: 'Check for update',
             subtitle: 'Over-the-air patch via Shorebird',
             trailing: _isCheckingUpdate
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: DripTheme.cosmicTeal,
-                    ),
-                  )
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: DripTheme.teal))
                 : null,
             onTap: _isCheckingUpdate ? null : _checkForOverTheAirUpdate,
           ),
@@ -170,57 +153,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: 'AI Models',
             subtitle: 'Text · image · video · quality',
             onTap: () {
-              final tier =
-                  ref.read(userProfileProvider).value?.subscriptionTier;
-              showModelPickerSheet(
-                context,
-                initial: ModelPickerTab.video,
-                subscriptionTier: tier,
-              );
+              final tier = ref.read(userProfileProvider).value?.subscriptionTier;
+              showModelPickerSheet(context, initial: ModelPickerTab.video, subscriptionTier: tier);
             },
           ),
-          _tile(
-            icon: Icons.privacy_tip_outlined,
-            title: 'Privacy Policy',
-            onTap: () {},
-          ),
-          _tile(
-            icon: Icons.description_outlined,
-            title: 'Terms of Service',
-            onTap: () {},
-          ),
+          _tile(icon: Icons.privacy_tip_outlined, title: 'Privacy Policy', onTap: () {}),
+          _tile(icon: Icons.description_outlined, title: 'Terms of Service', onTap: () {}),
           if (_isAdmin) ...[
             const Padding(
               padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
-              child: Text('CONTROL ROOM', style: DripTheme.technical),
+              child: Text('CONTROL ROOM', style: DripTheme.overline),
             ),
             _tile(
               icon: Icons.admin_panel_settings_outlined,
               title: 'Admin Dashboard',
               accent: DripTheme.nebulaCyan,
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AdminPortalScreen()),
-              ),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminPortalScreen())),
             ),
             _tile(
               icon: Icons.security,
               title: 'God Mode',
               subtitle: 'System control · server-gated',
-              accent: DripTheme.cosmicTeal,
+              accent: DripTheme.teal,
               onTap: () async {
                 final ok = await GodModeService.isAuthorizedAdmin();
                 if (!context.mounted) return;
                 if (!ok) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Access denied')),
-                  );
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Access denied')));
                   return;
                 }
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const GodModeScreen()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const GodModeScreen()));
               },
             ),
           ],
@@ -232,14 +194,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             subtitle: 'Return to login',
             accent: const Color(0xFFFF8A80),
             trailing: _signingOut
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Color(0xFFFF8A80),
-                    ),
-                  )
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFF8A80)))
                 : null,
             onTap: _signingOut ? null : _signOut,
           ),
@@ -258,20 +213,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }) {
     final color = accent ?? DripTheme.chrome;
     return ListTile(
-      leading: icon == null
-          ? const SizedBox(width: 24)
-          : Icon(icon, color: color, size: 22),
+      leading: icon == null ? const SizedBox(width: 24) : Icon(icon, color: color, size: 22),
       title: Text(
         title,
         style: TextStyle(
           color: accent ?? DripTheme.warmWhite,
           fontWeight: accent != null ? FontWeight.w600 : FontWeight.w500,
-          fontSize: 14,
+          fontSize: 15,
         ),
       ),
-      subtitle: subtitle == null
-          ? null
-          : Text(subtitle, style: const TextStyle(color: DripTheme.muted, fontSize: 12)),
+      subtitle: subtitle == null ? null : Text(subtitle, style: const TextStyle(color: DripTheme.muted, fontSize: 12)),
       trailing: trailing,
       onTap: onTap,
     );
