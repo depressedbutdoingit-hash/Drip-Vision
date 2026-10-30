@@ -10,7 +10,7 @@
     <application
         android:label="DripVision"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@android:drawable/ic_dialog_info">
         <activity
             android:name=".MainActivity"
             android:exported="true"
