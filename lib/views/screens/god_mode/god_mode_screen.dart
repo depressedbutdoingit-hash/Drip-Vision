@@ -160,7 +160,7 @@ class _OverviewTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  'Revenue requires RevenueCat webhooks writing to Firestore. '
+                  'Revenue and entitlements come from the Stripe webhook writing to Firestore. '
                   'Token totals above come from ai_usage (including your own admin use).',
                   style: DripTheme.meta,
                 ),
