@@ -58,13 +58,22 @@ jobs:
       - name: Build Flutter Web
         run: flutter build web --release
 
+      - name: Build Android debug APK
+        run: flutter build apk --debug --target-platform android-arm64
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: dripvision-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+
       - name: Deploy to Cloudflare Workers
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --directory build/web
+          command: deploy
 
   push-fix:
     runs-on: ubuntu-latest
@@ -75,37 +84,174 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           fetch-depth: 0
 
-      - name: Write real providers
+      - name: Write real main.dart and providers
         run: |
           python3 << 'PY'
-          # Service providers
-          providers = '''import 'package:flutter_riverpod/flutter_riverpod.dart';
+          # Real main.dart that loads SplashScreen
+          main = r'''import 'package:firebase_core/firebase_core.dart';
+          import 'package:flutter/material.dart';
+          import 'package:flutter_localizations/flutter_localizations.dart';
+          import 'package:flutter_riverpod/flutter_riverpod.dart';
+          import 'services/crashlytics_service.dart';
+          import 'views/screens/splash_screen.dart';
 
-          import '../services/media_action_service.dart';
-          import '../services/style_dna_service.dart';
-          import '../services/suno_service.dart';
-          import '../services/ai_director_service.dart';
-          import '../services/token_service.dart';
-          import '../services/openrouter_service.dart';
-          import '../services/video_stitching_service.dart';
-          import '../services/ai_generation_service.dart';
-          import '../services/continuity_service.dart';
-          import 'env.dart';
+          Future<void> main() async {
+            WidgetsFlutterBinding.ensureInitialized();
 
-          final mediaActionProvider = Provider<MediaActionService>((ref) => MediaActionService());
-          final styleDnaServiceProvider = Provider<StyleDnaService>((ref) => StyleDnaService(Env.openRouterKey));
-          final sunoServiceProvider = Provider<SunoService>((ref) => SunoService(Env.openRouterKey));
-          final aiDirectorServiceProvider = Provider<AIDirectorService>((ref) => AIDirectorService());
-          final tokenServiceProvider = Provider<TokenService>((ref) => TokenService());
-          final openRouterProvider = Provider<OpenRouterService>((ref) => OpenRouterService());
-          final videoStitchProvider = Provider<VideoStitchingService>((ref) => VideoStitchingService());
-          final aiGenerationServiceProvider = Provider<AIGenerationService>((ref) => AIGenerationService());
-          final continuityServiceProvider = Provider<ContinuityEngine>((ref) => ContinuityEngine());
+            try {
+              await Firebase.initializeApp();
+              await CrashlyticsService.init();
+            } catch (e, st) {
+              debugPrint('Firebase/Crashlytics init failed: $e\n$st');
+            }
+
+            runApp(const ProviderScope(child: DripVisionApp()));
+          }
+
+          class DripVisionApp extends StatelessWidget {
+            const DripVisionApp({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              return MaterialApp(
+                title: 'DripVision',
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData.dark().copyWith(
+                  scaffoldBackgroundColor: const Color(0xFF121416),
+                  primaryColor: const Color(0xFF00FFAA),
+                  textTheme: const TextTheme(
+                    bodyLarge: TextStyle(color: Colors.white),
+                    bodyMedium: TextStyle(color: Colors.white70),
+                  ),
+                ),
+                locale: const Locale('en'),
+                supportedLocales: const [Locale('en'), Locale('es')],
+                localizationsDelegates: const [
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                home: const SplashScreen(),
+              );
+            }
+          }
           '''
-          open('lib/core/providers.dart', 'w').write(providers)
+          open('lib/main.dart', 'w').write(main)
+          print('Wrote real main.dart')
 
-          # Real auth provider
-          auth = '''import 'package:flutter_riverpod/flutter_riverpod.dart';
+          # Real app_providers with Notifiers
+          app = r'''import 'package:flutter_riverpod/flutter_riverpod.dart';
+          import '../models/style_dna.dart';
+          import '../models/scene.dart';
+          import '../models/character.dart';
+
+          // Style list with methods screens expect
+          class StyleListNotifier extends StateNotifier<List<StyleDna>> {
+            StyleListNotifier() : super([]);
+
+            void addStyle(StyleDna style) {
+              state = [...state, style];
+            }
+
+            void updateStyle(StyleDna style) {
+              state = [
+                for (final s in state)
+                  if (s.id == style.id) style else s
+              ];
+            }
+
+            void removeStyle(String id) {
+              state = state.where((s) => s.id != id).toList();
+            }
+
+            void duplicateStyle(String id) {
+              final original = state.where((s) => s.id == id).firstOrNull;
+              if (original == null) return;
+              final copy = original.copyWith(
+                id: 'style_${DateTime.now().millisecondsSinceEpoch}',
+                name: '${original.name} (copy)',
+                createdAt: DateTime.now(),
+              );
+              state = [...state, copy];
+            }
+          }
+
+          final styleListProvider = StateNotifierProvider<StyleListNotifier, List<StyleDna>>((ref) {
+            return StyleListNotifier();
+          });
+
+          final activeStyleProvider = StateProvider<StyleDna?>((ref) => null);
+
+          // Scene list with methods screens expect
+          class SceneListNotifier extends StateNotifier<List<SceneNode>> {
+            SceneListNotifier() : super([]);
+
+            void addScene(SceneNode scene) {
+              state = [...state, scene];
+            }
+
+            void updateScene(SceneNode scene) {
+              state = [
+                for (final s in state)
+                  if (s.id == scene.id) scene else s
+              ];
+            }
+
+            void removeScene(String id) {
+              state = state.where((s) => s.id != id).toList();
+            }
+
+            void duplicateScene(String id) {
+              final original = state.where((s) => s.id == id).firstOrNull;
+              if (original == null) return;
+              final copy = original.copyWith(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                sequenceIndex: state.length,
+              );
+              state = [...state, copy];
+            }
+
+            void reorder(int oldIndex, int newIndex) {
+              if (newIndex > oldIndex) newIndex -= 1;
+              final list = [...state];
+              final item = list.removeAt(oldIndex);
+              list.insert(newIndex, item);
+              state = list;
+            }
+          }
+
+          final sceneListProvider = StateNotifierProvider<SceneListNotifier, List<SceneNode>>((ref) {
+            return SceneListNotifier();
+          });
+
+          // Character list
+          class CharacterListNotifier extends StateNotifier<List<Character>> {
+            CharacterListNotifier() : super([]);
+
+            void addCharacter(Character c) => state = [...state, c];
+            void updateCharacter(Character c) {
+              state = [for (final x in state) if (x.id == c.id) c else x];
+            }
+            void removeCharacter(String id) => state = state.where((c) => c.id != id).toList();
+          }
+
+          final characterListProvider = StateNotifierProvider<CharacterListNotifier, List<Character>>((ref) {
+            return CharacterListNotifier();
+          });
+
+          final activeCharacterProvider = StateProvider<Character?>((ref) => null);
+          final userProfileProvider = StateProvider<dynamic>((ref) => null);
+          final navIndexProvider = StateProvider<int>((ref) => 0);
+          final universeProvider = StateProvider<dynamic>((ref) => null);
+          final filmBibleProvider = StateProvider<dynamic>((ref) => null);
+          final pendingScenePromptProvider = StateProvider<String>((ref) => '');
+          final musicPlayerProvider = StateProvider<dynamic>((ref) => null);
+          '''
+          open('lib/core/app_providers.dart', 'w').write(app)
+          print('Wrote real app_providers.dart')
+
+          # Auth provider (already good, keep it)
+          auth = r'''import 'package:flutter_riverpod/flutter_riverpod.dart';
           import 'package:firebase_auth/firebase_auth.dart';
           import '../services/auth_service.dart';
 
@@ -114,79 +260,15 @@ jobs:
           });
           '''
           open('lib/core/auth_providers.dart', 'w').write(auth)
-
-          # Common screen state providers
-          app = '''import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-          final sceneListProvider = StateProvider<List<dynamic>>((ref) => []);
-          final characterListProvider = StateProvider<List<dynamic>>((ref) => []);
-          final userProfileProvider = StateProvider<dynamic>((ref) => null);
-          final navIndexProvider = StateProvider<int>((ref) => 0);
-          final activeCharacterProvider = StateProvider<dynamic>((ref) => null);
-          final universeProvider = StateProvider<dynamic>((ref) => null);
-          final filmBibleProvider = StateProvider<dynamic>((ref) => null);
-          final pendingScenePromptProvider = StateProvider<String>((ref) => '');
-          final styleListProvider = StateProvider<List<dynamic>>((ref) => []);
-          final activeStyleProvider = StateProvider<dynamic>((ref) => null);
-          final musicPlayerProvider = StateProvider<dynamic>((ref) => null);
-          '''
-          open('lib/core/app_providers.dart', 'w').write(app)
-          print('Wrote provider files')
-          PY
-
-      - name: Add imports to screens
-        run: |
-          python3 << 'PY'
-          import os
-
-          files = [
-            'lib/views/screens/storyboard_screen.dart',
-            'lib/views/screens/studio_screen.dart',
-            'lib/views/screens/music_video_screen.dart',
-            'lib/views/screens/profile_screen.dart',
-            'lib/views/screens/settings_screen.dart',
-            'lib/views/screens/sound_department_screen.dart',
-            'lib/views/screens/story_pipeline_screen.dart',
-            'lib/views/screens/story_planner_screen.dart',
-            'lib/views/screens/style_dna_screen.dart',
-            'lib/views/screens/timeline_screen.dart',
-            'lib/views/widgets/cosmic_stats_overlay.dart',
-            'lib/views/widgets/studio_drawer.dart',
-            'lib/views/screens/auth_screen.dart',
-          ]
-
-          import_line = "import '../../core/app_providers.dart';\n"
-          auth_import = "import '../../core/auth_providers.dart';\n"
-
-          for path in files:
-            if not os.path.exists(path):
-              continue
-            with open(path, 'r') as f:
-              content = f.read()
-            lines = content.splitlines(keepends=True)
-            last_import = 0
-            for i, line in enumerate(lines):
-              if line.startswith('import '):
-                last_import = i
-            changed = False
-            if 'app_providers.dart' not in content:
-              lines.insert(last_import + 1, import_line)
-              changed = True
-            if path.endswith('auth_screen.dart') and 'auth_providers.dart' not in content:
-              lines.insert(last_import + 1, auth_import)
-              changed = True
-            if changed:
-              with open(path, 'w') as f:
-                f.writelines(lines)
-              print(f'Updated imports in {path}')
+          print('Wrote auth_providers.dart')
           PY
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add lib/main.dart lib/core/app_providers.dart lib/core/auth_providers.dart
           git status
-          git commit -m "fix: real providers + imports so screens compile" || echo "Nothing to commit"
+          git commit -m "fix: restore real main.dart + real Notifier providers + fix wrangler deploy" || echo "Nothing to commit"
           git push origin HEAD:main
           echo "Push complete"
