@@ -87,7 +87,6 @@ jobs:
       - name: Write real main.dart and providers
         run: |
           python3 << 'PY'
-          # Real main.dart that loads SplashScreen
           main = r'''import 'package:firebase_core/firebase_core.dart';
           import 'package:flutter/material.dart';
           import 'package:flutter_localizations/flutter_localizations.dart';
@@ -137,33 +136,20 @@ jobs:
           }
           '''
           open('lib/main.dart', 'w').write(main)
-          print('Wrote real main.dart')
 
-          # Real app_providers with Notifiers
           app = r'''import 'package:flutter_riverpod/flutter_riverpod.dart';
           import '../models/style_dna.dart';
           import '../models/scene.dart';
           import '../models/character.dart';
 
-          // Style list with methods screens expect
           class StyleListNotifier extends StateNotifier<List<StyleDna>> {
             StyleListNotifier() : super([]);
 
-            void addStyle(StyleDna style) {
-              state = [...state, style];
-            }
-
+            void addStyle(StyleDna style) => state = [...state, style];
             void updateStyle(StyleDna style) {
-              state = [
-                for (final s in state)
-                  if (s.id == style.id) style else s
-              ];
+              state = [for (final s in state) if (s.id == style.id) style else s];
             }
-
-            void removeStyle(String id) {
-              state = state.where((s) => s.id != id).toList();
-            }
-
+            void removeStyle(String id) => state = state.where((s) => s.id != id).toList();
             void duplicateStyle(String id) {
               final original = state.where((s) => s.id == id).firstOrNull;
               if (original == null) return;
@@ -176,31 +162,17 @@ jobs:
             }
           }
 
-          final styleListProvider = StateNotifierProvider<StyleListNotifier, List<StyleDna>>((ref) {
-            return StyleListNotifier();
-          });
-
+          final styleListProvider = StateNotifierProvider<StyleListNotifier, List<StyleDna>>((ref) => StyleListNotifier());
           final activeStyleProvider = StateProvider<StyleDna?>((ref) => null);
 
-          // Scene list with methods screens expect
           class SceneListNotifier extends StateNotifier<List<SceneNode>> {
             SceneListNotifier() : super([]);
 
-            void addScene(SceneNode scene) {
-              state = [...state, scene];
-            }
-
+            void addScene(SceneNode scene) => state = [...state, scene];
             void updateScene(SceneNode scene) {
-              state = [
-                for (final s in state)
-                  if (s.id == scene.id) scene else s
-              ];
+              state = [for (final s in state) if (s.id == scene.id) scene else s];
             }
-
-            void removeScene(String id) {
-              state = state.where((s) => s.id != id).toList();
-            }
-
+            void removeScene(String id) => state = state.where((s) => s.id != id).toList();
             void duplicateScene(String id) {
               final original = state.where((s) => s.id == id).firstOrNull;
               if (original == null) return;
@@ -210,7 +182,6 @@ jobs:
               );
               state = [...state, copy];
             }
-
             void reorder(int oldIndex, int newIndex) {
               if (newIndex > oldIndex) newIndex -= 1;
               final list = [...state];
@@ -220,14 +191,10 @@ jobs:
             }
           }
 
-          final sceneListProvider = StateNotifierProvider<SceneListNotifier, List<SceneNode>>((ref) {
-            return SceneListNotifier();
-          });
+          final sceneListProvider = StateNotifierProvider<SceneListNotifier, List<SceneNode>>((ref) => SceneListNotifier());
 
-          // Character list
           class CharacterListNotifier extends StateNotifier<List<Character>> {
             CharacterListNotifier() : super([]);
-
             void addCharacter(Character c) => state = [...state, c];
             void updateCharacter(Character c) {
               state = [for (final x in state) if (x.id == c.id) c else x];
@@ -235,10 +202,7 @@ jobs:
             void removeCharacter(String id) => state = state.where((c) => c.id != id).toList();
           }
 
-          final characterListProvider = StateNotifierProvider<CharacterListNotifier, List<Character>>((ref) {
-            return CharacterListNotifier();
-          });
-
+          final characterListProvider = StateNotifierProvider<CharacterListNotifier, List<Character>>((ref) => CharacterListNotifier());
           final activeCharacterProvider = StateProvider<Character?>((ref) => null);
           final userProfileProvider = StateProvider<dynamic>((ref) => null);
           final navIndexProvider = StateProvider<int>((ref) => 0);
@@ -248,9 +212,7 @@ jobs:
           final musicPlayerProvider = StateProvider<dynamic>((ref) => null);
           '''
           open('lib/core/app_providers.dart', 'w').write(app)
-          print('Wrote real app_providers.dart')
 
-          # Auth provider (already good, keep it)
           auth = r'''import 'package:flutter_riverpod/flutter_riverpod.dart';
           import 'package:firebase_auth/firebase_auth.dart';
           import '../services/auth_service.dart';
@@ -260,7 +222,7 @@ jobs:
           });
           '''
           open('lib/core/auth_providers.dart', 'w').write(auth)
-          print('Wrote auth_providers.dart')
+          print('Wrote real files')
           PY
 
       - name: Commit and push
