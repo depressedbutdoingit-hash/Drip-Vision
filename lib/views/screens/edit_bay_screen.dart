@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
+import '../../core/continuity_score_providers.dart';
+import '../../models/continuity_score.dart';
+import '../widgets/continuity_score_card.dart';
 import 'video_player_screen.dart';
 
-class EditBayScreen extends StatefulWidget {
+class EditBayScreen extends ConsumerStatefulWidget {
   const EditBayScreen({super.key});
 
   @override
-  State<EditBayScreen> createState() => _EditBayScreenState();
+  ConsumerState<EditBayScreen> createState() => _EditBayScreenState();
 }
 
-class _EditBayScreenState extends State<EditBayScreen> {
+class _EditBayScreenState extends ConsumerState<EditBayScreen> {
   final List<_Clip> _clips = [
     _Clip(name: 'Opening', duration: '0:08'),
     _Clip(name: 'Character Intro', duration: '0:12'),
@@ -21,6 +25,20 @@ class _EditBayScreenState extends State<EditBayScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Demo score — replace with real sceneContinuityScoreProvider once you have active scene + DNA
+    final demoScore = ContinuityScore(
+      character: 0.96,
+      wardrobe: 1.0,
+      props: 0.80,
+      environment: 0.92,
+      timeline: 0.91,
+      overall: 0.92,
+      issues: const [
+        'Wardrobe changed from default outfit',
+        'Missing props: cigarette_pack',
+      ],
+    );
+
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       appBar: AppBar(
@@ -72,6 +90,17 @@ class _EditBayScreenState extends State<EditBayScreen> {
                 ),
               ],
             ),
+          ),
+
+          // Continuity Health Card
+          ContinuityScoreCard(
+            score: demoScore,
+            onFixPressed: () {
+              // TODO: Navigate to Character DNA / Closet for the active character
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Open Character DNA to fix issues')),
+              );
+            },
           ),
 
           // Timeline
