@@ -1,8 +1,8 @@
 class CharacterDNA {
   final String id;
   final String name;
-  final String version; // semver for schema alignment
-  final String? dnaHash; // sha256 of canonical fields for continuity checks
+  final String version;
+  final String? dnaHash;
   final String? faceReferenceUrl;
   final String? fullBodyReferenceUrl;
   final PhysicalTraits physical;
@@ -143,5 +143,274 @@ class CharacterDNA {
   int get hashCode => id.hashCode;
 }
 
-// ... (rest of the file remains the same: PhysicalTraits, VoiceProfile, PersonalityProfile, Outfit, VisualStyle)
-// Note: Full file content truncated in this payload for brevity; the complete updated file includes all original classes.
+class PhysicalTraits {
+  final String gender;
+  final String ageRange;
+  final String ethnicity;
+  final String hairColor;
+  final String hairStyle;
+  final String bodyType;
+  final String height;
+  final String distinguishingFeatures;
+
+  const PhysicalTraits({
+    required this.gender,
+    required this.ageRange,
+    required this.ethnicity,
+    required this.hairColor,
+    required this.hairStyle,
+    required this.bodyType,
+    required this.height,
+    required this.distinguishingFeatures,
+  });
+
+  factory PhysicalTraits.empty() => const PhysicalTraits(
+        gender: '',
+        ageRange: '',
+        ethnicity: '',
+        hairColor: '',
+        hairStyle: '',
+        bodyType: '',
+        height: '',
+        distinguishingFeatures: '',
+      );
+
+  PhysicalTraits copyWith({
+    String? gender,
+    String? ageRange,
+    String? ethnicity,
+    String? hairColor,
+    String? hairStyle,
+    String? bodyType,
+    String? height,
+    String? distinguishingFeatures,
+  }) {
+    return PhysicalTraits(
+      gender: gender ?? this.gender,
+      ageRange: ageRange ?? this.ageRange,
+      ethnicity: ethnicity ?? this.ethnicity,
+      hairColor: hairColor ?? this.hairColor,
+      hairStyle: hairStyle ?? this.hairStyle,
+      bodyType: bodyType ?? this.bodyType,
+      height: height ?? this.height,
+      distinguishingFeatures: distinguishingFeatures ?? this.distinguishingFeatures,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'gender': gender,
+        'ageRange': ageRange,
+        'ethnicity': ethnicity,
+        'hairColor': hairColor,
+        'hairStyle': hairStyle,
+        'bodyType': bodyType,
+        'height': height,
+        'distinguishingFeatures': distinguishingFeatures,
+      };
+
+  factory PhysicalTraits.fromJson(Map<String, dynamic> json) => PhysicalTraits(
+        gender: json['gender'] ?? '',
+        ageRange: json['ageRange'] ?? '',
+        ethnicity: json['ethnicity'] ?? '',
+        hairColor: json['hairColor'] ?? '',
+        hairStyle: json['hairStyle'] ?? '',
+        bodyType: json['bodyType'] ?? '',
+        height: json['height'] ?? '',
+        distinguishingFeatures: json['distinguishingFeatures'] ?? '',
+      );
+}
+
+class VoiceProfile {
+  final String? elevenLabsVoiceId;
+  final String description;
+  final String language;
+  final String accent;
+  final double stability;
+  final double similarityBoost;
+
+  const VoiceProfile({
+    this.elevenLabsVoiceId,
+    required this.description,
+    required this.language,
+    required this.accent,
+    this.stability = 0.0,
+    this.similarityBoost = 0.75,
+  });
+
+  factory VoiceProfile.empty() => const VoiceProfile(
+        elevenLabsVoiceId: null,
+        description: '',
+        language: 'en',
+        accent: '',
+        stability: 0.0,
+        similarityBoost: 0.75,
+      );
+
+  VoiceProfile copyWith({
+    String? elevenLabsVoiceId,
+    String? description,
+    String? language,
+    String? accent,
+    double? stability,
+    double? similarityBoost,
+  }) {
+    return VoiceProfile(
+      elevenLabsVoiceId: elevenLabsVoiceId ?? this.elevenLabsVoiceId,
+      description: description ?? this.description,
+      language: language ?? this.language,
+      accent: accent ?? this.accent,
+      stability: stability ?? this.stability,
+      similarityBoost: similarityBoost ?? this.similarityBoost,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'elevenLabsVoiceId': elevenLabsVoiceId,
+        'description': description,
+        'language': language,
+        'accent': accent,
+        'stability': stability,
+        'similarityBoost': similarityBoost,
+      };
+
+  factory VoiceProfile.fromJson(Map<String, dynamic> json) => VoiceProfile(
+        elevenLabsVoiceId: json['elevenLabsVoiceId'],
+        description: json['description'] ?? '',
+        language: json['language'] ?? 'en',
+        accent: json['accent'] ?? '',
+        stability: (json['stability'] ?? 0.0).toDouble(),
+        similarityBoost: (json['similarityBoost'] ?? 0.75).toDouble(),
+      );
+}
+
+class PersonalityProfile {
+  final String archetype;
+  final String traits;
+  final String mannerisms;
+  final String speechPattern;
+
+  const PersonalityProfile({
+    required this.archetype,
+    required this.traits,
+    required this.mannerisms,
+    required this.speechPattern,
+  });
+
+  factory PersonalityProfile.empty() => const PersonalityProfile(
+        archetype: '',
+        traits: '',
+        mannerisms: '',
+        speechPattern: '',
+      );
+
+  PersonalityProfile copyWith({
+    String? archetype,
+    String? traits,
+    String? mannerisms,
+    String? speechPattern,
+  }) {
+    return PersonalityProfile(
+      archetype: archetype ?? this.archetype,
+      traits: traits ?? this.traits,
+      mannerisms: mannerisms ?? this.mannerisms,
+      speechPattern: speechPattern ?? this.speechPattern,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'archetype': archetype,
+        'traits': traits,
+        'mannerisms': mannerisms,
+        'speechPattern': speechPattern,
+      };
+
+  factory PersonalityProfile.fromJson(Map<String, dynamic> json) =>
+      PersonalityProfile(
+        archetype: json['archetype'] ?? '',
+        traits: json['traits'] ?? '',
+        mannerisms: json['mannerisms'] ?? '',
+        speechPattern: json['speechPattern'] ?? '',
+      );
+}
+
+class Outfit {
+  final String id;
+  final String name;
+  final String description;
+  final String? referenceImageUrl;
+  final String? outfitImageUrl;
+  final List<String> tags;
+  final bool isDefault;
+
+  const Outfit({
+    required this.id,
+    required this.name,
+    required this.description,
+    this.referenceImageUrl,
+    this.outfitImageUrl,
+    this.tags = const [],
+    this.isDefault = false,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'description': description,
+        'referenceImageUrl': referenceImageUrl,
+        'outfitImageUrl': outfitImageUrl,
+        'tags': tags,
+        'isDefault': isDefault,
+      };
+
+  factory Outfit.fromJson(Map<String, dynamic> json) => Outfit(
+        id: json['id'] ?? '',
+        name: json['name'] ?? '',
+        description: json['description'] ?? '',
+        referenceImageUrl: json['referenceImageUrl'],
+        outfitImageUrl: json['outfitImageUrl'],
+        tags: List<String>.from(json['tags'] ?? []),
+        isDefault: json['isDefault'] ?? false,
+      );
+}
+
+class VisualStyle {
+  final String artDirection;
+  final String colorPalette;
+  final String lightingPreference;
+
+  const VisualStyle({
+    required this.artDirection,
+    required this.colorPalette,
+    required this.lightingPreference,
+  });
+
+  factory VisualStyle.empty() => const VisualStyle(
+        artDirection: 'photorealistic',
+        colorPalette: '',
+        lightingPreference: '',
+      );
+
+  VisualStyle copyWith({
+    String? artDirection,
+    String? colorPalette,
+    String? lightingPreference,
+  }) {
+    return VisualStyle(
+      artDirection: artDirection ?? this.artDirection,
+      colorPalette: colorPalette ?? this.colorPalette,
+      lightingPreference: lightingPreference ?? this.lightingPreference,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'artDirection': artDirection,
+        'colorPalette': colorPalette,
+        'lightingPreference': lightingPreference,
+      };
+
+  factory VisualStyle.fromJson(Map<String, dynamic> json) => VisualStyle(
+        artDirection: json['artDirection'] ?? 'photorealistic',
+        colorPalette: json['colorPalette'] ?? '',
+        lightingPreference: json['lightingPreference'] ?? '',
+      );
+}
