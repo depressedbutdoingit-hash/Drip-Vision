@@ -1,6 +1,6 @@
 import '../core/ai_tiers.dart';
 import '../models/character.dart';
-import '../models/character_dna.dart';
+import 'continuity_service.dart';
 import 'drip_engine_service.dart';
 import 'image_generation_service.dart';
 
