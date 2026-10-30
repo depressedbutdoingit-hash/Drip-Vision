@@ -7,12 +7,8 @@ import 'storyboard_screen.dart';
 import 'generator_screen.dart';
 import 'studio_screen.dart';
 import '../../core/providers.dart';
+import '../../core/app_providers.dart';
 
-/// SCREENPLAY
-/// Renders the real StoryPlan the AI Director already produced —
-/// industry slug lines, action, character cues and dialogue — instead of
-/// generic scene cards. Reads storyPlanProvider directly, so anything
-/// planned in Story Planner shows here with zero duplicate data entry.
 class ScreenplayScreen extends ConsumerWidget {
   const ScreenplayScreen({super.key});
 
@@ -128,9 +124,6 @@ class _ScreenplayScene extends ConsumerWidget {
   }
 
   void _generateVideo(BuildContext context, WidgetRef ref) {
-    // Wires the planned scene straight into the real generator — the
-    // description + shot list become the prompt, so "Generate Video"
-    // isn't decorative.
     ref.read(pendingScenePromptProvider.notifier).state =
         '${scene.description} ${scene.shots.isNotEmpty ? 'Shots: ${scene.shots.join(', ')}.' : ''}';
     Navigator.push(context, MaterialPageRoute(builder: (_) => const DripVisionStudioScreen()));
