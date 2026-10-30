@@ -1,5 +1,5 @@
 import 'character.dart';
-import 'character_dna.dart';
+import '../services/continuity_service.dart';
 
 class SceneNode {
   final String id;
@@ -154,7 +154,7 @@ class SceneNode {
                 name: 'Unknown',
                 avatarUrl: '',
                 wardrobeDNA: const [],
-                dna: CharacterDNA.fromJson({}),
+                dna: CharacterDNA.empty(),
                 faceReferenceUrls: const [],
                 activeOutfitId: '',
                 closet: const [],
