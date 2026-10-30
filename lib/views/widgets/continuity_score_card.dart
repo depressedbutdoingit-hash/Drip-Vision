@@ -5,11 +5,13 @@ import '../../core/theme.dart';
 class ContinuityScoreCard extends StatelessWidget {
   final ContinuityScore score;
   final VoidCallback? onFixPressed;
+  final VoidCallback? onRefresh;
 
   const ContinuityScoreCard({
     super.key,
     required this.score,
     this.onFixPressed,
+    this.onRefresh,
   });
 
   @override
@@ -34,6 +36,13 @@ class ContinuityScoreCard extends StatelessWidget {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 const Spacer(),
+                if (onRefresh != null)
+                  IconButton(
+                    icon: const Icon(Icons.refresh, size: 20),
+                    tooltip: 'Refresh score',
+                    onPressed: onRefresh,
+                    visualDensity: VisualDensity.compact,
+                  ),
                 Text(
                   '$overallPct%',
                   style: TextStyle(
