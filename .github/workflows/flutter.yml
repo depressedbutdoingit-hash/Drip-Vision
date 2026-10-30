@@ -57,14 +57,16 @@ jobs:
       - name: Build Flutter Web
         run: flutter build web --release
 
-      - name: Build Android debug APK
-        run: flutter build apk --debug
+      - name: Build Android ARM64 debug APK
+        run: |
+          flutter build apk --debug --target-platform android-arm64 --split-per-abi
+          ls -lh build/app/outputs/flutter-apk/
 
-      - name: Upload Android APK
+      - name: Upload Android ARM64 APK
         uses: actions/upload-artifact@v4
         with:
-          name: dripvision-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: dripvision-arm64-debug-apk
+          path: build/app/outputs/flutter-apk/app-arm64-v8a-debug.apk
           if-no-files-found: error
           retention-days: 14
 
