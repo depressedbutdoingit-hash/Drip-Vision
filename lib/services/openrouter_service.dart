@@ -17,6 +17,21 @@ class OpenRouterService {
     ));
   }
 
+  /// Simple text generation helper used by Ad Generator and other screens.
+  Future<String> generateText(String prompt, {String model = 'google/gemini-2.5-flash'}) async {
+    final response = await _dio.post(
+      'chat/completions',
+      data: {
+        'model': model,
+        'messages': [
+          {'role': 'user', 'content': prompt},
+        ],
+        'temperature': 0.7,
+      },
+    );
+    return response.data['choices'][0]['message']['content'] as String;
+  }
+
   /// Enhances a prompt and returns both the enhanced text and cost info.
   Future<EnhancedPromptResult> enhancePrompt({
     required String prompt,
