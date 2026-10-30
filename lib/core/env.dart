@@ -13,8 +13,6 @@ class Env {
   static String get falAiKey => _get('FAL_AI_KEY');
   static String get openAiKey => _get('OPENAI_KEY');
   static String get elevenLabsKey => _get('ELEVENLABS_KEY');
-  static String get revenueCatIosKey => _get('REVENUECAT_IOS_KEY');
-  static String get revenueCatAndroidKey => _get('REVENUECAT_ANDROID_KEY');
   static String get sunoApiKey => _get('SUNO_API_KEY');
 
   static bool get hasOpenRouter => openRouterKey.isNotEmpty;

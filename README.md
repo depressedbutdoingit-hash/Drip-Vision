@@ -1,58 +1,59 @@
 # DripVision
 
-Next-Gen AI Video Studio with scene continuity, character closets, and Grok-style photorealistic prompting.
+Next-Gen AI Video Studio with scene continuity, character closets, and cinematic prompting.
 
 ## Getting Started
 
-1. Copy `.env.example` to `.env` and fill in your API keys
+1. Copy `.env.example` to `.env` and fill in your keys (at minimum `OPENROUTER_KEY`)
 2. Run `flutter pub get`
 3. Connect Firebase (Auth, Firestore, Cloud Messaging)
-4. Configure RevenueCat with your product IDs
-5. Run `flutter run`
+4. Run `flutter run`
+
+Payments use **Stripe** (Checkout links + webhook). AI calls primarily go through **OpenRouter**.
 
 ## Architecture
 
 - **State Management**: Riverpod
 - **Backend**: Firebase (Auth, Firestore, FCM)
-- **AI APIs**: Fal.ai, OpenRouter, OpenAI (Whisper), ElevenLabs
-- **Payments**: RevenueCat
-- **CI/CD**: GitHub Actions
+- **AI**: OpenRouter (video, image, text). Optional secondary: Fal, ElevenLabs, Suno
+- **Payments**: Stripe
+- **CI/CD**: GitHub Actions → Cloudflare Workers (web) + debug APK
 
 ## Features
 
-- Grok-Style Prompt Enhancer
+- Cinematic prompt enhancement
 - Character Closet & Outfit Swapping
 - Scene Continuity Engine
 - Camera Motion Joystick
-- Voice Prompting (Whisper)
-- AI Voiceover (ElevenLabs)
+- Voice Prompting
+- AI Voiceover
 - Token-Based Generation Gating
 - Admin God Mode
 - Shorebird Code Push
 - Explore Drip Social Feed
+- Ad Generator (script + image)
 
-## Vector Learning Fusion Skills
+## Payments (Stripe)
 
-The `skills/` directory contains three Grok skills that power the cinematic intelligence layer:
+- Plans screen opens Stripe Checkout links
+- Backend Cloud Function (`backend/functions/index.js`) handles the Stripe webhook and updates user entitlements in Firestore
+- Paywall redirects to the plans screen
 
-- **cinematic-swarm-conductor** — Orchestrates Character DNA, Continuity Detective, Shot Planner, Preference Learner, and Video Generator
-- **dripvision-eternal-universe-manager** — Permanent versioned archive with memory consolidation
-- **dripvision-shared-schemas** — Canonical JSON schemas for Character DNA, Continuity Bible, Shot Plans, Preferences, and Video Metadata
+## AI (OpenRouter)
 
-These align with the existing `lib/models/character_dna.dart`, `continuity_health_analyzer.dart`, and film bible models.
+Most generation (video via `DripEngineService`, text via `OpenRouterService`, Ad Generator) uses a single `OPENROUTER_KEY`. Secondary keys are optional and only needed for legacy paths.
 
-## Shipathon-ready workflow
+## CI secrets
 
-The UI redesign preserves the existing Riverpod/Firebase/generation architecture and adds a premium filmmaking workspace around it. GitHub Actions is configured in `.github/workflows/flutter.yml` to run analysis/tests and an Android release build check on pushes and pull requests.
+Configure these repository secrets as needed:
+- Required: `OPENROUTER_KEY`
+- Deploy: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+- Optional: `FAL_AI_KEY`, `OPENAI_KEY`, `ELEVENLABS_KEY`, `SUNO_API_KEY`
 
-### CI secrets
-Configure these repository secrets when the corresponding services are used in CI: `OPENROUTER_KEY`, `FAL_AI_KEY`, `OPENAI_KEY`, `ELEVENLABS_KEY`, and `SUNO_API_KEY`.
+## Cloudflare Workers (Web)
 
-## Cloudflare Workers / Pages (Web)
+```bash
+flutter build web --release
+```
 
-This repo is configured for Cloudflare Workers static assets.
-
-1. Build the web app:
-   ```bash
-   flutter build web --release
-   ```
+The workflow deploys the `build/web` output via Wrangler.
