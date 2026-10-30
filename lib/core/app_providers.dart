@@ -11,10 +11,19 @@ class StyleListNotifier extends StateNotifier<List<StyleDna>> {
   void duplicateStyle(String id) {
     final o = state.where((x) => x.id == id).firstOrNull;
     if (o == null) return;
-    state = [...state, o.copyWith(id: 'style_\( {DateTime.now().millisecondsSinceEpoch}', name: ' \){o.name} (copy)', createdAt: DateTime.now())];
+    state = [
+      ...state,
+      o.copyWith(
+        id: 'style_${DateTime.now().millisecondsSinceEpoch}',
+        name: '${o.name} (copy)',
+        createdAt: DateTime.now(),
+      ),
+    ];
   }
 }
-final styleListProvider = StateNotifierProvider<StyleListNotifier, List<StyleDna>>((ref) => StyleListNotifier());
+
+final styleListProvider =
+    StateNotifierProvider<StyleListNotifier, List<StyleDna>>((ref) => StyleListNotifier());
 final activeStyleProvider = StateProvider<StyleDna?>((ref) => null);
 
 class SceneListNotifier extends StateNotifier<List<SceneNode>> {
@@ -25,8 +34,15 @@ class SceneListNotifier extends StateNotifier<List<SceneNode>> {
   void duplicateScene(String id) {
     final o = state.where((x) => x.id == id).firstOrNull;
     if (o == null) return;
-    state = [...state, o.copyWith(id: DateTime.now().millisecondsSinceEpoch.toString(), sequenceIndex: state.length)];
+    state = [
+      ...state,
+      o.copyWith(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        sequenceIndex: state.length,
+      ),
+    ];
   }
+
   void reorder(int oldIndex, int newIndex) {
     if (newIndex > oldIndex) newIndex -= 1;
     final list = [...state];
@@ -35,7 +51,9 @@ class SceneListNotifier extends StateNotifier<List<SceneNode>> {
     state = list;
   }
 }
-final sceneListProvider = StateNotifierProvider<SceneListNotifier, List<SceneNode>>((ref) => SceneListNotifier());
+
+final sceneListProvider =
+    StateNotifierProvider<SceneListNotifier, List<SceneNode>>((ref) => SceneListNotifier());
 
 class CharacterListNotifier extends StateNotifier<List<Character>> {
   CharacterListNotifier() : super([]);
@@ -43,7 +61,9 @@ class CharacterListNotifier extends StateNotifier<List<Character>> {
   void updateCharacter(Character c) => state = [for (final x in state) if (x.id == c.id) c else x];
   void removeCharacter(String id) => state = state.where((x) => x.id != id).toList();
 }
-final characterListProvider = StateNotifierProvider<CharacterListNotifier, List<Character>>((ref) => CharacterListNotifier());
+
+final characterListProvider =
+    StateNotifierProvider<CharacterListNotifier, List<Character>>((ref) => CharacterListNotifier());
 final activeCharacterProvider = StateProvider<Character?>((ref) => null);
 final userProfileProvider = StateProvider<dynamic>((ref) => null);
 final navIndexProvider = StateProvider<int>((ref) => 0);
