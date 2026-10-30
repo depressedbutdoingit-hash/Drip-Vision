@@ -16,6 +16,6 @@
 
 ## Stage 3 — Next
 - Timeline multi-clip stitch export
-- RevenueCat webhook → God Mode revenue
+- Stripe webhook → God Mode revenue / entitlements
 - Feature flags consumed app-wide
 - Full UI pass on Create / Library / Explore
