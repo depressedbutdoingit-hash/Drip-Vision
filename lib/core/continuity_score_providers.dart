@@ -4,13 +4,13 @@ import '../models/continuity_score.dart';
 import '../models/scene.dart';
 import '../services/continuity_checker_service.dart';
 import 'app_providers.dart';
+import 'active_providers.dart';
 
 /// Service provider for the continuity checker.
 final continuityCheckerServiceProvider =
     Provider<ContinuityCheckerService>((ref) => ContinuityCheckerService());
 
 /// Computes ContinuityScore for a specific scene + character DNA.
-/// Usage: ref.watch(sceneContinuityScoreProvider((sceneId: id, dna: dna)))
 final sceneContinuityScoreProvider =
     Provider.family<ContinuityScore, ({String sceneId, CharacterDNA dna})>(
         (ref, args) {
@@ -24,11 +24,16 @@ final sceneContinuityScoreProvider =
   return checker.checkScene(scene: scene, characterDna: args.dna);
 });
 
-/// Convenience provider for the currently active scene + active character DNA.
-/// Requires active scene and DNA to be set elsewhere.
+/// Live ContinuityScore for the currently active scene and CharacterDNA.
+/// Falls back to an empty score if either is missing.
 final activeSceneContinuityProvider = Provider<ContinuityScore>((ref) {
-  // Placeholder — wire to your active scene/character DNA providers when ready.
-  // Example: final scene = ref.watch(activeSceneProvider);
-  //          final dna = ref.watch(activeCharacterDnaProvider);
-  return ContinuityScore.empty();
+  final scene = ref.watch(activeSceneProvider);
+  final dna = ref.watch(activeCharacterDnaProvider);
+
+  if (scene == null || dna == null) {
+    return ContinuityScore.empty();
+  }
+
+  final checker = ref.watch(continuityCheckerServiceProvider);
+  return checker.checkScene(scene: scene, characterDna: dna);
 });
