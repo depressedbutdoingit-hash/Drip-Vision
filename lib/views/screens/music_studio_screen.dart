@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../../core/env.dart';
 import '../../core/theme.dart';
@@ -68,8 +68,7 @@ class _MusicStudioScreenState extends ConsumerState<MusicStudioScreen> {
   Future<void> _play() async {
     if (_track == null) return;
     try {
-      await _player.setFilePath(_track!.audioUrl);
-      await _player.play();
+      await _player.play(DeviceFileSource(_track!.audioUrl));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
