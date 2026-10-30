@@ -4,20 +4,16 @@ import 'package:audioplayers/audioplayers.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
 import '../../models/scene.dart';
-import '../../services/suno_service.dart';
+import '../../services/lyria_service.dart';
 import '../widgets/cinematic_button.dart';
 import '../widgets/cinematic_card.dart';
 import 'music_studio_screen.dart';
 import '../../core/app_providers.dart';
 
 /// SOUND DEPARTMENT
-/// MUSIC and AMBIENCE both call the real Suno integration — ambience is
+/// MUSIC and AMBIENCE both call Lyria via OpenRouter — ambience is
 /// simply a differently-directed prompt (soundscape, no melody) through
-/// the same generateForScene() your Music Studio already uses, not a
-/// second faked pipeline. SFX has no generation backend in this codebase
-/// yet, so it's an honest manual cue list rather than a fake "Generate"
-/// button with nothing behind it. MIX SCENE persists everything onto the
-/// real SceneNode via sceneListProvider.
+/// the same generateScore() your Music Studio already uses.
 class SoundDepartmentScreen extends ConsumerStatefulWidget {
   final SceneNode scene;
   const SoundDepartmentScreen({super.key, required this.scene});
@@ -27,8 +23,8 @@ class SoundDepartmentScreen extends ConsumerStatefulWidget {
 }
 
 class _SoundDepartmentScreenState extends ConsumerState<SoundDepartmentScreen> {
-  late SunoTrack? _music = widget.scene.musicTrackUrl != null
-      ? SunoTrack(id: 'existing', title: widget.scene.musicTitle ?? 'Score', audioUrl: widget.scene.musicTrackUrl!, genre: '', durationSeconds: 0)
+  late LyriaTrack? _music = widget.scene.musicTrackUrl != null
+      ? LyriaTrack(id: 'existing', title: widget.scene.musicTitle ?? 'Score', audioUrl: widget.scene.musicTrackUrl!, genre: '', durationSeconds: 0)
       : null;
   late final _ambienceCtl = TextEditingController(text: widget.scene.ambienceNotes ?? '');
   late List<String> _sfx = [...widget.scene.sfxCues];
@@ -164,7 +160,7 @@ class _SoundDepartmentScreenState extends ConsumerState<SoundDepartmentScreen> {
     if (_playing) {
       await player.pause();
     } else {
-      await player.play(UrlSource(url));
+      await player.play(DeviceFileSource(url));
     }
     setState(() => _playing = !_playing);
   }
@@ -172,11 +168,10 @@ class _SoundDepartmentScreenState extends ConsumerState<SoundDepartmentScreen> {
   Future<void> _generateMusic() async {
     setState(() => _generatingMusic = true);
     try {
-      final track = await ref.read(sunoServiceProvider).generateForScene(
-            sceneDescription: widget.scene.prompt,
-            sceneMood: widget.scene.lighting ?? 'cinematic',
-            lighting: widget.scene.lighting ?? '',
-            duration: 30,
+      final track = await ref.read(lyriaServiceProvider).generateScore(
+            prompt: widget.scene.prompt,
+            style: widget.scene.lighting ?? 'cinematic',
+            durationSeconds: 60,
           );
       setState(() => _music = track);
     } catch (e) {
@@ -189,12 +184,13 @@ class _SoundDepartmentScreenState extends ConsumerState<SoundDepartmentScreen> {
   Future<void> _generateAmbience() async {
     setState(() => _generatingAmbience = true);
     try {
-      final desc = _ambienceCtl.text.trim().isEmpty ? '${widget.scene.locationDescription ?? widget.scene.prompt}, ambient background only, no melody, no instruments' : '${_ambienceCtl.text.trim()}, ambient soundscape, no melody, no instruments';
-      final track = await ref.read(sunoServiceProvider).generateForScene(
-            sceneDescription: desc,
-            sceneMood: 'ambient soundscape',
-            lighting: '',
-            duration: 30,
+      final desc = _ambienceCtl.text.trim().isEmpty
+          ? '${widget.scene.locationDescription ?? widget.scene.prompt}, ambient background only, no melody, no instruments'
+          : '${_ambienceCtl.text.trim()}, ambient soundscape, no melody, no instruments';
+      final track = await ref.read(lyriaServiceProvider).generateScore(
+            prompt: desc,
+            style: 'ambient soundscape',
+            durationSeconds: 60,
           );
       setState(() => _ambienceTrackUrl = track.audioUrl);
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ambience track generated — attached on Mix Scene.')));
