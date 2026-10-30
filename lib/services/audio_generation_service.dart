@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import '../core/env.dart';
+import 'lyria_service.dart';
 
 class AudioGenerationService {
   final _dio = Dio();
@@ -12,7 +13,7 @@ class AudioGenerationService {
     String modelId = 'eleven_multilingual_v2',
   }) async {
     final tempDir = await getTemporaryDirectory();
-    final outputPath = '\( {tempDir.path}/voiceover_ \){DateTime.now().millisecondsSinceEpoch}.mp3';
+    final outputPath = '${tempDir.path}/voiceover_${DateTime.now().millisecondsSinceEpoch}.mp3';
 
     final response = await _dio.post(
       'https://api.elevenlabs.io/v1/text-to-speech/$voiceId',
@@ -32,12 +33,13 @@ class AudioGenerationService {
   }
 
   Future<String?> generateSoundtrack(String prompt) async {
-    if (Env.sunoApiKey.isEmpty) {
-      // Suno partnership not yet active — return null so callers can fall back gracefully
+    if (Env.openRouterKey.isEmpty) return null;
+    try {
+      final service = LyriaService(Env.openRouterKey);
+      final track = await service.generateScore(prompt: prompt);
+      return track.audioUrl;
+    } catch (_) {
       return null;
     }
-    // When partnership access is granted, implement real Suno API call here.
-    // For now, production code does not throw; it signals unavailability.
-    return null;
   }
 }
