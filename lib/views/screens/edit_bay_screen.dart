@@ -24,67 +24,74 @@ class _EditBayScreenState extends State<EditBayScreen> {
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       appBar: AppBar(
-        title: const Text('Edit Bay'),
+        title: const Text('EDIT BAY', style: DripTheme.overline),
         actions: [
           TextButton(
             onPressed: () {},
-            child: const Text('Export', style: TextStyle(color: DripTheme.teal)),
+            child: const Text('EXPORT', style: TextStyle(color: DripTheme.teal, fontWeight: FontWeight.w700, letterSpacing: 1)),
           ),
         ],
       ),
       body: Column(
         children: [
-          // Preview
-          Container(
-            height: 220,
-            margin: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: DripTheme.gunmetal,
-              image: const DecorationImage(
-                image: NetworkImage('https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800'),
-                fit: BoxFit.cover,
-                opacity: 0.7,
-              ),
-            ),
-            child: Stack(
-              children: [
-                const Center(
-                  child: Icon(Icons.play_circle_filled, size: 64, color: Colors.white70),
-                ),
-                Positioned(
-                  right: 12,
-                  bottom: 12,
-                  child: IconButton(
-                    icon: const Icon(Icons.fullscreen, color: Colors.white70),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const VideoPlayerScreen(
-                            videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-                            title: 'Edit Bay Preview',
-                          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(DripTheme.radiusXl),
+              child: SizedBox(
+                height: 240,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1200',
+                      fit: BoxFit.cover,
+                    ),
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0x44000000), Color(0xAA000000)],
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    ),
+                    const Center(
+                      child: Icon(Icons.play_circle_fill, size: 72, color: Colors.white70),
+                    ),
+                    Positioned(
+                      right: 16,
+                      bottom: 16,
+                      child: IconButton(
+                        icon: const Icon(Icons.fullscreen, color: Colors.white),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const VideoPlayerScreen(
+                                videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                                title: 'Edit Bay Preview',
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
 
-          // Timeline
           const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: EdgeInsets.fromLTRB(20, 24, 20, 8),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text('Timeline', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              child: Text('TIMELINE', style: DripTheme.overline),
             ),
           ),
-          const SizedBox(height: 8),
           SizedBox(
-            height: 100,
+            height: 110,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -94,21 +101,24 @@ class _EditBayScreenState extends State<EditBayScreen> {
                 return GestureDetector(
                   onTap: () => setState(() => _selected = i),
                   child: Container(
-                    width: 120,
+                    width: 130,
                     margin: const EdgeInsets.only(right: 10),
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: selected ? DripTheme.gunmetalLight : DripTheme.gunmetal,
-                      borderRadius: BorderRadius.circular(12),
+                      color: selected ? DripTheme.surfaceRaised : DripTheme.surface,
+                      borderRadius: BorderRadius.circular(DripTheme.radiusMd),
                       border: Border.all(
-                        color: selected ? DripTheme.teal : Colors.transparent,
-                        width: 1.5,
+                        color: selected ? DripTheme.teal : DripTheme.hairline.withOpacity(0.5),
+                        width: selected ? 1.5 : 1,
                       ),
+                      boxShadow: selected
+                          ? [BoxShadow(color: DripTheme.teal.withOpacity(0.15), blurRadius: 12)]
+                          : null,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_clips[i].name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(_clips[i].name.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.3)),
                         const Spacer(),
                         Text(_clips[i].duration, style: DripTheme.meta),
                       ],
@@ -121,16 +131,18 @@ class _EditBayScreenState extends State<EditBayScreen> {
 
           const Spacer(),
 
-          // Tools
-          Padding(
-            padding: const EdgeInsets.all(16),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: DripTheme.hairline, width: 0.5)),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _ToolButton(icon: Icons.content_cut, label: 'Cut'),
-                _ToolButton(icon: Icons.tune, label: 'Color'),
-                _ToolButton(icon: Icons.speed, label: 'Speed'),
-                _ToolButton(icon: Icons.music_note, label: 'Audio'),
+              children: const [
+                _ToolButton(icon: Icons.content_cut, label: 'CUT'),
+                _ToolButton(icon: Icons.tune, label: 'COLOR'),
+                _ToolButton(icon: Icons.speed, label: 'SPEED'),
+                _ToolButton(icon: Icons.music_note, label: 'AUDIO'),
               ],
             ),
           ),
@@ -155,9 +167,18 @@ class _ToolButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: DripTheme.teal),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 12)),
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: DripTheme.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: DripTheme.hairline),
+          ),
+          child: Icon(icon, color: DripTheme.teal, size: 22),
+        ),
+        const SizedBox(height: 6),
+        Text(label, style: const TextStyle(fontSize: 10, letterSpacing: 1, fontWeight: FontWeight.w600, color: DripTheme.silver)),
       ],
     );
   }
