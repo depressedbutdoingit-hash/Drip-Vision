@@ -23,6 +23,13 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
 
   int _selected = 0;
 
+  void _refreshScore() {
+    ref.invalidate(activeSceneContinuityProvider);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Continuity score refreshed')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final score = ref.watch(activeSceneContinuityProvider);
@@ -80,9 +87,10 @@ class _EditBayScreenState extends ConsumerState<EditBayScreen> {
             ),
           ),
 
-          // Live Continuity Health Card
+          // Live Continuity Health Card with refresh
           ContinuityScoreCard(
             score: score,
+            onRefresh: _refreshScore,
             onFixPressed: score.issues.isNotEmpty
                 ? () {
                     ScaffoldMessenger.of(context).showSnackBar(
