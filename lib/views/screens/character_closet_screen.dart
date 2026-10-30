@@ -226,7 +226,65 @@ class _CharacterClosetScreenState extends ConsumerState<CharacterClosetScreen> {
     );
   }
 
-  void _addOutfit() {
-    // Show dialog to add outfit
+  Future<void> _addOutfit() async {
+    final nameController = TextEditingController();
+    final descController = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: DripTheme.voidBlack,
+        title: const Text('Add Outfit', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Name',
+                labelStyle: TextStyle(color: Colors.white70),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: descController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Description',
+                labelStyle: TextStyle(color: Colors.white70),
+              ),
+              maxLines: 2,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || nameController.text.trim().isEmpty) return;
+
+    final newOutfit = Outfit(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: nameController.text.trim(),
+      description: descController.text.trim(),
+    );
+
+    setState(() {
+      _character = _character.copyWith(
+        closet: [..._character.closet, newOutfit],
+        defaultOutfitId: _character.defaultOutfitId.isEmpty ? newOutfit.id : _character.defaultOutfitId,
+        updatedAt: DateTime.now(),
+      );
+    });
   }
 }
