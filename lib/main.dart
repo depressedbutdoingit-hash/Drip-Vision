@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,29 +10,43 @@ import 'services/crashlytics_service.dart';
 import 'views/screens/auth_gate.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  var firebaseReady = false;
+    FlutterError.onError = (details) {
+      FlutterError.presentError(details);
+      debugPrint('FlutterError: ${details.exceptionAsString()}');
+    };
 
-  try {
-    await Firebase.initializeApp();
-    firebaseReady = true;
-  } catch (error, stackTrace) {
-    debugPrint('DripVision Firebase initialization failed: $error');
-    debugPrintStack(stackTrace: stackTrace);
-  }
-
-  if (firebaseReady) {
     try {
-      await CrashlyticsService.init();
+      await dotenv.load(fileName: 'assets/.env');
+    } catch (error) {
+      debugPrint('DripVision .env load skipped: $error');
+    }
+
+    var firebaseReady = false;
+    try {
+      await Firebase.initializeApp();
+      firebaseReady = true;
     } catch (error, stackTrace) {
-      // Crash reporting must never prevent the app from starting.
-      debugPrint('DripVision Crashlytics initialization failed: $error');
+      debugPrint('DripVision Firebase initialization failed: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
-  }
 
-  runApp(ProviderScope(child: DripVisionApp(firebaseReady: firebaseReady)));
+    if (firebaseReady) {
+      try {
+        await CrashlyticsService.init();
+      } catch (error, stackTrace) {
+        debugPrint('DripVision Crashlytics initialization failed: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
+    }
+
+    runApp(ProviderScope(child: DripVisionApp(firebaseReady: firebaseReady)));
+  }, (error, stack) {
+    debugPrint('Uncaught zone error: $error');
+    debugPrintStack(stackTrace: stack);
+  });
 }
 
 class DripVisionApp extends StatelessWidget {
@@ -39,6 +56,22 @@ class DripVisionApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ErrorWidget.builder = (details) {
+      return Material(
+        color: const Color(0xFF0B0F14),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              'Widget error:\n${details.exceptionAsString()}',
+              style: const TextStyle(color: Colors.white70),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    };
+
     return MaterialApp(
       title: 'DripVision',
       debugShowCheckedModeBanner: false,
@@ -89,7 +122,7 @@ class FirebaseStartupErrorScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 const Text(
-                  'DripVision couldn’t connect',
+                  'DripVision couldn\u2019t connect',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
