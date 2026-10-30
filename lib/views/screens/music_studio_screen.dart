@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/env.dart';
 import '../../core/theme.dart';
+import '../../services/suno_service.dart';
 
 class MusicStudioScreen extends ConsumerStatefulWidget {
   const MusicStudioScreen({super.key});
@@ -13,21 +16,44 @@ class _MusicStudioScreenState extends ConsumerState<MusicStudioScreen> {
   final _prompt = TextEditingController();
   bool _generating = false;
   String _status = 'Ready to generate cinematic score';
+  SunoTrack? _track;
 
   Future<void> _generate() async {
+    final prompt = _prompt.text.trim();
+    if (prompt.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Describe the score first')),
+      );
+      return;
+    }
+
     setState(() {
       _generating = true;
       _status = 'Generating score…';
+      _track = null;
     });
-    await Future.delayed(const Duration(seconds: 3));
-    setState(() {
-      _generating = false;
-      _status = 'Score ready. Continuity locked to scene.';
-    });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Music generated and attached to project')),
+
+    try {
+      final service = SunoService(Env.sunoApiKey);
+      final track = await service.generateForScene(
+        sceneDescription: prompt,
+        sceneMood: 'cinematic',
+        lighting: '',
+        duration: 30,
       );
+      setState(() {
+        _track = track;
+        _status = 'Score ready: ${track.title}';
+      });
+    } catch (e) {
+      setState(() => _status = 'Failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _generating = false);
     }
   }
 
@@ -53,7 +79,12 @@ class _MusicStudioScreenState extends ConsumerState<MusicStudioScreen> {
             TextField(
               controller: _prompt,
               maxLines: 3,
-              decoration: const InputDecoration(hintText: 'Describe the score (e.g. tense neon alley, slow strings)'),
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                hintText: 'Describe the score (e.g. tense neon alley, slow strings)',
+                hintStyle: TextStyle(color: DripTheme.faint),
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -64,6 +95,14 @@ class _MusicStudioScreenState extends ConsumerState<MusicStudioScreen> {
             ),
             const SizedBox(height: 24),
             Text(_status, textAlign: TextAlign.center, style: DripTheme.meta),
+            if (_track != null && _track!.audioUrl.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              SelectableText(
+                _track!.audioUrl,
+                style: const TextStyle(color: DripTheme.teal, fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ],
         ),
       ),
