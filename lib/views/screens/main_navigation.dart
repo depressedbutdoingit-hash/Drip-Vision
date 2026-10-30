@@ -27,18 +27,15 @@ class MainNavigation extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final i = ref.watch(navIndexProvider).clamp(0, 4).toInt();
-    final profile = ref.watch(userProfileProvider).value;
-    final tokens = profile?.tokenBalance ?? 0;
 
     final screens = <Widget>[
-      DripVisionStudioScreen(), // 0 STUDIO
-      StoryPlannerScreen(),     // 1 STORY
-      ExploreDripScreen(),      // 2 EXPLORE
-      MusicStudioScreen(),      // 3 MUSIC
-      LibraryScreen(),          // 4 MY DRIPS
+      const DripVisionStudioScreen(),
+      const StoryPlannerScreen(),
+      const ExploreDripScreen(),
+      const MusicStudioScreen(),
+      const LibraryScreen(),
     ];
 
-    // Explore is full-bleed cinematic feed.
     final hideChrome = i == 2;
 
     return SystemBannerHost(
@@ -52,7 +49,7 @@ class MainNavigation extends ConsumerWidget {
               SafeArea(
                 bottom: false,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 2),
+                  padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
                   child: Row(
                     children: [
                       IconButton(
@@ -60,9 +57,7 @@ class MainNavigation extends ConsumerWidget {
                         onPressed: openDrawer,
                         icon: const Icon(Icons.menu, size: 22, color: DripTheme.chrome),
                       ),
-                      const DripLogo(compact: true, size: 30),
                       const Spacer(),
-                      // Quick Edit Bay
                       IconButton(
                         tooltip: 'Edit Bay',
                         onPressed: () => Navigator.push(
@@ -71,30 +66,12 @@ class MainNavigation extends ConsumerWidget {
                         ),
                         icon: const Icon(Icons.content_cut, size: 20, color: DripTheme.chrome),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: DripTheme.surfaceRaised,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: DripTheme.hairlineStrong),
-                        ),
-                        child: Text(
-                          '$tokens TOK',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                            color: DripTheme.warmWhite,
-                          ),
-                        ),
-                      ),
                       IconButton(
                         onPressed: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const SettingsScreen()),
                         ),
-                        icon: const Icon(Icons.settings_outlined,
-                            size: 20, color: DripTheme.chrome),
+                        icon: const Icon(Icons.settings_outlined, size: 20, color: DripTheme.chrome),
                       ),
                     ],
                   ),
@@ -102,7 +79,7 @@ class MainNavigation extends ConsumerWidget {
               ),
             Expanded(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 220),
                 child: KeyedSubtree(
                   key: ValueKey(i),
                   child: screens[i],
@@ -112,24 +89,53 @@ class MainNavigation extends ConsumerWidget {
           ],
         ),
         bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
-            color: DripTheme.deepBlack,
-            border: Border(top: BorderSide(color: DripTheme.hairline, width: 0.5)),
+          decoration: BoxDecoration(
+            color: DripTheme.deepBlack.withOpacity(0.95),
+            border: const Border(top: BorderSide(color: DripTheme.hairline, width: 0.5)),
           ),
           child: SafeArea(
             top: false,
             child: SizedBox(
-              height: 58,
+              height: 64,
               child: Row(
                 children: [
                   _nav(ref, 0, Icons.movie_creation_outlined, 'STUDIO', i),
                   _nav(ref, 1, Icons.menu_book_outlined, 'STORY', i),
-                  _nav(ref, 2, Icons.explore_outlined, 'EXPLORE', i),
+                  _createButton(context),
                   _nav(ref, 3, Icons.music_note_outlined, 'MUSIC', i),
-                  _nav(ref, 4, Icons.folder_outlined, 'MY DRIPS', i),
+                  _nav(ref, 4, Icons.folder_outlined, 'VAULT', i),
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _createButton(BuildContext context) {
+    return Expanded(
+      child: Center(
+        child: GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const GeneratorScreen()),
+          ),
+          child: Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: DripTheme.teal,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: DripTheme.teal.withOpacity(0.4),
+                  blurRadius: 16,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: const Icon(Icons.auto_awesome, color: Colors.black, size: 26),
           ),
         ),
       ),
@@ -150,16 +156,16 @@ class MainNavigation extends ConsumerWidget {
               color: selected ? DripTheme.cosmicTeal : DripTheme.faint,
               size: 22,
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 4),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 8,
-                letterSpacing: 0.6,
+                fontSize: 9,
+                letterSpacing: 0.8,
                 color: selected ? DripTheme.cosmicTeal : DripTheme.faint,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
           ],
