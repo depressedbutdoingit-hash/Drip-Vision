@@ -9,7 +9,7 @@ import '../services/drip_score_service.dart';
 import '../services/media_action_service.dart';
 import '../services/openrouter_service.dart';
 import '../services/style_dna_service.dart';
-import '../services/suno_service.dart';
+import '../services/lyria_service.dart';
 import '../services/token_service.dart';
 import '../services/video_stitching_service.dart';
 import 'env.dart';
@@ -19,7 +19,7 @@ export 'continuity_providers.dart' show continuityHealthProvider, ContinuityHeal
 
 final mediaActionProvider = Provider<MediaActionService>((ref) => MediaActionService());
 final styleDnaServiceProvider = Provider<StyleDnaService>((ref) => StyleDnaService(Env.openRouterKey));
-final sunoServiceProvider = Provider<SunoService>((ref) => SunoService(Env.openRouterKey));
+final lyriaServiceProvider = Provider<LyriaService>((ref) => LyriaService(Env.openRouterKey));
 final aiDirectorServiceProvider = Provider<AIDirectorService>((ref) => AIDirectorService(Env.openRouterKey));
 final tokenServiceProvider = Provider<TokenService>((ref) => TokenService());
 final openRouterProvider = Provider<OpenRouterService>((ref) => OpenRouterService());
