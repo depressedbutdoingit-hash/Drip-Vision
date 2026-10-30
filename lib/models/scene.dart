@@ -1,4 +1,5 @@
 import 'character.dart';
+import 'character_dna.dart';
 
 class SceneNode {
   final String id;
@@ -12,7 +13,6 @@ class SceneNode {
   final String? cameraMotion;
   final DateTime createdAt;
 
-  // New continuity fields
   final String? locationId;
   final String? locationName;
   final String? locationDescription;
@@ -24,7 +24,6 @@ class SceneNode {
   final Map<String, String> characterOutfits;
   final bool isTransition;
 
-  // SOUND DEPARTMENT
   final String? musicTrackUrl;
   final String? musicTitle;
   final String? ambienceNotes;
@@ -153,6 +152,9 @@ class SceneNode {
             : Character(
                 id: 'unknown',
                 name: 'Unknown',
+                avatarUrl: '',
+                wardrobeDNA: const [],
+                dna: CharacterDNA.fromJson({}),
                 faceReferenceUrls: const [],
                 activeOutfitId: '',
                 closet: const [],

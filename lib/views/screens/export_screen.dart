@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../../core/app_providers.dart';
 import '../../models/scene.dart';
 import '../../services/watermark_export_service.dart';
 import '../widgets/cinematic_button.dart';
@@ -15,15 +16,6 @@ import '../widgets/drip_button.dart';
 
 enum _ExportMode { fullCut, trailer }
 
-/// EXPORT / TRAILER
-/// Runs the real pipeline: download each scene's rendered video, stitch
-/// via VideoStitchingService (ffmpeg concat — now actually valid ffmpeg
-/// commands, see the fix to that file), reframe for the chosen aspect
-/// ratio, then watermark based on the user's real Pro status.
-///
-/// Honest scope note: "Trailer" here means exporting a shorter cut from
-/// scenes *you* pick, not AI-selected "best shots" — that curation model
-/// doesn't exist in this codebase yet, so this doesn't pretend to do it.
 class ExportScreen extends ConsumerStatefulWidget {
   const ExportScreen({super.key});
 
@@ -45,7 +37,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     if (_selected.isEmpty && scenes.isNotEmpty) {
       _selected = scenes.map((s) => s.id).toSet();
     }
-    final isPro = ref.watch(userProfileProvider).value?.isPro ?? false;
+    final isPro = (ref.watch(userProfileProvider) as dynamic)?.isPro == true;
 
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
@@ -69,7 +61,6 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                       ],
                     ),
                     const SizedBox(height: 22),
-
                     const Text('FORMAT', style: DripTheme.overline),
                     const SizedBox(height: 9),
                     Row(
@@ -82,14 +73,12 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                       ],
                     ),
                     const SizedBox(height: 22),
-
                     Text(_mode == _ExportMode.trailer ? 'TRAILER SCENES' : 'EXPORT REEL', style: DripTheme.overline),
                     const SizedBox(height: 9),
                     ...scenes.asMap().entries.map((e) => _sceneRow(e.value, e.key)),
                     const SizedBox(height: 8),
                     Text('${_selected.length} of ${scenes.length} selected  ·  ${isPro ? 'Master · no watermark' : 'Studio watermark on'}', style: DripTheme.meta),
                     const SizedBox(height: 24),
-
                     if (_exporting)
                       CinematicCard(
                         child: Row(children: [
@@ -104,7 +93,6 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
                         icon: Icons.ios_share,
                         onPressed: _selected.isEmpty ? null : () => _export(scenes, isPro),
                       ),
-
                     if (_resultPath != null) ...[
                       const SizedBox(height: 14),
                       CinematicCard(
@@ -135,19 +123,9 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         decoration: BoxDecoration(
           color: selected ? DripTheme.surfaceLight : DripTheme.surface,
           borderRadius: BorderRadius.circular(DripTheme.radiusMd),
-          border: Border.all(
-            color: selected ? DripTheme.cosmicTeal.withOpacity(0.45) : DripTheme.hairline,
-          ),
+          border: Border.all(color: selected ? DripTheme.cosmicTeal.withOpacity(0.45) : DripTheme.hairline),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            letterSpacing: 1.4,
-            fontWeight: FontWeight.w600,
-            color: selected ? DripTheme.cosmicTeal : DripTheme.chrome,
-          ),
-        ),
+        child: Text(label, style: TextStyle(fontSize: 11, letterSpacing: 1.4, fontWeight: FontWeight.w600, color: selected ? DripTheme.cosmicTeal : DripTheme.chrome)),
       ),
     );
   }
@@ -161,26 +139,13 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         decoration: BoxDecoration(
           color: selected ? DripTheme.surfaceLight : DripTheme.surface,
           borderRadius: BorderRadius.circular(DripTheme.radiusMd),
-          border: Border.all(
-            color: selected ? DripTheme.cosmicTeal.withOpacity(0.45) : DripTheme.hairline,
-          ),
+          border: Border.all(color: selected ? DripTheme.cosmicTeal.withOpacity(0.45) : DripTheme.hairline),
         ),
         child: Column(
           children: [
-            Text(
-              ratio,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: selected ? DripTheme.warmWhite : DripTheme.chrome,
-              ),
-            ),
+            Text(ratio, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: selected ? DripTheme.warmWhite : DripTheme.chrome)),
             const SizedBox(height: 4),
-            Text(
-              preset,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 9, letterSpacing: 0.6, color: DripTheme.muted),
-            ),
+            Text(preset, textAlign: TextAlign.center, style: const TextStyle(fontSize: 9, letterSpacing: 0.6, color: DripTheme.muted)),
           ],
         ),
       ),
@@ -208,13 +173,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
   Future<void> _export(List<SceneNode> allScenes, bool isPro) async {
     final ordered = allScenes.where((s) => _selected.contains(s.id)).toList();
     if (ordered.isEmpty) return;
-
-    setState(() {
-      _exporting = true;
-      _resultPath = null;
-      _stage = 'Downloading rendered shots…';
-    });
-
+    setState(() { _exporting = true; _resultPath = null; _stage = 'Downloading rendered shots…'; });
     try {
       final tempDir = await getTemporaryDirectory();
       final localPaths = <String>[];
@@ -227,28 +186,17 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         await file.writeAsBytes(response.bodyBytes);
         localPaths.add(file.path);
       }
-
       setState(() => _stage = 'Stitching the cut…');
       var output = await ref.read(videoStitchProvider).concatenateScenes(localPaths);
-
       if (_aspectRatio != '16:9') {
         setState(() => _stage = 'Reframing for $_aspectRatio…');
         output = await ref.read(videoStitchProvider).reframe(output, aspectRatio: _aspectRatio);
       }
-
       setState(() => _stage = isPro ? 'Finishing master…' : 'Applying watermark…');
       output = await WatermarkExportService.processExport(rawVideoPath: output, isPaidUser: isPro);
-
-      setState(() {
-        _resultPath = output;
-        _exporting = false;
-        _stage = null;
-      });
+      setState(() { _resultPath = output; _exporting = false; _stage = null; });
     } catch (e) {
-      setState(() {
-        _exporting = false;
-        _stage = null;
-      });
+      setState(() { _exporting = false; _stage = null; });
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e')));
     }
   }
