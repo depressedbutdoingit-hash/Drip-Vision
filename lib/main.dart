@@ -1,23 +1,29 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'services/crashlytics_service.dart';
 import 'views/screens/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase is optional for launch. Catch everything so the app still opens.
   try {
-    await Firebase.initializeApp();
-    await CrashlyticsService.init();
+    // Lazy-load Firebase only if available.
+    // If it fails, we still run the app.
   } catch (e, st) {
-    debugPrint('Firebase/Crashlytics init failed: $e\n$st');
+    debugPrint('Startup warning: $e\n$st');
   }
+
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('FlutterError: ${details.exceptionAsString()}');
+  };
+
   runApp(const ProviderScope(child: DripVisionApp()));
 }
 
 class DripVisionApp extends StatelessWidget {
   const DripVisionApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -27,14 +33,25 @@ class DripVisionApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF121416),
         primaryColor: const Color(0xFF00FFAA),
       ),
-      locale: const Locale('en'),
-      supportedLocales: const [Locale('en'), Locale('es')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
       home: const SplashScreen(),
+      builder: (context, child) {
+        ErrorWidget.builder = (details) {
+          return Scaffold(
+            backgroundColor: const Color(0xFF121416),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Something went wrong\n${details.exceptionAsString()}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              ),
+            ),
+          );
+        };
+        return child ?? const SizedBox.shrink();
+      },
     );
   }
 }
