@@ -7,20 +7,17 @@ import 'views/screens/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   try {
     await Firebase.initializeApp();
     await CrashlyticsService.init();
   } catch (e, st) {
     debugPrint('Firebase/Crashlytics init failed: $e\n$st');
   }
-
   runApp(const ProviderScope(child: DripVisionApp()));
 }
 
 class DripVisionApp extends StatelessWidget {
   const DripVisionApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -29,10 +26,6 @@ class DripVisionApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF121416),
         primaryColor: const Color(0xFF00FFAA),
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Colors.white),
-          bodyMedium: TextStyle(color: Colors.white70),
-        ),
       ),
       locale: const Locale('en'),
       supportedLocales: const [Locale('en'), Locale('es')],
