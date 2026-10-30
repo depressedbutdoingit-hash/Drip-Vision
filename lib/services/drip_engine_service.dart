@@ -11,14 +11,8 @@ class DripEngineException implements Exception {
   String toString() => message;
 }
 
-/// Generates videos through OpenRouter's unified video API.
-/// Uses only the OPENROUTER_KEY so no separate Fal key is required.
 class DripEngineService {
   final Dio _dio;
-
-  /// Default model — strong quality and good image-to-video support.
-  /// Other good options: 'bytedance/seedance-2.0', 'google/veo-3.1-lite',
-  /// 'alibaba/wan-2.6', 'kwaivgi/kling-v3.0-std'
   static const String defaultModel = 'alibaba/wan-2.7';
 
   DripEngineService()
@@ -48,26 +42,21 @@ class DripEngineService {
   }) async {
     model ??= AiTiers.videoModelId(tier);
     if (Env.openRouterKey.isEmpty) {
-      throw DripEngineException(
-        'OPENROUTER_KEY is missing. Add it to your .env file.',
-      );
+      throw DripEngineException('OPENROUTER_KEY is missing. Add it to your .env file.');
     }
 
-    // Prefer selected model, then product fallbacks for this tier.
     final modelCandidates = <String>[
       model!,
       ...AiTiers.videoModelFallbacks(tier).where((m) => m != model),
     ];
 
-    final activeOutfit = character.activeOutfit;
+    final outfitDesc = character.activeOutfit?.description ?? 'default outfit';
     final fullPrompt =
-        '${character.name}, wearing ${activeOutfit.description}, $enhancedPrompt'
+        '${character.name}, wearing $outfitDesc, $enhancedPrompt'
         '${cameraMotion != null ? '. Camera motion: $cameraMotion' : ''}';
 
-    // Build frame_images for continuity (previous last frame becomes first frame)
     final List<Map<String, dynamic>> frameImages = [];
-    final previousFrame = previousScene?.generatedLastFrameUrl ??
-        previousScene?.outputVideoUrl;
+    final previousFrame = previousScene?.generatedLastFrameUrl ?? previousScene?.outputVideoUrl;
     if (previousFrame != null && previousFrame.startsWith('http')) {
       frameImages.add({
         'type': 'image_url',
@@ -76,15 +65,11 @@ class DripEngineService {
       });
     }
 
-    // Character face as style/identity reference when available
     final List<Map<String, dynamic>> inputReferences = [];
     if (character.faceReferenceUrls.isNotEmpty) {
       final faceUrl = character.faceReferenceUrls.first;
       if (faceUrl.startsWith('http')) {
-        inputReferences.add({
-          'type': 'image_url',
-          'image_url': {'url': faceUrl},
-        });
+        inputReferences.add({'type': 'image_url', 'image_url': {'url': faceUrl}});
       }
     }
 
@@ -105,35 +90,21 @@ class DripEngineService {
       payload['model'] = candidate;
       try {
         onProgress?.call(0.05 + (i * 0.02));
-
         final submitResponse = await _dio.post('videos', data: payload);
         final job = submitResponse.data as Map<String, dynamic>;
         final jobId = job['id'] as String?;
         final pollingUrl = job['polling_url'] as String?;
-
-        if (jobId == null) {
-          throw DripEngineException('OpenRouter did not return a job id.');
-        }
-
+        if (jobId == null) throw DripEngineException('OpenRouter did not return a job id.');
         onProgress?.call(0.15);
-
-        final completed = await _pollUntilDone(
-          jobId: jobId,
-          pollingUrl: pollingUrl,
-          onProgress: onProgress,
-        );
-
+        final completed = await _pollUntilDone(jobId: jobId, pollingUrl: pollingUrl, onProgress: onProgress);
         final unsignedUrls = completed['unsigned_urls'] as List?;
         String? videoUrl;
         if (unsignedUrls != null && unsignedUrls.isNotEmpty) {
           videoUrl = unsignedUrls.first as String;
         } else {
-          videoUrl =
-              'https://openrouter.ai/api/v1/videos/$jobId/content?index=0';
+          videoUrl = 'https://openrouter.ai/api/v1/videos/$jobId/content?index=0';
         }
-
         onProgress?.call(1.0);
-
         return SceneNode(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           sequenceIndex: (previousScene?.sequenceIndex ?? -1) + 1,
@@ -147,24 +118,15 @@ class DripEngineService {
         );
       } on DioException catch (e) {
         final detail = e.response?.data;
-        final message = detail is Map
-            ? (detail['error']?['message'] ?? detail['message'] ?? e.message)
-            : e.message;
+        final message = detail is Map ? (detail['error']?['message'] ?? detail['message'] ?? e.message) : e.message;
         lastError = '[$candidate] $message';
-        // Try next fallback
         continue;
       } catch (e) {
-        if (e is DripEngineException) {
-          lastError = '[$candidate] ${e.message}';
-          continue;
-        }
         lastError = '[$candidate] $e';
         continue;
       }
     }
-    throw DripEngineException(
-      'Generation failed after ${modelCandidates.length} model(s): $lastError',
-    );
+    throw DripEngineException('Generation failed after ${modelCandidates.length} model(s): $lastError');
   }
 
   Future<Map<String, dynamic>> _pollUntilDone({
@@ -174,29 +136,19 @@ class DripEngineService {
   }) async {
     const maxAttempts = 60;
     const interval = Duration(seconds: 10);
-
     for (var attempt = 1; attempt <= maxAttempts; attempt++) {
       await Future.delayed(interval);
-
       final url = pollingUrl ?? 'videos/$jobId';
       final response = await _dio.get(url);
       final data = response.data as Map<String, dynamic>;
       final status = data['status'] as String? ?? 'unknown';
-
       final progress = 0.15 + (attempt / maxAttempts) * 0.80;
       onProgress?.call(progress.clamp(0.0, 0.95));
-
-      if (status == 'completed') {
-        return data;
-      }
+      if (status == 'completed') return data;
       if (status == 'failed' || status == 'cancelled' || status == 'expired') {
-        final error = data['error'] ?? status;
-        throw DripEngineException('Video job $status: $error');
+        throw DripEngineException('Video job $status: ${data['error'] ?? status}');
       }
     }
-
-    throw DripEngineException(
-      'Video generation timed out after ${maxAttempts * interval.inSeconds} seconds.',
-    );
+    throw DripEngineException('Video generation timed out after ${maxAttempts * interval.inSeconds} seconds.');
   }
 }
