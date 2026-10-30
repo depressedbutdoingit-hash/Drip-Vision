@@ -84,9 +84,10 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           fetch-depth: 0
 
-      - name: Write real main.dart and providers
+      - name: Write real main, providers, hub, and ad generator
         run: |
           python3 << 'PY'
+          # Real main.dart
           main = r'''import 'package:firebase_core/firebase_core.dart';
           import 'package:flutter/material.dart';
           import 'package:flutter_localizations/flutter_localizations.dart';
@@ -137,6 +138,7 @@ jobs:
           '''
           open('lib/main.dart', 'w').write(main)
 
+          # Real providers
           app = r'''import 'package:flutter_riverpod/flutter_riverpod.dart';
           import '../models/style_dna.dart';
           import '../models/scene.dart';
@@ -144,7 +146,6 @@ jobs:
 
           class StyleListNotifier extends StateNotifier<List<StyleDna>> {
             StyleListNotifier() : super([]);
-
             void addStyle(StyleDna style) => state = [...state, style];
             void updateStyle(StyleDna style) {
               state = [for (final s in state) if (s.id == style.id) style else s];
@@ -167,7 +168,6 @@ jobs:
 
           class SceneListNotifier extends StateNotifier<List<SceneNode>> {
             SceneListNotifier() : super([]);
-
             void addScene(SceneNode scene) => state = [...state, scene];
             void updateScene(SceneNode scene) {
               state = [for (final s in state) if (s.id == scene.id) scene else s];
@@ -213,6 +213,7 @@ jobs:
           '''
           open('lib/core/app_providers.dart', 'w').write(app)
 
+          # Auth provider
           auth = r'''import 'package:flutter_riverpod/flutter_riverpod.dart';
           import 'package:firebase_auth/firebase_auth.dart';
           import '../services/auth_service.dart';
@@ -222,15 +223,249 @@ jobs:
           });
           '''
           open('lib/core/auth_providers.dart', 'w').write(auth)
-          print('Wrote real files')
+
+          # Simple hub so Ad Generator is reachable
+          hub = r'''import 'package:flutter/material.dart';
+          import 'auth_screen.dart';
+          import 'ad_generator_screen.dart';
+
+          class AppHubScreen extends StatelessWidget {
+            const AppHubScreen({super.key});
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                backgroundColor: const Color(0xFF121416),
+                body: SafeArea(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'DRIPVISION',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 6,
+                              color: Color(0xFF00FFAA),
+                            ),
+                          ),
+                          const SizedBox(height: 48),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF00FFAA),
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const AuthScreen()),
+                              ),
+                              child: const Text('ENTER STUDIO'),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFF00FFAA)),
+                                foregroundColor: const Color(0xFF00FFAA),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const AdGeneratorScreen()),
+                              ),
+                              child: const Text('AD GENERATOR'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+          }
+          '''
+          open('lib/views/screens/app_hub_screen.dart', 'w').write(hub)
+
+          # Ad Generator screen
+          ad = r'''import 'package:flutter/material.dart';
+          import 'package:flutter_riverpod/flutter_riverpod.dart';
+          import '../../core/providers.dart';
+
+          class AdGeneratorScreen extends ConsumerStatefulWidget {
+            const AdGeneratorScreen({super.key});
+
+            @override
+            ConsumerState<AdGeneratorScreen> createState() => _AdGeneratorScreenState();
+          }
+
+          class _AdGeneratorScreenState extends ConsumerState<AdGeneratorScreen> {
+            final _productController = TextEditingController();
+            final _benefitController = TextEditingController();
+            final _audienceController = TextEditingController();
+            bool _loading = false;
+            String? _result;
+            String? _error;
+
+            @override
+            void dispose() {
+              _productController.dispose();
+              _benefitController.dispose();
+              _audienceController.dispose();
+              super.dispose();
+            }
+
+            Future<void> _generate() async {
+              final product = _productController.text.trim();
+              final benefit = _benefitController.text.trim();
+              final audience = _audienceController.text.trim();
+              if (product.isEmpty) return;
+
+              setState(() {
+                _loading = true;
+                _error = null;
+                _result = null;
+              });
+
+              try {
+                final openRouter = ref.read(openRouterProvider);
+                final prompt = '''
+          Create a short, high-converting ad script (15-30 seconds) for:
+          Product: $product
+          Key benefit: ${benefit.isEmpty ? 'best in class' : benefit}
+          Target audience: ${audience.isEmpty ? 'general consumers' : audience}
+
+          Include:
+          - Hook (first 3 seconds)
+          - Problem
+          - Solution / product demo
+          - Call to action
+          Keep it punchy and visual.
+          ''';
+
+                final script = await openRouter.generateText(prompt);
+                setState(() => _result = script);
+              } catch (e) {
+                setState(() => _error = e.toString());
+              } finally {
+                if (mounted) setState(() => _loading = false);
+              }
+            }
+
+            @override
+            Widget build(BuildContext context) {
+              return Scaffold(
+                backgroundColor: const Color(0xFF121416),
+                appBar: AppBar(
+                  title: const Text('AD GENERATOR'),
+                  backgroundColor: Colors.transparent,
+                ),
+                body: SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Product', style: TextStyle(color: Colors.white70)),
+                        TextField(
+                          controller: _productController,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: const InputDecoration(hintText: 'e.g. Noise-cancelling earbuds'),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('Key benefit', style: TextStyle(color: Colors.white70)),
+                        TextField(
+                          controller: _benefitController,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: const InputDecoration(hintText: 'e.g. 40-hour battery'),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('Target audience', style: TextStyle(color: Colors.white70)),
+                        TextField(
+                          controller: _audienceController,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: const InputDecoration(hintText: 'e.g. young professionals'),
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF00FFAA),
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            onPressed: _loading ? null : _generate,
+                            child: _loading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Text('GENERATE AD SCRIPT'),
+                          ),
+                        ),
+                        if (_error != null) ...[
+                          const SizedBox(height: 16),
+                          Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+                        ],
+                        if (_result != null) ...[
+                          const SizedBox(height: 24),
+                          const Text('Generated Script', style: TextStyle(color: Color(0xFF00FFAA), fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1A1F24),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(_result!, style: const TextStyle(color: Colors.white, height: 1.4)),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+          }
+          '''
+          open('lib/views/screens/ad_generator_screen.dart', 'w').write(ad)
+
+          # Update splash to go to hub instead of auth
+          import pathlib
+          splash_path = pathlib.Path('lib/views/screens/splash_screen.dart')
+          if splash_path.exists():
+              content = splash_path.read_text()
+              content = content.replace(
+                  "pageBuilder: (_, __, ___) => const AuthScreen(),",
+                  "pageBuilder: (_, __, ___) => const AppHubScreen(),"
+              )
+              if "import 'app_hub_screen.dart';" not in content:
+                  content = content.replace(
+                      "import 'auth_screen.dart';",
+                      "import 'auth_screen.dart';\nimport 'app_hub_screen.dart';"
+                  )
+              splash_path.write_text(content)
+              print('Updated splash to open hub')
+          print('Wrote ad generator + hub')
           PY
 
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/main.dart lib/core/app_providers.dart lib/core/auth_providers.dart
+          git add -A
           git status
-          git commit -m "fix: restore real main.dart + real Notifier providers + fix wrangler deploy" || echo "Nothing to commit"
+          git commit -m "fix: real app entry + Notifiers + Ad Generator screen" || echo "Nothing to commit"
           git push origin HEAD:main
           echo "Push complete"
