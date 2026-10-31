@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers.dart';
 import '../../models/character.dart';
-import '../../models/character_dna.dart';
+import '../../services/continuity_service.dart';
 import 'video_player_screen.dart';
 
 class CreateDripScreen extends ConsumerStatefulWidget {
