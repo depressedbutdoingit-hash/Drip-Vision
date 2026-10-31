@@ -29,9 +29,17 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
     'Alien',
     'Animal',
     'Cartoon',
+    'Anime',
     'Barbie',
     'Claymation',
     'Pixel',
+    '3D Render',
+    'Oil Painting',
+    'Noir',
+    'Cyberpunk',
+    'Watercolor',
+    'Sketch',
+    'Miniature',
   ];
 
   static const _modeStyles = {
@@ -39,9 +47,17 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
     'Alien': 'alien creature, otherworldly features, sci-fi',
     'Animal': 'animal subject, realistic fur or scales, wildlife',
     'Cartoon': 'cartoon style, bold lines, stylized',
+    'Anime': 'anime style, clean lines, expressive eyes',
     'Barbie': 'plastic realistic Barbie doll, glossy skin, doll-like',
     'Claymation': 'claymation, stop-motion clay, handmade textures',
     'Pixel': 'pixel art, 16-bit style, crisp pixels',
+    '3D Render': '3D CGI render, Pixar-like, polished surfaces',
+    'Oil Painting': 'oil painting, fine art, visible brushstrokes',
+    'Noir': 'film noir, black and white, high contrast, dramatic shadows',
+    'Cyberpunk': 'cyberpunk, neon lights, futuristic city',
+    'Watercolor': 'watercolor painting, soft edges, painted',
+    'Sketch': 'pencil sketch, concept art, ink lines',
+    'Miniature': 'miniature tilt-shift, toy scale, shallow depth of field',
   };
 
   @override
