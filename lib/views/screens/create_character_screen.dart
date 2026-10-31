@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:gal/gal.dart';
+import 'dart:io';
 import '../../models/character.dart';
 import '../../services/continuity_service.dart';
 import 'character_dna_screen.dart';
@@ -17,6 +20,7 @@ class _CreateCharacterScreenState extends State<CreateCharacterScreen> {
   final _eyes = TextEditingController();
   final _voice = TextEditingController();
   final _outfit = TextEditingController();
+  String? _referencePath;
 
   @override
   void dispose() {
@@ -29,18 +33,50 @@ class _CreateCharacterScreenState extends State<CreateCharacterScreen> {
     super.dispose();
   }
 
+  Future<void> _uploadReference() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked != null) {
+      setState(() => _referencePath = picked.path);
+    }
+  }
+
+  Future<void> _downloadReference() async {
+    if (_referencePath == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No reference image to download')),
+      );
+      return;
+    }
+    try {
+      await Gal.putImage(_referencePath!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Saved to gallery')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not save: $e')),
+        );
+      }
+    }
+  }
+
   void _save() {
     final name = _name.text.trim();
     if (name.isEmpty) return;
     final character = Character(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
-      avatarUrl: '',
+      avatarUrl: _referencePath ?? '',
       role: _role.text.trim().isEmpty ? 'Lead' : _role.text.trim(),
       hairColor: _hair.text.trim().isEmpty ? 'Unknown' : _hair.text.trim(),
       eyeColor: _eyes.text.trim().isEmpty ? 'Unknown' : _eyes.text.trim(),
       voiceDescription: _voice.text.trim().isEmpty ? 'Neutral' : _voice.text.trim(),
       wardrobeDNA: [_outfit.text.trim().isEmpty ? 'default' : _outfit.text.trim()],
+      faceReferenceUrls: _referencePath != null ? [_referencePath!] : const [],
       dna: CharacterDNA.empty(),
     );
     Navigator.pushReplacement(
@@ -61,6 +97,58 @@ class _CreateCharacterScreenState extends State<CreateCharacterScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (_referencePath != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.file(
+                File(_referencePath!),
+                height: 160,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            )
+          else
+            Container(
+              height: 120,
+              decoration: BoxDecoration(
+                color: const Color(0xFF12161A),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text('No reference image', style: TextStyle(color: Colors.white38)),
+              ),
+            ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF00E5C0)),
+                    foregroundColor: const Color(0xFF00E5C0),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  ),
+                  onPressed: _uploadReference,
+                  icon: const Icon(Icons.upload, size: 18),
+                  label: const Text('Upload Reference'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white.withOpacity(0.3)),
+                    foregroundColor: Colors.white70,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  ),
+                  onPressed: _downloadReference,
+                  icon: const Icon(Icons.download, size: 18),
+                  label: const Text('Download'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
           _field(_name, 'Name'),
           _field(_role, 'Role'),
           _field(_hair, 'Hair'),
