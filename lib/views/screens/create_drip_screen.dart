@@ -16,30 +16,21 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
   final _prompt = TextEditingController(
     text: 'Isabella in a luxury dress, rooftop at sunset, cinematic shot',
   );
+  final _avoid = TextEditingController(text: 'extra limbs, distorted face, text, watermark, blurry');
   String _style = 'Cinema';
   String _res = '4K';
   String _dur = '15s';
   String _mode = 'Realistic';
+  String _shot = 'Medium shot';
+  String _camera = 'Slow push-in';
   bool _loading = false;
   String? _status;
   String? _error;
 
   static const _modes = [
-    'Realistic',
-    'Alien',
-    'Animal',
-    'Cartoon',
-    'Anime',
-    'Barbie',
-    'Claymation',
-    'Pixel',
-    '3D Render',
-    'Oil Painting',
-    'Noir',
-    'Cyberpunk',
-    'Watercolor',
-    'Sketch',
-    'Miniature',
+    'Realistic', 'Alien', 'Animal', 'Cartoon', 'Anime', 'Barbie',
+    'Claymation', 'Pixel', '3D Render', 'Oil Painting', 'Noir',
+    'Cyberpunk', 'Watercolor', 'Sketch', 'Miniature',
   ];
 
   static const _modeStyles = {
@@ -60,9 +51,13 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
     'Miniature': 'miniature tilt-shift, toy scale, shallow depth of field',
   };
 
+  static const _shots = ['Close-up', 'Medium shot', 'Wide shot', 'Over-the-shoulder'];
+  static const _cameras = ['Slow push-in', 'Orbit', 'Handheld', 'Static', 'Crane up'];
+
   @override
   void dispose() {
     _prompt.dispose();
+    _avoid.dispose();
     super.dispose();
   }
 
@@ -96,12 +91,23 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
       final engine = ref.read(aiGenerationServiceProvider).engine;
       final character = _isabella();
       final styleLine = _modeStyles[_mode] ?? '';
+      final avoid = _avoid.text.trim();
+      final enhanced = [
+        text,
+        _shot,
+        _style,
+        _res,
+        'Subject mode: $_mode',
+        styleLine,
+        if (avoid.isNotEmpty) 'Avoid: $avoid',
+      ].join('. ');
+
       final scene = await engine.generateNextScene(
         previousScene: null,
         rawPrompt: text,
-        enhancedPrompt: '$text, $_style, $_res. Subject mode: $_mode. $styleLine',
+        enhancedPrompt: enhanced,
         character: character,
-        cameraMotion: 'slow push-in',
+        cameraMotion: _camera,
         onProgress: (p) {
           if (mounted) setState(() => _status = 'Generating... ${(p * 100).toInt()}%');
         },
@@ -141,13 +147,8 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF12161A),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: TextField(
+          _box(
+            TextField(
               controller: _prompt,
               maxLines: 3,
               style: const TextStyle(color: Colors.white),
@@ -161,32 +162,15 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
           const SizedBox(height: 16),
           const Text('Subject mode', style: TextStyle(color: Colors.white70, fontSize: 13)),
           const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _modes.map((m) {
-              final selected = m == _mode;
-              return GestureDetector(
-                onTap: () => setState(() => _mode = m),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: selected ? const Color(0xFF00E5C0) : const Color(0xFF12161A),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: selected ? const Color(0xFF00E5C0) : Colors.white12),
-                  ),
-                  child: Text(
-                    m,
-                    style: TextStyle(
-                      color: selected ? Colors.black : Colors.white70,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
+          _wrap(_modes, _mode, (v) => setState(() => _mode = v)),
+          const SizedBox(height: 16),
+          const Text('Shot type', style: TextStyle(color: Colors.white70, fontSize: 13)),
+          const SizedBox(height: 8),
+          _wrap(_shots, _shot, (v) => setState(() => _shot = v)),
+          const SizedBox(height: 16),
+          const Text('Camera', style: TextStyle(color: Colors.white70, fontSize: 13)),
+          const SizedBox(height: 8),
+          _wrap(_cameras, _camera, (v) => setState(() => _camera = v)),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -196,6 +180,21 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
               const SizedBox(width: 8),
               _chip('15s', _dur, (v) => setState(() => _dur = v), Icons.timer_outlined),
             ],
+          ),
+          const SizedBox(height: 16),
+          const Text('Avoid', style: TextStyle(color: Colors.white70, fontSize: 13)),
+          const SizedBox(height: 8),
+          _box(
+            TextField(
+              controller: _avoid,
+              maxLines: 2,
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                hintText: 'What to avoid...',
+                hintStyle: TextStyle(color: Colors.white38),
+              ),
+            ),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -225,6 +224,46 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _box(Widget child) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF12161A),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _wrap(List<String> items, String current, ValueChanged<String> onTap) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: items.map((m) {
+        final selected = m == current;
+        return GestureDetector(
+          onTap: () => onTap(m),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: selected ? const Color(0xFF00E5C0) : const Color(0xFF12161A),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: selected ? const Color(0xFF00E5C0) : Colors.white12),
+            ),
+            child: Text(
+              m,
+              style: TextStyle(
+                color: selected ? Colors.black : Colors.white70,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 
