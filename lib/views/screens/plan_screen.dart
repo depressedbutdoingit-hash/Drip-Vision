@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/theme.dart';
 
 class PlansScreen extends StatelessWidget {
   const PlansScreen({super.key});
 
   Future<void> _openCheckout(String paymentLink) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    final url = Uri.parse(
-      '\( paymentLink?client_reference_id= \){user.uid}&prefilled_email=${Uri.encodeComponent(user.email ?? '')}',
-    );
-
+    final url = Uri.parse(paymentLink);
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
@@ -36,7 +29,7 @@ class PlansScreen extends StatelessWidget {
             name: 'First Take',
             price: '\$19.99 / month',
             tokens: '300 tokens',
-            features: const ['\~10–15 short clips', 'Basic continuity', 'Standard models'],
+            features: const ['~10\u201315 short clips', 'Basic continuity', 'Standard models'],
             onPressed: () => _openCheckout('https://buy.stripe.com/3cI3cw4nodEefi5feR5AQ01'),
           ),
           const SizedBox(height: 16),
@@ -45,7 +38,7 @@ class PlansScreen extends StatelessWidget {
             name: 'Director Mode',
             price: '\$49.99 / month',
             tokens: '1,000 tokens',
-            features: const ['\~30–50 clips', 'Full continuity engine', 'Better models'],
+            features: const ['~30\u201350 clips', 'Full continuity engine', 'Better models'],
             highlighted: true,
             onPressed: () => _openCheckout('https://buy.stripe.com/4gMfZi8DEfMmb1P4Ad5AQ02'),
           ),
@@ -100,7 +93,7 @@ class _PlanCard extends StatelessWidget {
           const SizedBox(height: 12),
           ...features.map((f) => Padding(
             padding: const EdgeInsets.only(bottom: 4),
-            child: Text('• $f', style: DripTheme.body),
+            child: Text('\u2022 $f', style: DripTheme.body),
           )),
           const SizedBox(height: 16),
           SizedBox(
