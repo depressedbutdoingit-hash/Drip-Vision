@@ -85,6 +85,39 @@ class UniverseScreen extends ConsumerWidget {
                         ),
                         Positioned(
                           top: 8,
+                          left: 8,
+                          child: GestureDetector(
+                            onTap: () => ref.read(generationHistoryProvider.notifier).setPublic(scene.id, !scene.isPublic),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: scene.isPublic ? const Color(0xFF00E5C0) : Colors.black54,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    scene.isPublic ? Icons.public : Icons.lock_outline,
+                                    size: 14,
+                                    color: scene.isPublic ? Colors.black : Colors.white70,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    scene.isPublic ? 'Public' : 'Private',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: scene.isPublic ? Colors.black : Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
                           right: 8,
                           child: GestureDetector(
                             onTap: () => ref.read(generationHistoryProvider.notifier).remove(scene.id),
