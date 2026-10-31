@@ -27,6 +27,10 @@ class GenerationHistory extends StateNotifier<List<GeneratedScene>> {
     state = [scene, ...state];
   }
 
+  void remove(String id) {
+    state = state.where((s) => s.id != id).toList();
+  }
+
   void clear() => state = const [];
 }
 
