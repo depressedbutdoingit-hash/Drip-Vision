@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
-import 'auth_screen.dart';
-import 'app_hub_screen.dart';
+import 'studio_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -41,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const AppHubScreen(),
+            pageBuilder: (_, __, ___) => const StudioHomeScreen(),
             transitionsBuilder: (_, animation, __, child) {
               return FadeTransition(opacity: animation, child: child);
             },
