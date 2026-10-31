@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'plan_screen.dart';
 
 class ProfilePremiumScreen extends StatelessWidget {
   const ProfilePremiumScreen({super.key});
@@ -26,13 +27,7 @@ class ProfilePremiumScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Text('Gigi', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white)),
-                        SizedBox(width: 6),
-                        Icon(Icons.workspace_premium, color: Color(0xFF00E5C0), size: 16),
-                      ],
-                    ),
+                    Text('Gigi', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white)),
                     Text('Studio Owner', style: TextStyle(color: Colors.white54)),
                   ],
                 ),
@@ -90,7 +85,10 @@ class ProfilePremiumScreen extends StatelessWidget {
                       foregroundColor: const Color(0xFF00E5C0),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                     ),
-                    onPressed: () {},
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PlansScreen()),
+                    ),
                     child: const Text('Manage Plan'),
                   ),
                 ),
