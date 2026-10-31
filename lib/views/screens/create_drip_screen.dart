@@ -1,23 +1,60 @@
 import 'package:flutter/material.dart';
-import 'generator_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/providers.dart';
 
-class CreateDripScreen extends StatefulWidget {
+class CreateDripScreen extends ConsumerStatefulWidget {
   const CreateDripScreen({super.key});
 
   @override
-  State<CreateDripScreen> createState() => _CreateDripScreenState();
+  ConsumerState<CreateDripScreen> createState() => _CreateDripScreenState();
 }
 
-class _CreateDripScreenState extends State<CreateDripScreen> {
-  final _prompt = TextEditingController(text: 'Isabella in a luxury dress, rooftop at sunset, cinematic shot...');
+class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
+  final _prompt = TextEditingController(
+    text: 'Isabella in a luxury dress, rooftop at sunset, cinematic shot',
+  );
   String _style = 'Cinema';
   String _res = '4K';
   String _dur = '15s';
+  bool _loading = false;
+  String? _result;
+  String? _image;
+  String? _error;
 
   @override
   void dispose() {
     _prompt.dispose();
     super.dispose();
+  }
+
+  Future<void> _generate() async {
+    final text = _prompt.text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+      _result = null;
+      _image = null;
+    });
+    try {
+      final openRouter = ref.read(openRouterProvider);
+      final ai = ref.read(aiGenerationServiceProvider);
+      final script = await openRouter.generateText(
+        'Write a short cinematic scene description for: $text. Style: $_style. Duration: $_dur.',
+      );
+      final image = await ai.generateImage(
+        prompt: '$text, $_style, professional cinematography, $_res',
+        quality: 'standard',
+      );
+      setState(() {
+        _result = script;
+        _image = image;
+      });
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -70,49 +107,38 @@ class _CreateDripScreenState extends State<CreateDripScreen> {
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
               ),
-              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GeneratorScreen())),
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Generate', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+              onPressed: _loading ? null : _generate,
+              icon: _loading
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                  : const Icon(Icons.play_arrow),
+              label: Text(_loading ? 'Generating...' : 'Generate', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
             ),
           ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF12161A),
+          if (_error != null) ...[
+            const SizedBox(height: 16),
+            Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+          ],
+          if (_image != null) ...[
+            const SizedBox(height: 16),
+            ClipRRect(
               borderRadius: BorderRadius.circular(14),
+              child: _image!.startsWith('http')
+                  ? Image.network(_image!, height: 180, width: double.infinity, fit: BoxFit.cover)
+                  : Image.asset(_image!, height: 180, width: double.infinity, fit: BoxFit.cover),
             ),
-            child: const Row(
-              children: [
-                SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00E5C0)),
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Generating your scene...', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-                      SizedBox(height: 2),
-                      Text('This may take 30-60 seconds', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Image.network(
-              'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800',
-              height: 180,
+          ],
+          if (_result != null) ...[
+            const SizedBox(height: 16),
+            Container(
               width: double.infinity,
-              fit: BoxFit.cover,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF12161A),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(_result!, style: const TextStyle(color: Colors.white, height: 1.4)),
             ),
-          ),
+          ],
         ],
       ),
     );
