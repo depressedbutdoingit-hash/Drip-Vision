@@ -30,6 +30,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   Future<void> _initPlayer() async {
+    setState(() {
+      _error = null;
+      _initialized = false;
+    });
     final url = widget.videoUrl.trim();
     if (url.isEmpty || !url.startsWith('http')) {
       setState(() => _error = 'No video URL returned. Generation may still be processing, or the model did not return a playable link.');
@@ -88,6 +92,16 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     const SizedBox(height: 16),
                     Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
                     const SizedBox(height: 16),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: DripTheme.teal,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      ),
+                      onPressed: _initPlayer,
+                      child: const Text('Retry'),
+                    ),
+                    const SizedBox(height: 8),
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Back', style: TextStyle(color: DripTheme.teal)),
