@@ -30,6 +30,32 @@ class DripEngineService {
           ),
         );
 
+  /// Builds a Full DNA block from the Character fields and prepends it to the scene prompt.
+  String buildDnaPrompt(Character character, String scenePrompt, {String? cameraMotion}) {
+    final outfit = character.activeOutfit?.description ??
+        (character.wardrobeDNA.isNotEmpty ? character.wardrobeDNA.first : 'default outfit');
+    final buffer = StringBuffer()
+      ..writeln('Character DNA:')
+      ..writeln('Name: ${character.name}')
+      ..writeln('Role: ${character.role}')
+      ..writeln('Age: ${character.age}')
+      ..writeln('Height: ${character.height}')
+      ..writeln('Build: ${character.build}')
+      ..writeln('Eye color: ${character.eyeColor}')
+      ..writeln('Hair: ${character.hairColor}')
+      ..writeln('Voice: ${character.voiceDescription}')
+      ..writeln('Outfit: $outfit');
+    if (character.defaultStylePrompt.isNotEmpty) {
+      buffer.writeln('Style: ${character.defaultStylePrompt}');
+    }
+    buffer.writeln();
+    buffer.write('Scene: $scenePrompt');
+    if (cameraMotion != null && cameraMotion.isNotEmpty) {
+      buffer.write('. Camera motion: $cameraMotion');
+    }
+    return buffer.toString();
+  }
+
   Future<SceneNode> generateNextScene({
     required SceneNode? previousScene,
     required String rawPrompt,
@@ -50,10 +76,7 @@ class DripEngineService {
       ...AiTiers.videoModelFallbacks(tier).where((m) => m != model),
     ];
 
-    final outfitDesc = character.activeOutfit?.description ?? 'default outfit';
-    final fullPrompt =
-        '${character.name}, wearing $outfitDesc, $enhancedPrompt'
-        '${cameraMotion != null ? '. Camera motion: $cameraMotion' : ''}';
+    final fullPrompt = buildDnaPrompt(character, enhancedPrompt, cameraMotion: cameraMotion);
 
     final List<Map<String, dynamic>> frameImages = [];
     final previousFrame = previousScene?.generatedLastFrameUrl ?? previousScene?.outputVideoUrl;
