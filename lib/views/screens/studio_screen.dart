@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../models/character.dart';
+import '../../services/continuity_service.dart';
 import 'generator_screen.dart';
 import 'music_video_screen.dart';
 import 'ad_generator_screen.dart';
@@ -20,6 +22,54 @@ class StudioHomeScreen extends ConsumerStatefulWidget {
 class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
   int _tab = 0;
   int _nav = 0;
+
+  static final _characters = [
+    Character(
+      id: 'isabella',
+      name: 'Isabella',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+      role: 'Lead Heroine',
+      hairColor: 'Dark brown, wavy',
+      eyeColor: 'Hazel',
+      voiceDescription: 'Confident, warm',
+      wardrobeDNA: const ['luxury black dress', 'leather jacket'],
+      defaultStylePrompt: 'photorealistic, cinematic',
+      dna: CharacterDNA.empty(),
+    ),
+    Character(
+      id: 'marcus',
+      name: 'Marcus',
+      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
+      role: 'Lead',
+      hairColor: 'Short black',
+      eyeColor: 'Brown',
+      voiceDescription: 'Steady',
+      wardrobeDNA: const ['dark coat'],
+      dna: CharacterDNA.empty(),
+    ),
+    Character(
+      id: 'elena',
+      name: 'Elena',
+      avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
+      role: 'Supporting',
+      hairColor: 'Blonde',
+      eyeColor: 'Blue',
+      voiceDescription: 'Soft',
+      wardrobeDNA: const ['white dress'],
+      dna: CharacterDNA.empty(),
+    ),
+    Character(
+      id: 'rex',
+      name: 'Rex',
+      avatarUrl: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=200',
+      role: 'Companion',
+      hairColor: 'Tan',
+      eyeColor: 'Brown',
+      voiceDescription: 'N/A',
+      wardrobeDNA: const ['collar'],
+      dna: CharacterDNA.empty(),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +105,7 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
               const SizedBox(height: 22),
               _section('Your Characters'),
               const SizedBox(height: 10),
-              _characters(),
+              _charactersRow(),
               const SizedBox(height: 22),
               _section('Studio'),
               const SizedBox(height: 10),
@@ -212,62 +262,63 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
   }
 
   Widget _continueCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF12161A),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-            child: Image.network(
-              'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400',
-              width: 110,
-              height: 80,
-              fit: BoxFit.cover,
+    return GestureDetector(
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TimelineScreen())),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF12161A),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+              child: Image.network(
+                'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400',
+                width: 110,
+                height: 80,
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('The Last Goodbye', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                SizedBox(height: 4),
-                Text('2h ago • 00:15', style: TextStyle(color: Colors.white54, fontSize: 12)),
-              ],
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('The Last Goodbye', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  SizedBox(height: 4),
+                  Text('2h ago • 00:15', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TimelineScreen())),
-            icon: const Icon(Icons.play_circle_fill, color: Color(0xFF00E5C0), size: 32),
-          ),
-        ],
+            const Icon(Icons.play_circle_fill, color: Color(0xFF00E5C0), size: 32),
+            const SizedBox(width: 12),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _characters() {
-    final faces = [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
-      'https://images.unsplash.com/photo-1552053831-71594a27632d?w=200',
-    ];
+  Widget _charactersRow() {
     return SizedBox(
       height: 72,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: faces.length,
+        itemCount: _characters.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (_, i) => GestureDetector(
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CharacterDnaScreen())),
-          child: CircleAvatar(
-            radius: 32,
-            backgroundImage: NetworkImage(faces[i]),
-          ),
-        ),
+        itemBuilder: (_, i) {
+          final c = _characters[i];
+          return GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => CharacterDnaScreen(character: c)),
+            ),
+            child: CircleAvatar(
+              radius: 32,
+              backgroundImage: NetworkImage(c.avatarUrl),
+            ),
+          );
+        },
       ),
     );
   }
