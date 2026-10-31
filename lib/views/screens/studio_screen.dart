@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../models/character.dart';
-import '../../services/continuity_service.dart';
+import '../../services/character_list_service.dart';
 import '../../services/generation_history_service.dart';
 import 'generator_screen.dart';
 import 'music_video_screen.dart';
@@ -26,54 +25,6 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
   int _tab = 0;
   int _nav = 0;
 
-  static final _characters = [
-    Character(
-      id: 'isabella',
-      name: 'Isabella',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
-      role: 'Lead Heroine',
-      hairColor: 'Dark brown, wavy',
-      eyeColor: 'Hazel',
-      voiceDescription: 'Confident, warm',
-      wardrobeDNA: const ['luxury black dress', 'leather jacket'],
-      defaultStylePrompt: 'photorealistic, cinematic',
-      dna: CharacterDNA.empty(),
-    ),
-    Character(
-      id: 'marcus',
-      name: 'Marcus',
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
-      role: 'Lead',
-      hairColor: 'Short black',
-      eyeColor: 'Brown',
-      voiceDescription: 'Steady',
-      wardrobeDNA: const ['dark coat'],
-      dna: CharacterDNA.empty(),
-    ),
-    Character(
-      id: 'elena',
-      name: 'Elena',
-      avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
-      role: 'Supporting',
-      hairColor: 'Blonde',
-      eyeColor: 'Blue',
-      voiceDescription: 'Soft',
-      wardrobeDNA: const ['white dress'],
-      dna: CharacterDNA.empty(),
-    ),
-    Character(
-      id: 'rex',
-      name: 'Rex',
-      avatarUrl: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=200',
-      role: 'Companion',
-      hairColor: 'Tan',
-      eyeColor: 'Brown',
-      voiceDescription: 'N/A',
-      wardrobeDNA: const ['collar'],
-      dna: CharacterDNA.empty(),
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final pages = [
@@ -93,6 +44,7 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
 
   Widget _homeBody() {
     final history = ref.watch(generationHistoryProvider);
+    final characters = ref.watch(characterListProvider);
     return Column(
       children: [
         _topBar(),
@@ -121,7 +73,7 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
                 ],
               ),
               const SizedBox(height: 10),
-              _charactersRow(),
+              _charactersRow(characters),
               const SizedBox(height: 22),
               _section('Studio'),
               const SizedBox(height: 10),
@@ -181,6 +133,10 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
                   Text(scene.mode, style: const TextStyle(color: Colors.white54, fontSize: 12)),
                 ],
               ),
+            ),
+            IconButton(
+              onPressed: () => ref.read(generationHistoryProvider.notifier).remove(scene.id),
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
             ),
           ],
         ),
@@ -327,24 +283,35 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
     );
   }
 
-  Widget _charactersRow() {
+  Widget _charactersRow(List characters) {
     return SizedBox(
-      height: 72,
+      height: 80,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: _characters.length,
+        itemCount: characters.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (_, i) {
-          final c = _characters[i];
-          return GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => CharacterDnaScreen(character: c)),
-            ),
-            child: CircleAvatar(
-              radius: 32,
-              backgroundImage: NetworkImage(c.avatarUrl),
-            ),
+          final c = characters[i];
+          return Column(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => CharacterDnaScreen(character: c)),
+                ),
+                onLongPress: () => ref.read(characterListProvider.notifier).remove(c.id),
+                child: CircleAvatar(
+                  radius: 28,
+                  backgroundImage: c.avatarUrl.isNotEmpty ? NetworkImage(c.avatarUrl) : null,
+                  child: c.avatarUrl.isEmpty ? Text(c.name[0]) : null,
+                ),
+              ),
+              const SizedBox(height: 4),
+              GestureDetector(
+                onTap: () => ref.read(characterListProvider.notifier).remove(c.id),
+                child: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 14),
+              ),
+            ],
           );
         },
       ),
