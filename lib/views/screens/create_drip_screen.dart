@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers.dart';
 import '../../models/character.dart';
 import '../../services/continuity_service.dart';
+import '../../services/generation_history_service.dart';
 import 'video_player_screen.dart';
 
 class CreateDripScreen extends ConsumerStatefulWidget {
@@ -113,6 +114,18 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
         },
       );
       if (!mounted) return;
+
+      ref.read(generationHistoryProvider.notifier).add(
+        GeneratedScene(
+          id: scene.id,
+          title: text.length > 40 ? '${text.substring(0, 40)}...' : text,
+          prompt: text,
+          videoUrl: scene.outputVideoUrl,
+          createdAt: DateTime.now(),
+          mode: _mode,
+        ),
+      );
+
       setState(() {
         _loading = false;
         _status = 'Done';
