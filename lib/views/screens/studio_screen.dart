@@ -13,6 +13,13 @@ import 'create_character_screen.dart';
 import 'universe_screen.dart';
 import 'profile_premium_screen.dart';
 import 'video_player_screen.dart';
+import 'edit_bay_screen.dart';
+import 'voice_cloning_screen.dart';
+import 'music_studio_screen.dart';
+import 'export_screen.dart';
+import 'drip_chains_screen.dart';
+import 'character_lab_screen.dart';
+import 'explore_drip_screen.dart';
 
 class StudioHomeScreen extends ConsumerStatefulWidget {
   const StudioHomeScreen({super.key});
@@ -82,6 +89,22 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
               _tool(Icons.movie_outlined, 'Timeline', 'Director\'s cut', const TimelineScreen()),
               const SizedBox(height: 8),
               _tool(Icons.palette_outlined, 'Style DNA', 'Save a look', const StyleDnaScreen()),
+              const SizedBox(height: 8),
+              _tool(Icons.content_cut, 'Edit Bay', 'Cut and arrange', const EditBayScreen()),
+              const SizedBox(height: 8),
+              _tool(Icons.music_note, 'Music Studio', 'Generate score', const MusicStudioScreen()),
+              const SizedBox(height: 8),
+              _tool(Icons.videocam_outlined, 'Music Video', 'Sync to track', const MusicVideoScreen()),
+              const SizedBox(height: 8),
+              _tool(Icons.mic, 'Voice Clone', 'Lock a voice', const VoiceCloningScreen()),
+              const SizedBox(height: 8),
+              _tool(Icons.ios_share, 'Export', 'Master or trailer', const ExportScreen()),
+              const SizedBox(height: 8),
+              _tool(Icons.link, 'Drip Chains', 'Sequence scenes', const DripChainsScreen()),
+              const SizedBox(height: 8),
+              _tool(Icons.science_outlined, 'Character Lab', 'Deep DNA tools', const CharacterLabScreen()),
+              const SizedBox(height: 8),
+              _tool(Icons.explore_outlined, 'Explore', 'Browse drips', const ExploreDripScreen()),
               const SizedBox(height: 24),
             ],
           ),
