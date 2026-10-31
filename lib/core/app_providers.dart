@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/style_dna.dart';
 import '../models/scene.dart';
 import '../models/character.dart';
+import '../services/continuity_service.dart';
 
 class StyleListNotifier extends StateNotifier<List<StyleDna>> {
   StyleListNotifier() : super([]);
@@ -38,7 +39,41 @@ class SceneListNotifier extends StateNotifier<List<SceneNode>> {
 final sceneListProvider = StateNotifierProvider<SceneListNotifier, List<SceneNode>>((ref) => SceneListNotifier());
 
 class CharacterListNotifier extends StateNotifier<List<Character>> {
-  CharacterListNotifier() : super([]);
+  CharacterListNotifier() : super([
+    Character(
+      id: 'isabella',
+      name: 'Isabella',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+      role: 'Lead Heroine',
+      hairColor: 'Dark brown, wavy',
+      eyeColor: 'Hazel',
+      voiceDescription: 'Confident, warm',
+      wardrobeDNA: const ['luxury black dress'],
+      dna: CharacterDNA.empty(),
+    ),
+    Character(
+      id: 'marcus',
+      name: 'Marcus',
+      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
+      role: 'Lead',
+      hairColor: 'Short black',
+      eyeColor: 'Brown',
+      voiceDescription: 'Steady',
+      wardrobeDNA: const ['dark coat'],
+      dna: CharacterDNA.empty(),
+    ),
+    Character(
+      id: 'elena',
+      name: 'Elena',
+      avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
+      role: 'Supporting',
+      hairColor: 'Blonde',
+      eyeColor: 'Blue',
+      voiceDescription: 'Soft',
+      wardrobeDNA: const ['white dress'],
+      dna: CharacterDNA.empty(),
+    ),
+  ]);
   void addCharacter(Character c) => state = [...state, c];
   void updateCharacter(Character c) => state = [for (final x in state) if (x.id == c.id) c else x];
   void removeCharacter(String id) => state = state.where((x) => x.id != id).toList();
