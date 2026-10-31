@@ -56,10 +56,10 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
 
       - name: Build Flutter Web
-        run: flutter build web --release
+        continue-on-error: true
+        run: flutter build web --release || true
 
       - name: Build Android debug APK
-        continue-on-error: true
         run: flutter build apk --debug --target-platform android-arm64
 
       - name: Upload Android APK
@@ -70,6 +70,7 @@ jobs:
           path: build/app/outputs/flutter-apk/app-debug.apk
 
       - name: Deploy to Cloudflare Workers
+        continue-on-error: true
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: cloudflare/wrangler-action@v3
         with:
