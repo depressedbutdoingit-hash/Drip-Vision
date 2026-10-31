@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/character.dart';
 import '../../services/continuity_service.dart';
+import '../../services/generation_history_service.dart';
 import 'generator_screen.dart';
 import 'music_video_screen.dart';
 import 'ad_generator_screen.dart';
@@ -9,8 +10,10 @@ import 'timeline_screen.dart';
 import 'style_dna_screen.dart';
 import 'character_dna_screen.dart';
 import 'create_drip_screen.dart';
+import 'create_character_screen.dart';
 import 'universe_screen.dart';
 import 'profile_premium_screen.dart';
+import 'video_player_screen.dart';
 
 class StudioHomeScreen extends ConsumerStatefulWidget {
   const StudioHomeScreen({super.key});
@@ -89,6 +92,7 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
   }
 
   Widget _homeBody() {
+    final history = ref.watch(generationHistoryProvider);
     return Column(
       children: [
         _topBar(),
@@ -101,9 +105,21 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
               const SizedBox(height: 22),
               _section('Continue Where You Left Off'),
               const SizedBox(height: 10),
-              _continueCard(),
+              if (history.isEmpty)
+                _emptyContinue()
+              else
+                _historyCard(history.first),
               const SizedBox(height: 22),
-              _section('Your Characters'),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Your Characters', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                  TextButton(
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateCharacterScreen())),
+                    child: const Text('New', style: TextStyle(color: Color(0xFF00E5C0))),
+                  ),
+                ],
+              ),
               const SizedBox(height: 10),
               _charactersRow(),
               const SizedBox(height: 22),
@@ -119,6 +135,56 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _emptyContinue() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF12161A),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Text(
+        'No generations yet. Tap New Drip to create your first scene.',
+        style: TextStyle(color: Colors.white54),
+      ),
+    );
+  }
+
+  Widget _historyCard(GeneratedScene scene) {
+    return GestureDetector(
+      onTap: () {
+        if (scene.videoUrl != null && scene.videoUrl!.isNotEmpty) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => VideoPlayerScreen(videoUrl: scene.videoUrl!, title: scene.title)),
+          );
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF12161A),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.play_circle_fill, color: Color(0xFF00E5C0), size: 32),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(scene.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text(scene.mode, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -258,44 +324,6 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
           child: Text('See All', style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.5))),
         ),
       ],
-    );
-  }
-
-  Widget _continueCard() {
-    return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TimelineScreen())),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF12161A),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-              child: Image.network(
-                'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400',
-                width: 110,
-                height: 80,
-                fit: BoxFit.cover,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('The Last Goodbye', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                  SizedBox(height: 4),
-                  Text('2h ago • 00:15', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                ],
-              ),
-            ),
-            const Icon(Icons.play_circle_fill, color: Color(0xFF00E5C0), size: 32),
-            const SizedBox(width: 12),
-          ],
-        ),
-      ),
     );
   }
 
