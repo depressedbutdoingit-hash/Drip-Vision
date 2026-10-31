@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'auth_screen.dart';
 import 'ad_generator_screen.dart';
 import 'studio_screen.dart';
 import 'timeline_screen.dart';
@@ -22,7 +21,7 @@ class AppHubScreen extends StatelessWidget {
               const SizedBox(height: 8),
               const Text('AI Filmmaking Studio', style: TextStyle(color: Colors.white70)),
               const SizedBox(height: 40),
-              _btn(context, 'ENTER STUDIO', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthScreen()))),
+              _btn(context, 'ENTER STUDIO', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DripVisionStudioScreen()))),
               const SizedBox(height: 12),
               _btn(context, 'AD GENERATOR', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdGeneratorScreen())), outline: true),
               const SizedBox(height: 12),
