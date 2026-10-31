@@ -29,6 +29,24 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
     super.dispose();
   }
 
+  Character _isabella() {
+    return Character(
+      id: 'isabella',
+      name: 'Isabella',
+      avatarUrl: '',
+      role: 'Lead Heroine',
+      age: 29,
+      height: "5'8\"",
+      build: 'Athletic',
+      eyeColor: 'Hazel',
+      hairColor: 'Dark brown, wavy',
+      voiceDescription: 'Confident, warm',
+      wardrobeDNA: const ['luxury black dress'],
+      defaultStylePrompt: 'photorealistic, cinematic lighting',
+      dna: CharacterDNA.empty(),
+    );
+  }
+
   Future<void> _generate() async {
     final text = _prompt.text.trim();
     if (text.isEmpty) return;
@@ -39,13 +57,7 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
     });
     try {
       final engine = ref.read(aiGenerationServiceProvider).engine;
-      final character = Character(
-        id: 'isabella',
-        name: 'Isabella',
-        avatarUrl: '',
-        wardrobeDNA: const ['luxury dress'],
-        dna: CharacterDNA.empty(),
-      );
+      final character = _isabella();
       final scene = await engine.generateNextScene(
         previousScene: null,
         rawPrompt: text,
