@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../services/character_list_service.dart';
+import '../../core/app_providers.dart';
 import '../../services/generation_history_service.dart';
 import 'generator_screen.dart';
 import 'music_video_screen.dart';
@@ -322,7 +322,7 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
                   context,
                   MaterialPageRoute(builder: (_) => CharacterDnaScreen(character: c)),
                 ),
-                onLongPress: () => ref.read(characterListProvider.notifier).remove(c.id),
+                onLongPress: () => ref.read(characterListProvider.notifier).removeCharacter(c.id),
                 child: CircleAvatar(
                   radius: 28,
                   backgroundImage: c.avatarUrl.isNotEmpty ? NetworkImage(c.avatarUrl) : null,
@@ -331,7 +331,7 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
               ),
               const SizedBox(height: 4),
               GestureDetector(
-                onTap: () => ref.read(characterListProvider.notifier).remove(c.id),
+                onTap: () => ref.read(characterListProvider.notifier).removeCharacter(c.id),
                 child: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 14),
               ),
             ],
