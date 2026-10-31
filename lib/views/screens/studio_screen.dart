@@ -13,124 +13,163 @@ class StudioHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      backgroundColor: DripTheme.voidBlack,
+      backgroundColor: const Color(0xFF0A0C0E),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
               floating: true,
-              backgroundColor: DripTheme.voidBlack,
-              title: const Text('DRIPVISION', style: TextStyle(letterSpacing: 2, fontWeight: FontWeight.w700)),
+              backgroundColor: const Color(0xFF0A0C0E),
+              elevation: 0,
+              title: const Text(
+                'DRIPVISION',
+                style: TextStyle(
+                  letterSpacing: 4,
+                  fontWeight: FontWeight.w300,
+                  fontSize: 16,
+                  color: Color(0xFFE8E8E8),
+                ),
+              ),
               actions: [
                 Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: CircleAvatar(
-                    radius: 16,
-                    backgroundColor: DripTheme.teal,
-                    child: const Icon(Icons.person, size: 18, color: Colors.black),
+                  padding: const EdgeInsets.only(right: 20),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFF00FFAA).withOpacity(0.4), width: 1),
+                    ),
+                    child: const Icon(Icons.person_outline, size: 16, color: Color(0xFF00FFAA)),
                   ),
                 ),
               ],
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF0B0F14), Color(0xFF1A2A30)],
+                    // Hero
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        height: 240,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF111416),
                         ),
-                        image: const DecorationImage(
-                          image: NetworkImage('https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800'),
-                          fit: BoxFit.cover,
-                          opacity: 0.55,
-                        ),
-                      ),
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            left: 20,
-                            bottom: 20,
-                            right: 20,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Your Universe.\nYour Rules.',
-                                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, height: 1.1, color: Colors.white),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'AI filmmaking that remembers your characters, your worlds, and your story.',
-                                  style: DripTheme.meta.copyWith(color: Colors.white70),
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: DripTheme.teal,
-                                        foregroundColor: Colors.black,
-                                      ),
-                                      onPressed: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (_) => const GeneratorScreen()),
-                                      ),
-                                      child: const Text('New Drip'),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    OutlinedButton(
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(builder: (_) => const MusicVideoScreen()),
-                                        );
-                                      },
-                                      style: OutlinedButton.styleFrom(
-                                        side: const BorderSide(color: DripTheme.teal),
-                                        foregroundColor: DripTheme.teal,
-                                      ),
-                                      child: const Text('Music Video'),
-                                    ),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.network(
+                              'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1200&q=80',
+                              fit: BoxFit.cover,
+                              alignment: Alignment.center,
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.black.withOpacity(0.15),
+                                    Colors.black.withOpacity(0.75),
                                   ],
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  const Text(
+                                    'YOUR UNIVERSE',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      letterSpacing: 3,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF00FFAA),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  const Text(
+                                    'Your Rules.',
+                                    style: TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w300,
+                                      height: 1.05,
+                                      color: Colors.white,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  const Text(
+                                    'Cinematic AI that remembers your characters and worlds.',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      height: 1.35,
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 18),
+                                  Row(
+                                    children: [
+                                      _primaryBtn(context, 'New Drip', const GeneratorScreen()),
+                                      const SizedBox(width: 10),
+                                      _ghostBtn(context, 'Music Video', const MusicVideoScreen()),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 28),
-                    const Text('Recent Projects', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 36),
+                    const Text(
+                      'RECENT',
+                      style: TextStyle(
+                        fontSize: 11,
+                        letterSpacing: 3,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white54,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
                     SizedBox(
-                      height: 140,
+                      height: 148,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: 4,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        separatorBuilder: (_, __) => const SizedBox(width: 14),
                         itemBuilder: (context, i) => _ProjectCard(
                           title: ['The Last Heist', 'Scarlet & Stone', 'Ocean Hearts', 'Broken Crown'][i],
-                          status: ['Rendering...', 'Edited 2h ago', 'Completed', 'In Progress'][i],
-                          image: 'https://picsum.photos/id/${i + 10}/200/300',
+                          status: ['Rendering', 'Edited 2h ago', 'Completed', 'In Progress'][i],
+                          image: 'https://picsum.photos/id/${i + 20}/400/500',
                         ),
                       ),
                     ),
-                    const SizedBox(height: 28),
-                    const Text('Tools', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 12),
-                    _toolTile(context, Icons.campaign_outlined, 'Ad Generator', 'Write a short ad script', const AdGeneratorScreen()),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 36),
+                    const Text(
+                      'STUDIO',
+                      style: TextStyle(
+                        fontSize: 11,
+                        letterSpacing: 3,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white54,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _toolTile(context, Icons.campaign_outlined, 'Ad Generator', 'Short-form commercial scripts', const AdGeneratorScreen()),
+                    const SizedBox(height: 10),
                     _toolTile(context, Icons.movie_outlined, 'Timeline', 'Director\'s cut', const TimelineScreen()),
-                    const SizedBox(height: 8),
-                    _toolTile(context, Icons.palette_outlined, 'Style DNA', 'Save a look', const StyleDnaScreen()),
+                    const SizedBox(height: 10),
+                    _toolTile(context, Icons.palette_outlined, 'Style DNA', 'Save and reuse a look', const StyleDnaScreen()),
                   ],
                 ),
               ),
@@ -141,15 +180,63 @@ class StudioHomeScreen extends ConsumerWidget {
     );
   }
 
+  Widget _primaryBtn(BuildContext context, String label, Widget screen) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF00FFAA),
+        foregroundColor: Colors.black,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.3),
+      ),
+      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => screen)),
+      child: Text(label),
+    );
+  }
+
+  Widget _ghostBtn(BuildContext context, String label, Widget screen) {
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: Color(0xFF00FFAA), width: 1),
+        foregroundColor: const Color(0xFF00FFAA),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, letterSpacing: 0.3),
+      ),
+      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => screen)),
+      child: Text(label),
+    );
+  }
+
   Widget _toolTile(BuildContext context, IconData icon, String title, String subtitle, Widget screen) {
-    return ListTile(
-      tileColor: const Color(0xFF1A1F24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      leading: Icon(icon, color: DripTheme.teal),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 12)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.white38),
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => screen)),
+    return Material(
+      color: const Color(0xFF14181C),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => screen)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Icon(icon, color: const Color(0xFF00FFAA), size: 20),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.white54)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.white24, size: 20),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -164,25 +251,26 @@ class _ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 120,
+      width: 128,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: DripTheme.gunmetal,
+        color: const Color(0xFF14181C),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Image.network(image, height: 80, width: 120, fit: BoxFit.cover),
+            child: Image.network(image, height: 88, width: 128, fit: BoxFit.cover),
           ),
           Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-                Text(status, style: DripTheme.meta.copyWith(fontSize: 11)),
+                Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Text(status, style: const TextStyle(fontSize: 10, color: Colors.white54)),
               ],
             ),
           ),
