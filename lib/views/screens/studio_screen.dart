@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
-import '../../core/providers.dart';
 import 'generator_screen.dart';
 import 'music_video_screen.dart';
-import '../../core/app_providers.dart';
+import 'ad_generator_screen.dart';
+import 'timeline_screen.dart';
+import 'style_dna_screen.dart';
 
 class StudioHomeScreen extends ConsumerWidget {
   const StudioHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final universe = ref.watch(universeProvider);
-
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       body: SafeArea(
@@ -40,7 +39,7 @@ class StudioHomeScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      height: 180,
+                      height: 200,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         gradient: const LinearGradient(
@@ -51,7 +50,7 @@ class StudioHomeScreen extends ConsumerWidget {
                         image: const DecorationImage(
                           image: NetworkImage('https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800'),
                           fit: BoxFit.cover,
-                          opacity: 0.6,
+                          opacity: 0.55,
                         ),
                       ),
                       child: Stack(
@@ -76,6 +75,10 @@ class StudioHomeScreen extends ConsumerWidget {
                                 Row(
                                   children: [
                                     ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: DripTheme.teal,
+                                        foregroundColor: Colors.black,
+                                      ),
                                       onPressed: () => Navigator.push(
                                         context,
                                         MaterialPageRoute(builder: (_) => const GeneratorScreen()),
@@ -120,6 +123,14 @@ class StudioHomeScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 28),
+                    const Text('Tools', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 12),
+                    _toolTile(context, Icons.campaign_outlined, 'Ad Generator', 'Write a short ad script', const AdGeneratorScreen()),
+                    const SizedBox(height: 8),
+                    _toolTile(context, Icons.movie_outlined, 'Timeline', 'Director\'s cut', const TimelineScreen()),
+                    const SizedBox(height: 8),
+                    _toolTile(context, Icons.palette_outlined, 'Style DNA', 'Save a look', const StyleDnaScreen()),
                   ],
                 ),
               ),
@@ -127,6 +138,18 @@ class StudioHomeScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _toolTile(BuildContext context, IconData icon, String title, String subtitle, Widget screen) {
+    return ListTile(
+      tileColor: const Color(0xFF1A1F24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      leading: Icon(icon, color: DripTheme.teal),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+      trailing: const Icon(Icons.chevron_right, color: Colors.white38),
+      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => screen)),
     );
   }
 }
@@ -168,4 +191,5 @@ class _ProjectCard extends StatelessWidget {
     );
   }
 }
+
 typedef DripVisionStudioScreen = StudioHomeScreen;
