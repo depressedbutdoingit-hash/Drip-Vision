@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers.dart';
+import '../../models/character.dart';
+import '../../models/character_dna.dart';
+import 'video_player_screen.dart';
 
 class CreateDripScreen extends ConsumerStatefulWidget {
   const CreateDripScreen({super.key});
@@ -17,8 +20,7 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
   String _res = '4K';
   String _dur = '15s';
   bool _loading = false;
-  String? _result;
-  String? _image;
+  String? _status;
   String? _error;
 
   @override
@@ -33,27 +35,47 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
     setState(() {
       _loading = true;
       _error = null;
-      _result = null;
-      _image = null;
+      _status = 'Submitting to OpenRouter...';
     });
     try {
-      final openRouter = ref.read(openRouterProvider);
-      final ai = ref.read(aiGenerationServiceProvider);
-      final script = await openRouter.generateText(
-        'Write a short cinematic scene description for: $text. Style: $_style. Duration: $_dur.',
+      final engine = ref.read(aiGenerationServiceProvider).engine;
+      final character = Character(
+        id: 'isabella',
+        name: 'Isabella',
+        avatarUrl: '',
+        wardrobeDNA: const ['luxury dress'],
+        dna: CharacterDNA.empty(),
       );
-      final image = await ai.generateImage(
-        prompt: '$text, $_style, professional cinematography, $_res',
-        quality: 'standard',
+      final scene = await engine.generateNextScene(
+        previousScene: null,
+        rawPrompt: text,
+        enhancedPrompt: '$text, $_style, $_res',
+        character: character,
+        cameraMotion: 'slow push-in',
+        onProgress: (p) {
+          if (mounted) setState(() => _status = 'Generating... ${(p * 100).toInt()}%');
+        },
       );
+      if (!mounted) return;
       setState(() {
-        _result = script;
-        _image = image;
+        _loading = false;
+        _status = 'Done';
       });
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => VideoPlayerScreen(
+            videoUrl: scene.outputVideoUrl ?? '',
+            title: 'Generated Scene',
+          ),
+        ),
+      );
     } catch (e) {
-      setState(() => _error = e.toString());
-    } finally {
-      if (mounted) setState(() => _loading = false);
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+        _status = null;
+      });
     }
   }
 
@@ -114,30 +136,13 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
               label: Text(_loading ? 'Generating...' : 'Generate', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
             ),
           ),
+          if (_status != null) ...[
+            const SizedBox(height: 16),
+            Text(_status!, style: const TextStyle(color: Color(0xFF00E5C0))),
+          ],
           if (_error != null) ...[
             const SizedBox(height: 16),
             Text(_error!, style: const TextStyle(color: Colors.redAccent)),
-          ],
-          if (_image != null) ...[
-            const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: _image!.startsWith('http')
-                  ? Image.network(_image!, height: 180, width: double.infinity, fit: BoxFit.cover)
-                  : Image.asset(_image!, height: 180, width: double.infinity, fit: BoxFit.cover),
-            ),
-          ],
-          if (_result != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFF12161A),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Text(_result!, style: const TextStyle(color: Colors.white, height: 1.4)),
-            ),
           ],
         ],
       ),
