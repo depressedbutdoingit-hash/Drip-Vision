@@ -77,7 +77,16 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         children: [
-          const Icon(Icons.movie_filter, color: Color(0xFF00E5C0), size: 22),
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF00E5C0), width: 1.5),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(Icons.water_drop, color: Color(0xFF00E5C0), size: 16),
+          ),
           const SizedBox(width: 8),
           const Text('DripVision', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.white)),
           const Spacer(),
