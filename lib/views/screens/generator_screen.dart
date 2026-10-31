@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
-import '../../services/continuity_service.dart' hide continuityEngineProvider;
-import '../../services/token_service.dart';
-import 'video_player_screen.dart';
 
 class GeneratorScreen extends ConsumerStatefulWidget {
   const GeneratorScreen({super.key});
@@ -18,65 +15,43 @@ class _GeneratorScreenState extends ConsumerState<GeneratorScreen> {
     text: 'Isabella walks into the neon-lit alley, leather jacket catching the rain.',
   );
   bool _isGenerating = false;
-  String _status = 'Ready — Character DNA will be fused and locked';
+  String _status = 'Ready';
+  String? _image;
+  String? _script;
 
   Future<void> _generate() async {
-    const cost = 10;
-
-    final success = await TokenService.deduct(cost);
-    if (!success) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Not enough tokens')),
-        );
-      }
-      return;
-    }
+    final prompt = _promptController.text.trim();
+    if (prompt.isEmpty) return;
 
     setState(() {
       _isGenerating = true;
-      _status = 'Generating with continuity...';
+      _status = 'Generating...';
+      _image = null;
+      _script = null;
     });
 
     try {
-      final generation = ref.read(aiGenerationServiceProvider);
-      final url = await generation.generateVideo(
-        prompt: _promptController.text,
-        cameraMotion: 'slow push-in',
-        quality: 'draft',
-        durationSeconds: 5,
+      final openRouter = ref.read(openRouterProvider);
+      final ai = ref.read(aiGenerationServiceProvider);
+      final script = await openRouter.generateText(
+        'Write a short cinematic scene for: $prompt',
+      );
+      final image = await ai.generateImage(
+        prompt: '$prompt, cinematic, professional lighting',
+        quality: 'standard',
       );
 
       setState(() {
         _isGenerating = false;
-        _status = 'Generation complete';
+        _status = 'Done';
+        _script = script;
+        _image = image;
       });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Scene generated')),
-        );
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => VideoPlayerScreen(
-              videoUrl: url,
-              title: 'Generated Scene',
-            ),
-          ),
-        );
-      }
     } catch (e) {
       setState(() {
         _isGenerating = false;
-        _status = 'Generation failed — try again';
+        _status = 'Failed: $e';
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
     }
   }
 
@@ -85,50 +60,54 @@ class _GeneratorScreenState extends ConsumerState<GeneratorScreen> {
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
       appBar: AppBar(title: const Text('Studio')),
-      body: Padding(
+      body: ListView(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+        children: [
+          if (_image != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: _image!.startsWith('http')
+                  ? Image.network(_image!, height: 200, fit: BoxFit.cover)
+                  : Image.asset(_image!, height: 200, fit: BoxFit.cover),
+            )
+          else
             Container(
               height: 200,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 color: DripTheme.gunmetal,
-                image: const DecorationImage(
-                  image: NetworkImage('https://images.unsplash.com/photo-1485846234645-a62644f84728?w=600'),
-                  fit: BoxFit.cover,
-                  opacity: 0.7,
-                ),
               ),
               child: const Center(
-                child: Icon(Icons.play_circle_outline, size: 64, color: Colors.white70),
+                child: Icon(Icons.movie_outlined, size: 48, color: Colors.white38),
               ),
             ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _promptController,
-              maxLines: 4,
-              style: DripTheme.body,
-              decoration: const InputDecoration(
-                hintText: 'Describe the scene. Characters remember their DNA.',
-              ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: _promptController,
+            maxLines: 4,
+            style: DripTheme.body,
+            decoration: const InputDecoration(
+              hintText: 'Describe the scene.',
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isGenerating ? null : _generate,
-              child: _isGenerating
-                  ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                    )
-                  : const Text('GENERATE WITH CONTINUITY'),
-            ),
-            const SizedBox(height: 24),
-            Text(_status, textAlign: TextAlign.center, style: DripTheme.meta),
+          ),
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: _isGenerating ? null : _generate,
+            child: _isGenerating
+                ? const SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                  )
+                : const Text('GENERATE'),
+          ),
+          const SizedBox(height: 16),
+          Text(_status, textAlign: TextAlign.center, style: DripTheme.meta),
+          if (_script != null) ...[
+            const SizedBox(height: 16),
+            Text(_script!, style: const TextStyle(color: Colors.white, height: 1.4)),
           ],
-        ),
+        ],
       ),
     );
   }
