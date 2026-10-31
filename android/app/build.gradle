@@ -2,8 +2,10 @@ plugins {
     id "com.android.application"
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
-    id "com.google.gms.google-services"
-    id "com.google.firebase.crashlytics"
+    // Firebase plugins disabled temporarily so the app can launch.
+    // Re-enable after google-services.json is confirmed working.
+    // id "com.google.gms.google-services"
+    // id "com.google.firebase.crashlytics"
 }
 
 def localProperties = new Properties()
@@ -52,24 +54,11 @@ android {
         multiDexEnabled true
     }
 
-    signingConfigs {
-        release {
-            keyAlias localProperties.getProperty('keyAlias')
-            keyPassword localProperties.getProperty('keyPassword')
-            storeFile localProperties.getProperty('storeFile') ? file(localProperties.getProperty('storeFile')) : null
-            storePassword localProperties.getProperty('storePassword')
-        }
-    }
-
     buildTypes {
         release {
-            signingConfig signingConfigs.release
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            firebaseCrashlytics {
-                mappingFileUploadEnabled true
-            }
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
         }
         debug {
             signingConfig signingConfigs.debug
