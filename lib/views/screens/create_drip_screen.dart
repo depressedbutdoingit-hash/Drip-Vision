@@ -19,9 +19,30 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
   String _style = 'Cinema';
   String _res = '4K';
   String _dur = '15s';
+  String _mode = 'Realistic';
   bool _loading = false;
   String? _status;
   String? _error;
+
+  static const _modes = [
+    'Realistic',
+    'Alien',
+    'Animal',
+    'Cartoon',
+    'Barbie',
+    'Claymation',
+    'Pixel',
+  ];
+
+  static const _modeStyles = {
+    'Realistic': 'photorealistic human, natural skin, cinematic lighting',
+    'Alien': 'alien creature, otherworldly features, sci-fi',
+    'Animal': 'animal subject, realistic fur or scales, wildlife',
+    'Cartoon': 'cartoon style, bold lines, stylized',
+    'Barbie': 'plastic realistic Barbie doll, glossy skin, doll-like',
+    'Claymation': 'claymation, stop-motion clay, handmade textures',
+    'Pixel': 'pixel art, 16-bit style, crisp pixels',
+  };
 
   @override
   void dispose() {
@@ -42,7 +63,7 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
       hairColor: 'Dark brown, wavy',
       voiceDescription: 'Confident, warm',
       wardrobeDNA: const ['luxury black dress'],
-      defaultStylePrompt: 'photorealistic, cinematic lighting',
+      defaultStylePrompt: _modeStyles[_mode] ?? 'photorealistic',
       dna: CharacterDNA.empty(),
     );
   }
@@ -58,10 +79,11 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
     try {
       final engine = ref.read(aiGenerationServiceProvider).engine;
       final character = _isabella();
+      final styleLine = _modeStyles[_mode] ?? '';
       final scene = await engine.generateNextScene(
         previousScene: null,
         rawPrompt: text,
-        enhancedPrompt: '$text, $_style, $_res',
+        enhancedPrompt: '$text, $_style, $_res. Subject mode: $_mode. $styleLine',
         character: character,
         cameraMotion: 'slow push-in',
         onProgress: (p) {
@@ -119,6 +141,35 @@ class _CreateDripScreenState extends ConsumerState<CreateDripScreen> {
                 hintStyle: TextStyle(color: Colors.white38),
               ),
             ),
+          ),
+          const SizedBox(height: 16),
+          const Text('Subject mode', style: TextStyle(color: Colors.white70, fontSize: 13)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _modes.map((m) {
+              final selected = m == _mode;
+              return GestureDetector(
+                onTap: () => setState(() => _mode = m),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: selected ? const Color(0xFF00E5C0) : const Color(0xFF12161A),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: selected ? const Color(0xFF00E5C0) : Colors.white12),
+                  ),
+                  child: Text(
+                    m,
+                    style: TextStyle(
+                      color: selected ? Colors.black : Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
           const SizedBox(height: 16),
           Row(
