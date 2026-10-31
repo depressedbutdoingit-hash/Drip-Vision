@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../../core/providers.dart';
+import '../../services/generation_history_service.dart';
 import 'video_player_screen.dart';
-import '../../core/app_providers.dart';
 
 class MusicVideoScreen extends ConsumerStatefulWidget {
   const MusicVideoScreen({super.key});
@@ -12,113 +12,138 @@ class MusicVideoScreen extends ConsumerStatefulWidget {
   ConsumerState<MusicVideoScreen> createState() => _MusicVideoScreenState();
 }
 
-class _Section {
-  final String name;
-  final String start;
-  final String end;
-  final String prompt;
-  const _Section({required this.name, required this.start, required this.end, this.prompt = ''});
-}
-
 class _MusicVideoScreenState extends ConsumerState<MusicVideoScreen> {
-  final _directionController = TextEditingController();
+  final _direction = TextEditingController();
   String _style = 'Cinematic Neon';
-  bool _generating = false;
-  int _tab = 0;
+  bool _loading = false;
+  String? _result;
+  String? _error;
 
-  final _styles = const ['Cinematic Neon', 'Film Grain Noir', 'High Fashion', 'Dreamlike', 'Moody Drama'];
+  static const _styles = ['Cinematic Neon', 'Film Grain Noir', 'High Fashion', 'Dreamlike', 'Moody Drama'];
 
-  final List<_Section> _sections = const [
-    _Section(name: 'Intro', start: '0:00', end: '0:12'),
-    _Section(name: 'Verse', start: '0:12', end: '0:28'),
-    _Section(name: 'Chorus', start: '0:28', end: '0:48'),
-    _Section(name: 'Bridge', start: '0:48', end: '1:02'),
-  ];
-
-  Future<void> _generate() async {
-    setState(() => _generating = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _generating = false);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Music video generated')));
-    }
+  @override
+  void dispose() {
+    _direction.dispose();
+    super.dispose();
   }
 
-  void _playTestVideo() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const VideoPlayerScreen(
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      title: 'Test Video',
-    )));
+  Future<void> _generate() async {
+    final text = _direction.text.trim();
+    if (text.isEmpty) {
+      setState(() => _error = 'Describe the visual direction.');
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _error = null;
+      _result = null;
+    });
+    try {
+      final service = ref.read(openRouterProvider);
+      final script = await service.generateText(
+        'Write a 4-section music video treatment for: $text. Style: $_style. Format as Intro / Verse / Chorus / Bridge with short visual descriptions.',
+      );
+      if (!mounted) return;
+      ref.read(generationHistoryProvider.notifier).add(
+        GeneratedScene(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          title: text.length > 40 ? '${text.substring(0, 40)}...' : text,
+          prompt: text,
+          createdAt: DateTime.now(),
+          mode: 'Music Video',
+        ),
+      );
+      setState(() {
+        _loading = false;
+        _result = script;
+      });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final universe = ref.watch(universeProvider);
-    final character = universe.characters.isNotEmpty ? universe.characters.first : null;
-
     return Scaffold(
       backgroundColor: DripTheme.voidBlack,
-      appBar: AppBar(title: const Text('Music Video Studio')),
-      body: IndexedStack(
-        index: _tab,
+      appBar: AppBar(title: const Text('Music Video')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
         children: [
-          _buildPreviewTab(),
-          _buildTimelineTab(character),
-          const Center(child: Text('Assets')),
-          const Center(child: Text('Export')),
+          TextField(
+            controller: _direction,
+            maxLines: 3,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: 'Visual direction (e.g. neon alley, slow strings, close-ups)',
+              hintStyle: TextStyle(color: Colors.white38),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text('Style', style: TextStyle(color: Colors.white70, fontSize: 13)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: _styles.map((s) {
+              final selected = s == _style;
+              return ChoiceChip(
+                label: Text(s),
+                selected: selected,
+                onSelected: (_) => setState(() => _style = s),
+                selectedColor: DripTheme.teal,
+                labelStyle: TextStyle(color: selected ? Colors.black : Colors.white70),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: DripTheme.teal,
+                foregroundColor: Colors.black,
+              ),
+              onPressed: _loading ? null : _generate,
+              child: _loading
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                  : const Text('GENERATE TREATMENT'),
+            ),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 16),
+            Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+            TextButton(onPressed: _generate, child: const Text('Retry', style: TextStyle(color: DripTheme.teal))),
+          ],
+          if (_result != null) ...[
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: DripTheme.gunmetal,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(_result!, style: const TextStyle(color: Colors.white70, height: 1.4)),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const VideoPlayerScreen(
+                    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                    title: 'Preview',
+                  ),
+                ),
+              ),
+              child: const Text('Preview sample'),
+            ),
+          ],
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        backgroundColor: DripTheme.gunmetal,
-        selectedIndex: _tab,
-        onDestinationSelected: (i) => setState(() => _tab = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.play_circle_outline), label: 'Preview'),
-          NavigationDestination(icon: Icon(Icons.timeline), label: 'Timeline'),
-          NavigationDestination(icon: Icon(Icons.folder_outlined), label: 'Assets'),
-          NavigationDestination(icon: Icon(Icons.upload), label: 'Export'),
-        ],
-      ),
     );
-  }
-
-  Widget _buildPreviewTab() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        TextField(controller: _directionController, maxLines: 3, decoration: const InputDecoration(hintText: 'Overall visual direction…')),
-        const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: _generating ? null : _generate,
-          child: _generating ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('GENERATE MUSIC VIDEO'),
-        ),
-        const SizedBox(height: 12),
-        OutlinedButton(onPressed: _playTestVideo, child: const Text('Play Test Video')),
-      ],
-    );
-  }
-
-  Widget _buildTimelineTab(dynamic character) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const Text('SONG TIMELINE', style: TextStyle(letterSpacing: 1.2, fontSize: 12, color: DripTheme.teal)),
-        const SizedBox(height: 8),
-        ..._sections.map((s) => ListTile(title: Text(s.name), subtitle: Text('${s.start} – ${s.end}'))),
-        const SizedBox(height: 20),
-        const Text('STYLE', style: TextStyle(letterSpacing: 1.2, fontSize: 12, color: DripTheme.teal)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          children: _styles.map((s) => ChoiceChip(label: Text(s), selected: s == _style, onSelected: (_) => setState(() => _style = s))).toList(),
-        ),
-      ],
-    );
-  }
-
-  @override
-  void dispose() {
-    _directionController.dispose();
-    super.dispose();
   }
 }
