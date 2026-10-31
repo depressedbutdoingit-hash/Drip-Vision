@@ -5,6 +5,10 @@ import 'music_video_screen.dart';
 import 'ad_generator_screen.dart';
 import 'timeline_screen.dart';
 import 'style_dna_screen.dart';
+import 'character_dna_screen.dart';
+import 'create_drip_screen.dart';
+import 'universe_screen.dart';
+import 'profile_premium_screen.dart';
 
 class StudioHomeScreen extends ConsumerStatefulWidget {
   const StudioHomeScreen({super.key});
@@ -15,45 +19,56 @@ class StudioHomeScreen extends ConsumerStatefulWidget {
 
 class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
   int _tab = 0;
+  int _nav = 0;
 
   @override
   Widget build(BuildContext context) {
+    final pages = [
+      _homeBody(),
+      const UniverseScreen(),
+      const CreateDripScreen(),
+      const UniverseScreen(),
+      const ProfilePremiumScreen(),
+    ];
+
     return Scaffold(
       backgroundColor: const Color(0xFF07090B),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _topBar(),
-            _tabs(),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                children: [
-                  _hero(),
-                  const SizedBox(height: 22),
-                  _section('Continue Where You Left Off'),
-                  const SizedBox(height: 10),
-                  _continueCard(),
-                  const SizedBox(height: 22),
-                  _section('Your Characters'),
-                  const SizedBox(height: 10),
-                  _characters(),
-                  const SizedBox(height: 22),
-                  _section('Studio'),
-                  const SizedBox(height: 10),
-                  _tool(Icons.campaign_outlined, 'Ad Generator', 'Commercial scripts', const AdGeneratorScreen()),
-                  const SizedBox(height: 8),
-                  _tool(Icons.movie_outlined, 'Timeline', 'Director\'s cut', const TimelineScreen()),
-                  const SizedBox(height: 8),
-                  _tool(Icons.palette_outlined, 'Style DNA', 'Save a look', const StyleDnaScreen()),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      body: SafeArea(child: pages[_nav]),
       bottomNavigationBar: _bottomNav(),
+    );
+  }
+
+  Widget _homeBody() {
+    return Column(
+      children: [
+        _topBar(),
+        _tabs(),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            children: [
+              _hero(),
+              const SizedBox(height: 22),
+              _section('Continue Where You Left Off'),
+              const SizedBox(height: 10),
+              _continueCard(),
+              const SizedBox(height: 22),
+              _section('Your Characters'),
+              const SizedBox(height: 10),
+              _characters(),
+              const SizedBox(height: 22),
+              _section('Studio'),
+              const SizedBox(height: 10),
+              _tool(Icons.campaign_outlined, 'Ad Generator', 'Commercial scripts', const AdGeneratorScreen()),
+              const SizedBox(height: 8),
+              _tool(Icons.movie_outlined, 'Timeline', 'Director\'s cut', const TimelineScreen()),
+              const SizedBox(height: 8),
+              _tool(Icons.palette_outlined, 'Style DNA', 'Save a look', const StyleDnaScreen()),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -62,15 +77,18 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Row(
         children: [
-          const Icon(Icons.workspace_premium, color: Color(0xFF00E5C0), size: 20),
+          const Icon(Icons.movie_filter, color: Color(0xFF00E5C0), size: 22),
           const SizedBox(width: 8),
           const Text('DripVision', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.white)),
           const Spacer(),
           Icon(Icons.notifications_none, color: Colors.white.withOpacity(0.7)),
           const SizedBox(width: 14),
-          CircleAvatar(
-            radius: 14,
-            backgroundImage: const NetworkImage('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'),
+          GestureDetector(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfilePremiumScreen())),
+            child: const CircleAvatar(
+              radius: 14,
+              backgroundImage: NetworkImage('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'),
+            ),
           ),
         ],
       ),
@@ -115,7 +133,7 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
   Widget _hero() {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
-      child: Container(
+      child: SizedBox(
         height: 200,
         child: Stack(
           fit: StackFit.expand,
@@ -158,7 +176,7 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                     ),
-                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GeneratorScreen())),
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateDripScreen())),
                     icon: const Icon(Icons.play_arrow, size: 18),
                     label: const Text('New Drip', style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
@@ -176,7 +194,10 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
-        Text('See All', style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.5))),
+        GestureDetector(
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UniverseScreen())),
+          child: Text('See All', style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.5))),
+        ),
       ],
     );
   }
@@ -210,7 +231,7 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TimelineScreen())),
             icon: const Icon(Icons.play_circle_fill, color: Color(0xFF00E5C0), size: 32),
           ),
         ],
@@ -231,9 +252,12 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
         scrollDirection: Axis.horizontal,
         itemCount: faces.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (_, i) => CircleAvatar(
-          radius: 32,
-          backgroundImage: NetworkImage(faces[i]),
+        itemBuilder: (_, i) => GestureDetector(
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CharacterDnaScreen())),
+          child: CircleAvatar(
+            radius: 32,
+            backgroundImage: NetworkImage(faces[i]),
+          ),
         ),
       ),
     );
@@ -281,11 +305,11 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _navItem(Icons.home_outlined, 'Home', true),
-              _navItem(Icons.movie_outlined, 'Studio', false),
+              _navItem(0, Icons.home_outlined, 'Home'),
+              _navItem(1, Icons.movie_outlined, 'Studio'),
               _plus(),
-              _navItem(Icons.folder_outlined, 'Library', false),
-              _navItem(Icons.person_outline, 'Profile', false),
+              _navItem(3, Icons.folder_outlined, 'Library'),
+              _navItem(4, Icons.person_outline, 'Profile'),
             ],
           ),
         ),
@@ -293,28 +317,32 @@ class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
     );
   }
 
-  Widget _navItem(IconData icon, String label, bool active) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, color: active ? const Color(0xFF00E5C0) : Colors.white38, size: 22),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 10, color: active ? const Color(0xFF00E5C0) : Colors.white38)),
-      ],
+  Widget _navItem(int index, IconData icon, String label) {
+    final active = _nav == index;
+    return GestureDetector(
+      onTap: () => setState(() => _nav = index),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: active ? const Color(0xFF00E5C0) : Colors.white38, size: 22),
+          const SizedBox(height: 4),
+          Text(label, style: TextStyle(fontSize: 10, color: active ? const Color(0xFF00E5C0) : Colors.white38)),
+        ],
+      ),
     );
   }
 
   Widget _plus() {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: const BoxDecoration(
-        color: Color(0xFF00E5C0),
-        shape: BoxShape.circle,
-      ),
-      child: IconButton(
-        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GeneratorScreen())),
-        icon: const Icon(Icons.add, color: Colors.black, size: 24),
+    return GestureDetector(
+      onTap: () => setState(() => _nav = 2),
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: const BoxDecoration(
+          color: Color(0xFF00E5C0),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.add, color: Colors.black, size: 24),
       ),
     );
   }
