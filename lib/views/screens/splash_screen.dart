@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/theme.dart';
 import 'studio_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -59,18 +58,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
           ),
+          // Glowing drips
+          Positioned(top: -30, left: 50, child: _drip(36, 0.4)),
+          Positioned(top: -16, right: 70, child: _drip(22, 0.28)),
+          Positioned(top: 100, right: 10, child: _drip(16, 0.22)),
           SafeArea(
             child: FadeTransition(
               opacity: _fade,
               child: Column(
                 children: [
                   const SizedBox(height: 36),
-                  const Icon(Icons.workspace_premium, color: Color(0xFF00E5C0), size: 28),
-                  const SizedBox(height: 8),
+                  _logo(),
+                  const SizedBox(height: 10),
                   const Text(
                     'DripVision',
                     style: TextStyle(
-                      fontSize: 40,
+                      fontSize: 38,
                       fontWeight: FontWeight.w300,
                       letterSpacing: 1,
                       color: Colors.white,
@@ -126,6 +129,41 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _logo() {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFF00E5C0), width: 2),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFF00E5C0).withOpacity(0.45), blurRadius: 16),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: const Icon(Icons.water_drop, color: Color(0xFF00E5C0), size: 28),
+    );
+  }
+
+  Widget _drip(double size, double opacity) {
+    return Container(
+      width: size,
+      height: size * 1.5,
+      decoration: BoxDecoration(
+        color: const Color(0xFF00E5C0).withOpacity(opacity),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(size),
+          topRight: Radius.circular(size),
+          bottomLeft: Radius.circular(size * 0.4),
+          bottomRight: Radius.circular(size * 0.4),
+        ),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFF00E5C0).withOpacity(opacity), blurRadius: 20, spreadRadius: 2),
         ],
       ),
     );
