@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../core/env.dart';
@@ -68,7 +69,6 @@ class OpenRouterService {
     return response.data['choices'][0]['message']['content'] as String;
   }
 
-  /// ElevenLabs TTS through OpenRouter. Returns raw mp3 bytes.
   Future<Uint8List> speak({
     required String text,
     String voice = 'sarah',
@@ -84,6 +84,39 @@ class OpenRouterService {
         'input': text,
         'voice': voice,
         'response_format': 'mp3',
+      },
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return Uint8List.fromList(response.data as List<int>);
+  }
+
+  /// Stateless voice clone via Fish Audio on OpenRouter.
+  Future<Uint8List> cloneSpeak({
+    required String text,
+    required Uint8List sampleBytes,
+    required String sampleTranscript,
+    String model = 'fish-audio/s2.1-pro',
+  }) async {
+    if (Env.openRouterKey.isEmpty) {
+      throw Exception('OPENROUTER_KEY is missing.');
+    }
+    final b64 = base64Encode(sampleBytes);
+    final response = await _dio.post(
+      'audio/speech',
+      data: {
+        'model': model,
+        'input': text,
+        'response_format': 'mp3',
+        'input_references': [
+          {
+            'type': 'input_audio',
+            'input_audio': {'data': 'data:audio/wav;base64,$b64'},
+          },
+          {
+            'type': 'text',
+            'text': sampleTranscript,
+          },
+        ],
       },
       options: Options(responseType: ResponseType.bytes),
     );
