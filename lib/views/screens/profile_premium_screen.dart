@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../services/generation_history_service.dart';
 import 'plan_screen.dart';
 
-class ProfilePremiumScreen extends StatelessWidget {
+class ProfilePremiumScreen extends ConsumerWidget {
   const ProfilePremiumScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPublic = ref.watch(profilePublicProvider);
     return Scaffold(
       backgroundColor: const Color(0xFF07090B),
       appBar: AppBar(
@@ -43,6 +46,25 @@ class ProfilePremiumScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF12161A),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Public profile', style: TextStyle(color: Colors.white)),
+              subtitle: Text(
+                isPublic ? 'Anyone can view your profile' : 'Only you can see your profile',
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+              value: isPublic,
+              activeColor: const Color(0xFF00E5C0),
+              onChanged: (v) => ref.read(profilePublicProvider.notifier).state = v,
+            ),
+          ),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
