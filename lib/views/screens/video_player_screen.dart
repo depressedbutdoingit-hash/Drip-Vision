@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -65,6 +67,73 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     }
   }
 
+  Future<void> _share() async {
+    final url = widget.videoUrl.trim();
+    if (url.isEmpty) return;
+    await Share.share('$url\nMade with DripVision', subject: widget.title);
+  }
+
+  Future<void> _openApp(String scheme, String fallback) async {
+    final uri = Uri.parse(scheme);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      await launchUrl(Uri.parse(fallback), mode: LaunchMode.externalApplication);
+    }
+  }
+
+  void _showShareSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF12161A),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Share', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _shareItem(Icons.share, 'Share', _share),
+                _shareItem(Icons.download, 'Download', _share),
+                _shareItem(Icons.music_note, 'TikTok', () => _openApp('tiktok://', 'https://www.tiktok.com')),
+                _shareItem(Icons.camera_alt, 'Instagram', () => _openApp('instagram://', 'https://www.instagram.com')),
+                _shareItem(Icons.facebook, 'Facebook', () => _openApp('fb://', 'https://www.facebook.com')),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _shareItem(IconData icon, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        onTap();
+      },
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF00E5C0).withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: const Color(0xFF00E5C0)),
+          ),
+          const SizedBox(height: 6),
+          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _chewieController?.dispose();
@@ -80,6 +149,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         title: Text(widget.title),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          if (_error == null && _initialized)
+            IconButton(
+              onPressed: _showShareSheet,
+              icon: const Icon(Icons.share, color: DripTheme.teal),
+            ),
+        ],
       ),
       body: Center(
         child: _error != null
