@@ -84,6 +84,21 @@ class UniverseScreen extends ConsumerWidget {
                           ),
                         ),
                         Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: () => ref.read(generationHistoryProvider.notifier).remove(scene.id),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 18),
+                            ),
+                          ),
+                        ),
+                        Positioned(
                           left: 12,
                           bottom: 12,
                           right: 12,
