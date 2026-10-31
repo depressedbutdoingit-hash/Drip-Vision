@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/character.dart';
+import '../../services/continuity_service.dart';
 import 'universe_screen.dart';
 
 class CharacterDnaScreen extends StatelessWidget {
