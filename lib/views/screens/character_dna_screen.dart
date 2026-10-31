@@ -1,15 +1,36 @@
 import 'package:flutter/material.dart';
+import '../../models/character.dart';
+import 'universe_screen.dart';
 
 class CharacterDnaScreen extends StatelessWidget {
-  const CharacterDnaScreen({super.key});
+  final Character? character;
+
+  const CharacterDnaScreen({super.key, this.character});
+
+  Character get _c => character ?? Character(
+    id: 'isabella',
+    name: 'Isabella',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
+    role: 'Lead Heroine',
+    age: 29,
+    height: "5'8\"",
+    build: 'Athletic',
+    eyeColor: 'Hazel',
+    hairColor: 'Dark brown, wavy',
+    voiceDescription: 'Confident, warm',
+    wardrobeDNA: const ['luxury black dress', 'leather jacket', 'evening gown'],
+    defaultStylePrompt: 'photorealistic, cinematic lighting',
+    dna: CharacterDNA.empty(),
+  );
 
   @override
   Widget build(BuildContext context) {
+    final c = _c;
+    final score = c.healthScore.round();
     return Scaffold(
       backgroundColor: const Color(0xFF07090B),
       body: Stack(
         children: [
-          // Subtle glowing drips
           Positioned(top: -20, left: 40, child: _drip(28, 0.35)),
           Positioned(top: -10, right: 60, child: _drip(18, 0.25)),
           Positioned(top: 80, right: -8, child: _drip(14, 0.2)),
@@ -31,20 +52,17 @@ class CharacterDnaScreen extends StatelessWidget {
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(16),
-                            child: Image.network(
-                              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400',
-                              width: 150,
-                              height: 200,
-                              fit: BoxFit.cover,
-                            ),
+                            child: c.avatarUrl.isNotEmpty
+                                ? Image.network(c.avatarUrl, width: 150, height: 200, fit: BoxFit.cover)
+                                : Container(width: 150, height: 200, color: const Color(0xFF12161A)),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Isabella', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white)),
-                                const Text('Lead Heroine', style: TextStyle(color: Colors.white54, fontSize: 13)),
+                                Text(c.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white)),
+                                Text(c.role, style: const TextStyle(color: Colors.white54, fontSize: 13)),
                                 const SizedBox(height: 16),
                                 Container(
                                   width: 88,
@@ -57,21 +75,21 @@ class CharacterDnaScreen extends StatelessWidget {
                                     ],
                                   ),
                                   alignment: Alignment.center,
-                                  child: const Text('98%', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Color(0xFF00E5C0))),
+                                  child: Text('$score%', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Color(0xFF00E5C0))),
                                 ),
                                 const SizedBox(height: 8),
-                                const Text('Continuity\nLocked', style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.2)),
+                                Text(c.continuityLock ? 'Continuity\nLocked' : 'Continuity\nOpen', style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.2)),
                               ],
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 20),
-                      _check('Looks: Locked'),
-                      _check('Voice: Cloned'),
-                      _check('Wardrobe: 12 outfits'),
-                      _check('Personality: Active'),
-                      _check('Story Arc: In Sync'),
+                      _check('Looks: ${c.hairColor}, ${c.eyeColor} eyes'),
+                      _check('Voice: ${c.voiceDescription}'),
+                      _check('Wardrobe: ${c.wardrobeDNA.length} outfits'),
+                      _check('Build: ${c.build}, ${c.height}'),
+                      _check('Style: ${c.defaultStylePrompt.isEmpty ? "Default" : c.defaultStylePrompt}'),
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
@@ -82,40 +100,41 @@ class CharacterDnaScreen extends StatelessWidget {
                             foregroundColor: const Color(0xFF00E5C0),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                           ),
-                          onPressed: () {},
-                          child: const Text('View Her Universe'),
+                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const UniverseScreen())),
+                          child: const Text('View Universe'),
                         ),
                       ),
                       const SizedBox(height: 24),
                       const Text('Recent Scenes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
                       const SizedBox(height: 10),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: Stack(
-                          children: [
-                            Image.network(
-                              'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800',
-                              height: 140,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                            Positioned(
-                              left: 12,
-                              bottom: 12,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Rooftop Escape', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                                  Text('00:15', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      _sceneCard('Rooftop Escape', '00:15', 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800'),
+                      const SizedBox(height: 8),
+                      _sceneCard('Neon Alley', '00:12', 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800'),
                     ],
                   ),
                 ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sceneCard(String title, String duration, String image) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: Stack(
+        children: [
+          Image.network(image, height: 120, width: double.infinity, fit: BoxFit.cover),
+          Positioned(
+            left: 12,
+            bottom: 12,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                Text(duration, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
               ],
             ),
           ),
@@ -137,11 +156,7 @@ class CharacterDnaScreen extends StatelessWidget {
           bottomRight: Radius.circular(size * 0.4),
         ),
         boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF00E5C0).withOpacity(opacity * 0.8),
-            blurRadius: 18,
-            spreadRadius: 2,
-          ),
+          BoxShadow(color: const Color(0xFF00E5C0).withOpacity(opacity * 0.8), blurRadius: 18, spreadRadius: 2),
         ],
       ),
     );
@@ -154,7 +169,7 @@ class CharacterDnaScreen extends StatelessWidget {
         children: [
           const Icon(Icons.check_circle, color: Color(0xFF00E5C0), size: 16),
           const SizedBox(width: 8),
-          Text(text, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          Expanded(child: Text(text, style: const TextStyle(color: Colors.white70, fontSize: 13))),
         ],
       ),
     );
