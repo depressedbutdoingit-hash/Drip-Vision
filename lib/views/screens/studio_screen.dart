@@ -1,177 +1,168 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/theme.dart';
 import 'generator_screen.dart';
 import 'music_video_screen.dart';
 import 'ad_generator_screen.dart';
 import 'timeline_screen.dart';
 import 'style_dna_screen.dart';
 
-class StudioHomeScreen extends ConsumerWidget {
+class StudioHomeScreen extends ConsumerStatefulWidget {
   const StudioHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StudioHomeScreen> createState() => _StudioHomeScreenState();
+}
+
+class _StudioHomeScreenState extends ConsumerState<StudioHomeScreen> {
+  int _tab = 0;
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0C0E),
+      backgroundColor: const Color(0xFF07090B),
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              floating: true,
-              backgroundColor: const Color(0xFF0A0C0E),
-              elevation: 0,
-              title: const Text(
-                'DRIPVISION',
+        child: Column(
+          children: [
+            _topBar(),
+            _tabs(),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                children: [
+                  _hero(),
+                  const SizedBox(height: 22),
+                  _section('Continue Where You Left Off'),
+                  const SizedBox(height: 10),
+                  _continueCard(),
+                  const SizedBox(height: 22),
+                  _section('Your Characters'),
+                  const SizedBox(height: 10),
+                  _characters(),
+                  const SizedBox(height: 22),
+                  _section('Studio'),
+                  const SizedBox(height: 10),
+                  _tool(Icons.campaign_outlined, 'Ad Generator', 'Commercial scripts', const AdGeneratorScreen()),
+                  const SizedBox(height: 8),
+                  _tool(Icons.movie_outlined, 'Timeline', 'Director\'s cut', const TimelineScreen()),
+                  const SizedBox(height: 8),
+                  _tool(Icons.palette_outlined, 'Style DNA', 'Save a look', const StyleDnaScreen()),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _bottomNav(),
+    );
+  }
+
+  Widget _topBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Row(
+        children: [
+          const Icon(Icons.workspace_premium, color: Color(0xFF00E5C0), size: 20),
+          const SizedBox(width: 8),
+          const Text('DripVision', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500, color: Colors.white)),
+          const Spacer(),
+          Icon(Icons.notifications_none, color: Colors.white.withOpacity(0.7)),
+          const SizedBox(width: 14),
+          CircleAvatar(
+            radius: 14,
+            backgroundImage: const NetworkImage('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tabs() {
+    const labels = ['Studio', 'Story', 'Explore', 'Music', 'My Drips'];
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        scrollDirection: Axis.horizontal,
+        itemCount: labels.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final selected = i == _tab;
+          return GestureDetector(
+            onTap: () => setState(() => _tab = i),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: selected ? const Color(0xFF00E5C0) : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+                border: selected ? null : Border.all(color: Colors.white12),
+              ),
+              child: Text(
+                labels[i],
                 style: TextStyle(
-                  letterSpacing: 4,
-                  fontWeight: FontWeight.w300,
-                  fontSize: 16,
-                  color: Color(0xFFE8E8E8),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: selected ? Colors.black : Colors.white70,
                 ),
               ),
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 20),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF00FFAA).withOpacity(0.4), width: 1),
-                    ),
-                    child: const Icon(Icons.person_outline, size: 16, color: Color(0xFF00FFAA)),
-                  ),
-                ),
-              ],
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Hero
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: Container(
-                        height: 240,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF111416),
-                        ),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            Image.network(
-                              'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1200&q=80',
-                              fit: BoxFit.cover,
-                              alignment: Alignment.center,
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.black.withOpacity(0.15),
-                                    Colors.black.withOpacity(0.75),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  const Text(
-                                    'YOUR UNIVERSE',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      letterSpacing: 3,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xFF00FFAA),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  const Text(
-                                    'Your Rules.',
-                                    style: TextStyle(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.w300,
-                                      height: 1.05,
-                                      color: Colors.white,
-                                      letterSpacing: -0.5,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  const Text(
-                                    'Cinematic AI that remembers your characters and worlds.',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      height: 1.35,
-                                      color: Colors.white70,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 18),
-                                  Row(
-                                    children: [
-                                      _primaryBtn(context, 'New Drip', const GeneratorScreen()),
-                                      const SizedBox(width: 10),
-                                      _ghostBtn(context, 'Music Video', const MusicVideoScreen()),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 36),
-                    const Text(
-                      'RECENT',
-                      style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 3,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    SizedBox(
-                      height: 148,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: 4,
-                        separatorBuilder: (_, __) => const SizedBox(width: 14),
-                        itemBuilder: (context, i) => _ProjectCard(
-                          title: ['The Last Heist', 'Scarlet & Stone', 'Ocean Hearts', 'Broken Crown'][i],
-                          status: ['Rendering', 'Edited 2h ago', 'Completed', 'In Progress'][i],
-                          image: 'https://picsum.photos/id/${i + 20}/400/500',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 36),
-                    const Text(
-                      'STUDIO',
-                      style: TextStyle(
-                        fontSize: 11,
-                        letterSpacing: 3,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    _toolTile(context, Icons.campaign_outlined, 'Ad Generator', 'Short-form commercial scripts', const AdGeneratorScreen()),
-                    const SizedBox(height: 10),
-                    _toolTile(context, Icons.movie_outlined, 'Timeline', 'Director\'s cut', const TimelineScreen()),
-                    const SizedBox(height: 10),
-                    _toolTile(context, Icons.palette_outlined, 'Style DNA', 'Save and reuse a look', const StyleDnaScreen()),
-                  ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _hero() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        height: 200,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1000&q=80',
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [Colors.black.withOpacity(0.7), Colors.black.withOpacity(0.15)],
                 ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Your Universe.\nIn Motion.',
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w400, color: Colors.white, height: 1.15),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Create. Continue. Be Legendary.',
+                    style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00E5C0),
+                      foregroundColor: Colors.black,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    ),
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GeneratorScreen())),
+                    icon: const Icon(Icons.play_arrow, size: 18),
+                    label: const Text('New Drip', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ],
               ),
             ),
           ],
@@ -180,101 +171,150 @@ class StudioHomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _primaryBtn(BuildContext context, String label, Widget screen) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF00FFAA),
-        foregroundColor: Colors.black,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.3),
-      ),
-      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => screen)),
-      child: Text(label),
+  Widget _section(String title) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+        Text('See All', style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.5))),
+      ],
     );
   }
 
-  Widget _ghostBtn(BuildContext context, String label, Widget screen) {
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: Color(0xFF00FFAA), width: 1),
-        foregroundColor: const Color(0xFF00FFAA),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, letterSpacing: 0.3),
+  Widget _continueCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF12161A),
+        borderRadius: BorderRadius.circular(16),
       ),
-      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => screen)),
-      child: Text(label),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+            child: Image.network(
+              'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400',
+              width: 110,
+              height: 80,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('The Last Goodbye', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                SizedBox(height: 4),
+                Text('2h ago • 00:15', style: TextStyle(color: Colors.white54, fontSize: 12)),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.play_circle_fill, color: Color(0xFF00E5C0), size: 32),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _toolTile(BuildContext context, IconData icon, String title, String subtitle, Widget screen) {
+  Widget _characters() {
+    final faces = [
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
+      'https://images.unsplash.com/photo-1552053831-71594a27632d?w=200',
+    ];
+    return SizedBox(
+      height: 72,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: faces.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (_, i) => CircleAvatar(
+          radius: 32,
+          backgroundImage: NetworkImage(faces[i]),
+        ),
+      ),
+    );
+  }
+
+  Widget _tool(IconData icon, String title, String sub, Widget screen) {
     return Material(
-      color: const Color(0xFF14181C),
+      color: const Color(0xFF12161A),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => screen)),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
-              Icon(icon, color: const Color(0xFF00FFAA), size: 20),
-              const SizedBox(width: 14),
+              Icon(icon, color: const Color(0xFF00E5C0), size: 20),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white)),
-                    const SizedBox(height: 2),
-                    Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.white54)),
+                    Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+                    Text(sub, style: const TextStyle(color: Colors.white54, fontSize: 12)),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.white24, size: 20),
+              const Icon(Icons.chevron_right, color: Colors.white24),
             ],
           ),
         ),
       ),
     );
   }
-}
 
-class _ProjectCard extends StatelessWidget {
-  final String title;
-  final String status;
-  final String image;
-
-  const _ProjectCard({required this.title, required this.status, required this.image});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _bottomNav() {
     return Container(
-      width: 128,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: const Color(0xFF14181C),
+      decoration: const BoxDecoration(
+        color: Color(0xFF0C1014),
+        border: Border(top: BorderSide(color: Colors.white10)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Image.network(image, height: 88, width: 128, fit: BoxFit.cover),
+      child: SafeArea(
+        child: SizedBox(
+          height: 64,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _navItem(Icons.home_outlined, 'Home', true),
+              _navItem(Icons.movie_outlined, 'Studio', false),
+              _plus(),
+              _navItem(Icons.folder_outlined, 'Library', false),
+              _navItem(Icons.person_outline, 'Profile', false),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 2),
-                Text(status, style: const TextStyle(fontSize: 10, color: Colors.white54)),
-              ],
-            ),
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _navItem(IconData icon, String label, bool active) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, color: active ? const Color(0xFF00E5C0) : Colors.white38, size: 22),
+        const SizedBox(height: 4),
+        Text(label, style: TextStyle(fontSize: 10, color: active ? const Color(0xFF00E5C0) : Colors.white38)),
+      ],
+    );
+  }
+
+  Widget _plus() {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: const BoxDecoration(
+        color: Color(0xFF00E5C0),
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GeneratorScreen())),
+        icon: const Icon(Icons.add, color: Colors.black, size: 24),
       ),
     );
   }
