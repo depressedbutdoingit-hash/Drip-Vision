@@ -4,7 +4,8 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Drop with point at the bottom -->
     <path
         android:fillColor="#00FFAA"
-        android:pathData="M54,20 C42,20 32,32 32,46 C32,62 54,88 54,88 C54,88 76,62 76,46 C76,32 66,20 54,20 Z"/>
+        android:pathData="M54,88 C42,88 32,76 32,62 C32,46 54,20 54,20 C54,20 76,46 76,62 C76,76 66,88 54,88 Z"/>
 </vector>
