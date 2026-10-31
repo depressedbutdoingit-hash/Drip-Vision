@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../core/env.dart';
 import 'cost_tracking_service.dart';
@@ -14,10 +15,10 @@ class OpenRouterService {
         'X-Title': 'DripVision',
         'Content-Type': 'application/json',
       },
+      responseType: ResponseType.json,
     ));
   }
 
-  /// Enhances a prompt and returns both the enhanced text and cost info.
   Future<EnhancedPromptResult> enhancePrompt({
     required String prompt,
     required String modelSlug,
@@ -49,7 +50,6 @@ class OpenRouterService {
     );
   }
 
-  /// Simple text generation for ad scripts and other short copy.
   Future<String> generateText(String prompt, {String model = 'openai/gpt-4o-mini'}) async {
     if (Env.openRouterKey.isEmpty) {
       throw Exception('OPENROUTER_KEY is missing.');
@@ -66,6 +66,28 @@ class OpenRouterService {
       },
     );
     return response.data['choices'][0]['message']['content'] as String;
+  }
+
+  /// ElevenLabs TTS through OpenRouter. Returns raw mp3 bytes.
+  Future<Uint8List> speak({
+    required String text,
+    String voice = 'sarah',
+    String model = 'elevenlabs/eleven-v4',
+  }) async {
+    if (Env.openRouterKey.isEmpty) {
+      throw Exception('OPENROUTER_KEY is missing.');
+    }
+    final response = await _dio.post(
+      'audio/speech',
+      data: {
+        'model': model,
+        'input': text,
+        'voice': voice,
+        'response_format': 'mp3',
+      },
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return Uint8List.fromList(response.data as List<int>);
   }
 }
 
