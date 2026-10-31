@@ -18,9 +18,10 @@ class VideoPlayerScreen extends StatefulWidget {
 }
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
-  late VideoPlayerController _videoController;
+  VideoPlayerController? _videoController;
   ChewieController? _chewieController;
   bool _initialized = false;
+  String? _error;
 
   @override
   void initState() {
@@ -29,33 +30,41 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   Future<void> _initPlayer() async {
-    _videoController = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
-    await _videoController.initialize();
-
-    _chewieController = ChewieController(
-      videoPlayerController: _videoController,
-      autoPlay: true,
-      looping: false,
-      aspectRatio: _videoController.value.aspectRatio,
-      allowFullScreen: true,
-      allowMuting: true,
-      showControls: true,
-      materialProgressColors: ChewieProgressColors(
-        playedColor: DripTheme.teal,
-        handleColor: DripTheme.teal,
-        backgroundColor: DripTheme.gunmetalLight,
-        bufferedColor: DripTheme.silver.withOpacity(0.4),
-      ),
-      placeholder: Container(color: DripTheme.voidBlack),
-    );
-
-    if (mounted) setState(() => _initialized = true);
+    final url = widget.videoUrl.trim();
+    if (url.isEmpty || !url.startsWith('http')) {
+      setState(() => _error = 'No video URL returned. Generation may still be processing, or the model did not return a playable link.');
+      return;
+    }
+    try {
+      final controller = VideoPlayerController.networkUrl(Uri.parse(url));
+      _videoController = controller;
+      await controller.initialize();
+      _chewieController = ChewieController(
+        videoPlayerController: controller,
+        autoPlay: true,
+        looping: false,
+        aspectRatio: controller.value.aspectRatio,
+        allowFullScreen: true,
+        allowMuting: true,
+        showControls: true,
+        materialProgressColors: ChewieProgressColors(
+          playedColor: DripTheme.teal,
+          handleColor: DripTheme.teal,
+          backgroundColor: DripTheme.gunmetalLight,
+          bufferedColor: DripTheme.silver.withOpacity(0.4),
+        ),
+        placeholder: Container(color: DripTheme.voidBlack),
+      );
+      if (mounted) setState(() => _initialized = true);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Could not play video: $e');
+    }
   }
 
   @override
   void dispose() {
     _chewieController?.dispose();
-    _videoController.dispose();
+    _videoController?.dispose();
     super.dispose();
   }
 
@@ -69,19 +78,36 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         elevation: 0,
       ),
       body: Center(
-        child: _initialized && _chewieController != null
-            ? AspectRatio(
-                aspectRatio: _videoController.value.aspectRatio,
-                child: Chewie(controller: _chewieController!),
+        child: _error != null
+            ? Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+                    const SizedBox(height: 16),
+                    Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Back', style: TextStyle(color: DripTheme.teal)),
+                    ),
+                  ],
+                ),
               )
-            : const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: DripTheme.teal),
-                  SizedBox(height: 16),
-                  Text('Loading video…', style: TextStyle(color: DripTheme.silver)),
-                ],
-              ),
+            : _initialized && _chewieController != null
+                ? AspectRatio(
+                    aspectRatio: _videoController!.value.aspectRatio,
+                    child: Chewie(controller: _chewieController!),
+                  )
+                : const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: DripTheme.teal),
+                      SizedBox(height: 16),
+                      Text('Loading video\u2026', style: TextStyle(color: DripTheme.silver)),
+                    ],
+                  ),
       ),
     );
   }
